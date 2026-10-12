@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>body{margin:0;background:#e9ebef;font-family:'Montserrat',sans-serif;color:#1a2238;-webkit-font-smoothing:antialiased}a{color:#1a2238;text-decoration:none}a:hover{color:#3f9ad9}*{box-sizing:border-box}
+@keyframes kb{from{transform:scale(1.04) translate(0,0)}to{transform:scale(1.14) translate(-1.5%,-1%)}}</style>
+</helmet>
+<div data-screen-label="Services" style="width:1440px;margin:0 auto;background:#fff;box-shadow:0 30px 80px rgba(26,34,56,.18)">
+<dc-import name="SiteNav" page-label="Our Services" active="services" hint-size="100%,168px"></dc-import>
+<section style="position:relative;height:720px;background:#1a2238;color:#fff;overflow:hidden">
+  {{ heroStack }}
+  <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(26,34,56,.92) 0%,rgba(26,34,56,.72) 42%,rgba(26,34,56,.15) 75%,rgba(26,34,56,0) 100%);pointer-events:none"></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(26,34,56,.7) 0%,rgba(26,34,56,0) 35%);pointer-events:none"></div>
+  <div style="position:relative;height:100%;display:grid;grid-template-columns:minmax(0,1fr) 300px;padding:0 72px;gap:48px;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:28px;max-width:760px">
+      <span style="display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#6cb6e6"><span style="width:28px;height:2px;background:#6cb6e6;display:block"></span>Our Services</span>
+      <h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:72px;line-height:1.02;letter-spacing:-.01em;text-wrap:pretty">Design for <span style="position:relative;display:inline-block;color:#6cb6e6;font-style:italic">{{ sceneWord }}<span style="position:absolute;left:0;right:0;bottom:6px;height:2px;background:#6cb6e6;transform-origin:left;transform:scaleX({{ progress }});transition:transform .3s linear"></span></span><br>— today and for years to come.</h1>
+      <p style="margin:0;max-width:560px;font-size:18px;line-height:1.65;color:#dfe3ea;text-wrap:pretty">{{ sceneLine }}</p>
+      <a href="Contact.dc.html" style="display:inline-flex;align-items:center;gap:12px;height:58px;padding:0 32px;border-radius:999px;background:#6cb6e6;color:#1a2238;font-size:15px;font-weight:700;align-self:flex-start;box-shadow:0 12px 30px rgba(108,182,230,.35)">Start a Project <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#1a2238" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;justify-self:end;align-self:end;margin-bottom:72px;width:300px">
+      <span style="font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#c6cbd6;margin-bottom:8px">How we help</span>
+      <sc-for list="{{ scenes }}" as="r" hint-placeholder-count="4">
+        <a href="{{ r.href }}" onMouseEnter="{{ r.pick }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:12px;background:{{ r.bg }};color:#fff;border:1px solid {{ r.border }};transition:all .3s">
+          <span style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#6cb6e6;width:28px">{{ r.num }}</span>
+          <span style="display:flex;flex-direction:column;gap:3px;flex:1"><span style="font-size:14px;font-weight:600">{{ r.name }}</span><span style="height:2px;background:rgba(255,255,255,.18);border-radius:2px;overflow:hidden"><span style="display:block;height:100%;width:{{ r.pct }};background:#6cb6e6;transition:width .25s linear"></span></span></span>
+        </a>
+      </sc-for>
+    </div>
+  </div>
+</section>
+<section style="padding:80px 72px 104px;display:flex;flex-direction:column;gap:40px">
+  <sc-for list="{{ services }}" as="s" hint-placeholder-count="6">
+    <article data-reveal style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:64px;align-items:center;padding:40px 0;border-bottom:1px solid #eef0f4">
+      <div style="position:relative;height:360px;border-radius:18px;overflow:hidden;order:{{ s.imgOrder }}"><image-slot id="{{ s.slot }}" shape="rect" src="{{ s.img }}" placeholder="{{ s.title }}"></image-slot></div>
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <span style="font-family:'Cormorant Garamond',serif;font-size:40px;color:#6cb6e6;line-height:1">{{ s.num }}</span>
+        <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:42px;line-height:1.1">{{ s.title }}</h2>
+        <p style="margin:0;font-size:16px;line-height:1.7;color:#4b5569;text-wrap:pretty">{{ s.sub }}</p>
+        <div style="display:flex;align-items:center;gap:18px;margin-top:8px;flex-wrap:wrap">
+          <a href="{{ s.href }}" style="display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 24px;border-radius:999px;background:#1a2238;color:#fff;font-size:14px;font-weight:600" style-hover="background:#6cb6e6;color:#1a2238">Learn More <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <sc-if value="{{ s.hasSub }}" hint-placeholder-val="{{ false }}"><a href="Service.dc.html#model-home" style="display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#3f9ad9">Model Home Design <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></sc-if>
+          <sc-if value="{{ s.hasVirtual }}" hint-placeholder-val="{{ false }}"><a href="Service.dc.html#virtual-assessment" style="display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#3f9ad9">Virtual Home Assessments <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></sc-if>
+          <sc-if value="{{ s.hasSub }}" hint-placeholder-val="{{ false }}"><a href="Service.dc.html#design-refresh" style="display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#3f9ad9">Design Refresh <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></sc-if>
+        </div>
+      </div>
+    </article>
+  </sc-for>
+</section>
+<dc-import name="SiteFooter" hint-size="100%,480px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;autoplay&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;slideSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:5,&quot;min&quot;:3,&quot;max&quot;:10,&quot;step&quot;:1,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Hero&quot;}}">
+class Component extends DCLogic {
+  state = { list: [], i: 0, t: 0 };
+  I = 'https://img.magnific.com/free-photo/';
+  SCENES = [
+    { name:'Residential', word:'the home you love', line:'Kitchens, baths, bedrooms and living rooms designed around your goals, budget and style.', img:this.I+'interior-shot-modern-house-kitchen-with-large-windows_181624-24368.jpg', href:'Service.dc.html#residential' },
+    { name:'Aging-in-Place', word:'a lifetime at home', line:'Certified specialists who make your house safe, accessible and beautiful for decades.', img:this.I+'shower-with-handle_1203-481.jpg', href:'Service.dc.html#aging-in-place' },
+    { name:'Commercial', word:'the way you work', line:'Offices, clinics and hospitality spaces that reflect your brand and support your team.', img:this.I+'corner-open-office-space-with-modern-interior-design_181624-17688.jpg', href:'Service.dc.html#commercial' },
+    { name:'Design Refresh', word:'a fresh start', line:'A new look in days — space re-planning, color, lighting and styling with what you own.', img:this.I+'beautiful-modern-plants-deco_23-2149198562.jpg', href:'Service.dc.html#design-refresh' }
+  ];
+  async componentDidMount() {
+    const m = await import(new URL('services-data.js', document.baseURI).href); this.setState({ list: m.SERVICE_LIST });
+    const dur = (this.props.slideSeconds ?? 5) * 1000, step = 100;
+    this.timer = setInterval(() => { if (this.props.autoplay === false) return; this.setState(s => { const t = s.t + step; return t >= dur ? { t:0, i:(s.i+1) % this.SCENES.length } : { t }; }); }, step);
+    this.io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = 1; e.target.style.transform = 'none'; this.io.unobserve(e.target); } }), { threshold: .12 });
+    this.observe();
+  }
+  componentDidUpdate() { this.observe(); }
+  observe() { document.querySelectorAll('[data-reveal]:not([data-rv])').forEach(el => { el.dataset.rv = 1; el.style.opacity = 0; el.style.transform = 'translateY(24px)'; el.style.transition = 'opacity .7s ease, transform .7s ease'; this.io.observe(el); }); }
+  componentWillUnmount() { clearInterval(this.timer); this.io && this.io.disconnect(); }
+  renderVals() {
+    const dur = (this.props.slideSeconds ?? 5) * 1000, prog = this.state.t / dur, i = this.state.i, cur = this.SCENES[i];
+    const heroStack = React.createElement('div', { style:{ position:'absolute', inset:0 } }, this.SCENES.map((x,k) => React.createElement('img', { key:k, src:x.img, alt:x.name, style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', opacity:k===i?1:0, transition:'opacity 1.1s ease', animation:k===i?`kb ${dur/1000+1.5}s ease-out forwards`:'none' } })));
+    return { heroStack, sceneWord: cur.word, sceneLine: cur.line, progress: prog,
+      scenes: this.SCENES.map((x,k) => ({ name:x.name, href:x.href, num:String(k+1).padStart(2,'0'), bg:k===i?'rgba(255,255,255,.12)':'rgba(255,255,255,0)', border:k===i?'rgba(255,255,255,.25)':'transparent', pct:k===i?Math.round(prog*100)+'%':(k<i?'100%':'0%'), pick: () => this.setState({i:k,t:0}) })),
+      services: this.state.list.map((s,k) => ({ ...s, slot:'svc-'+s.slug, num:String(k+1).padStart(2,'0'), href:'Service.dc.html#'+s.slug, imgOrder: k%2 ? 2 : 0, hasSub: s.slug==='residential', hasVirtual: s.slug==='aging-in-place' })) };
+  }
+}
+</script>
+</body>
+</html>

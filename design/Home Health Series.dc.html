@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>body{margin:0;background:#e9ebef;font-family:'Montserrat',sans-serif;color:#1a2238;-webkit-font-smoothing:antialiased}a{color:#1a2238;text-decoration:none}a:hover{color:#3f9ad9}*{box-sizing:border-box}</style>
+</helmet>
+<div data-screen-label="Home Health Series" style="width:1440px;margin:0 auto;background:#fff;box-shadow:0 30px 80px rgba(26,34,56,.18)">
+<dc-import name="SiteNav" page-label="Healthy Home Resources · Home Health Series" active="hbd" source-key="home-health" hint-size="100%,168px"></dc-import>
+<section style="padding:88px 72px 64px;background:#f7f8fa;display:flex;flex-direction:column;gap:16px">
+  <a href="Healthy%20Home%20Resources.dc.html" style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Healthy Home Resources · Home Health Series</a>
+  <h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:60px;line-height:1.05;max-width:860px;text-wrap:pretty">Short episodes on living well at home</h1>
+  <p style="margin:0;max-width:620px;font-size:16px;line-height:1.7;color:#4b5569">Each episode tackles one room or one habit. Watch in under ten minutes, then use the companion notes to act on it.</p>
+</section>
+<section data-reveal style="padding:72px 72px 0;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:48px;align-items:center">
+  <div style="position:relative;aspect-ratio:16/9;border-radius:20px;overflow:hidden"><image-slot id="hhs-feat" shape="rect" src="./assets/couple-sunset.jpg" placeholder="Featured episode"></image-slot>
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><span style="width:84px;height:84px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 18px 44px rgba(26,34,56,.3)"><svg width="30" height="30" viewBox="0 0 24 24" fill="#1a2238"><path d="M8 5v14l11-7z"/></svg></span></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Latest episode · 08</span>
+    <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:500;line-height:1.1">The bathroom: five changes before a fall, not after</h2>
+    <p style="margin:0;font-size:15px;line-height:1.7;color:#4b5569">Grab bars, lighting, flooring, faucets and the step-in — what to change first and what it costs.</p>
+    <div style="display:flex;gap:14px;align-items:center;font-size:13px;color:#6b7486"><span>9 min</span><span style="width:3px;height:3px;border-radius:50%;background:#c6cbd6"></span><span>Oct 1, 2026</span></div>
+    <a href="#" style="display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 24px;border-radius:999px;background:#1a2238;color:#fff;font-size:14px;font-weight:600;align-self:flex-start">Watch now</a>
+  </div>
+</section>
+
+<section style="padding:72px 0 0;display:flex;flex-direction:column;gap:28px;overflow:hidden">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:0 72px">
+    <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">All episodes</span><h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:40px;line-height:1.1">Browse the series</h2></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:12px;color:#6b7486;margin-right:8px">{{ carPos }}</span>
+      <a href="#" onClick="{{ carPrev }}" style="width:46px;height:46px;border-radius:50%;border:1.5px solid #e3e6ec;display:flex;align-items:center;justify-content:center;color:#1a2238" style-hover="border-color:#1a2238"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="#" onClick="{{ carNext }}" style="width:46px;height:46px;border-radius:50%;background:#1a2238;display:flex;align-items:center;justify-content:center;color:#fff" style-hover="background:#6cb6e6;color:#1a2238"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </div>
+  </div>
+  <div onMouseEnter="{{ carPause }}" onMouseLeave="{{ carResume }}" style="padding:0 72px;overflow:hidden">
+    <div style="display:flex;gap:24px;transform:translateX({{ carX }});transition:transform .6s cubic-bezier(.22,.61,.36,1)">
+      <sc-for list="{{ eps }}" as="c" hint-placeholder-count="3"><a href="#" style="flex:none;width:416px;display:flex;flex-direction:column;gap:14px;color:#1a2238">
+        <div style="position:relative;aspect-ratio:16/10;border-radius:14px;overflow:hidden"><image-slot id="{{ c.slot }}" shape="rect" src="{{ c.img }}" placeholder="Episode thumbnail"></image-slot><span style="position:absolute;bottom:10px;right:10px;padding:4px 8px;border-radius:6px;background:rgba(26,34,56,.85);color:#fff;font-size:11px;font-weight:600;pointer-events:none">{{ c.len }}</span><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><span style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="#1a2238"><path d="M8 5v14l11-7z"/></svg></span></span></div>
+        <span style="font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#3f9ad9">Episode {{ c.num }} · {{ c.room }}</span>
+        <h3 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;line-height:1.2">{{ c.title }}</h3>
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#6b7486">{{ c.desc }}</p>
+      </a></sc-for>
+    </div>
+  </div>
+  <div style="display:flex;gap:6px;padding:0 72px"><sc-for list="{{ carDots }}" as="d" hint-placeholder-count="3"><a href="#" onClick="{{ d.go }}" style="height:4px;width:{{ d.w }};border-radius:2px;background:{{ d.bg }};transition:all .4s"></a></sc-for></div>
+</section>
+<div style="height:104px"></div>
+<dc-import name="SiteFooter" hint-size="100%,480px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { ...this.state, car: 0, paused: false };
+  CARD_W = 416; CAR_N = 6;
+  componentDidMount() {
+    this.carTimer = setInterval(() => { if (!this.state.paused) this.carStep(1); }, 4000);
+    this.io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = 1; e.target.style.transform = 'none'; this.io.unobserve(e.target); } }), { threshold: .1 });
+    this.observe();
+  }
+  componentDidUpdate() { this.observe(); }
+  observe() { document.querySelectorAll('[data-reveal]:not([data-rv])').forEach(el => { el.dataset.rv = 1; el.style.opacity = 0; el.style.transform = 'translateY(24px)'; el.style.transition = 'opacity .7s ease, transform .7s ease'; this.io.observe(el); }); }
+  componentWillUnmount() { clearInterval(this.carTimer); this.io && this.io.disconnect(); }
+  carStep(d) { const max = Math.max(0, this.CAR_N - this.carVisible()); this.setState(s => ({ car: ((s.car + d) % (max + 1) + (max + 1)) % (max + 1) })); }
+  carVisible() { return Math.floor(1296 / (this.CARD_W + 24)) || 1; }
+  carVals() {
+    const max = Math.max(0, this.CAR_N - this.carVisible()), c = Math.min(this.state.car, max);
+    return { carX: (-(c * (this.CARD_W + 24))) + 'px', carPos: (c + 1) + ' / ' + (max + 1),
+      carPrev: e => { e.preventDefault(); this.carStep(-1); }, carNext: e => { e.preventDefault(); this.carStep(1); },
+      carPause: () => this.setState({paused:true}), carResume: () => this.setState({paused:false}),
+      carDots: Array.from({length: max + 1}, (_, k) => ({ w: k===c ? '28px' : '10px', bg: k===c ? '#1a2238' : '#dfe3ea', go: e => { e.preventDefault(); this.setState({car:k}); } })) };
+  }
+  renderVals() {
+    const I = 'https://img.magnific.com/free-photo/';
+    const eps = [
+      ['07','Kitchen','Reachable storage without a remodel','Pull-downs, drawers and counters at more than one height.','7 min','disabled-senior-woman-sitting-wheelchair-kitchen-looking-through-window-living-with-handicapped-person-husband-helping-wife-with-disability-elderly-couple-with-happy-marriage_482257-10721.jpg'],
+      ['06','Entry','Zero-step entry: three ways in','Ramps, regrading and the threshold fix most people miss.','8 min','cozy-lobby-with-bookshelf_1262-3517.jpg'],
+      ['05','Bedroom','Light that helps you sleep','Blackout, warm dimming and a lit path to the bathroom.','6 min','relax-sofa-window_1150-12924.jpg'],
+      ['04','Living room','Furniture layouts with room to move','Clearances, firm seating and rugs that don\'t trip.','9 min','contemporary-living-room_1150-12613.jpg'],
+      ['03','Whole home','Lever handles and lighted switches','Small hardware swaps with big daily impact.','5 min','armchair-near-window_1203-138.jpg'],
+      ['02','Mind','Clutter, calm and the WELL mind concept','Why what you see every day shapes how you feel.','8 min','minimalist-interior-with-green-plant-art-frames_9975-133014.jpg']
+    ].map(([num,room,title,desc,len,img]) => ({num,room,title,desc,len,img:I+img,slot:'hhs-'+num}));
+    return { ...this.carVals(), eps };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>body{margin:0;background:#e9ebef;font-family:'Montserrat',sans-serif;color:#1a2238;-webkit-font-smoothing:antialiased}a{color:#1a2238;text-decoration:none}a:hover{color:#3f9ad9}*{box-sizing:border-box}</style>
+</helmet>
+<div data-screen-label="News & Insights" style="width:1440px;margin:0 auto;background:#fff;box-shadow:0 30px 80px rgba(26,34,56,.18)">
+<dc-import name="SiteNav" page-label="News &amp; Insights" active="news" hint-size="100%,168px"></dc-import>
+<section style="padding:88px 72px 64px;background:#f7f8fa;display:flex;justify-content:space-between;align-items:flex-end;gap:40px">
+  <div style="display:flex;flex-direction:column;gap:16px;max-width:760px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">News &amp; Insights</span>
+    <h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:60px;line-height:1.05">Ideas for living well at home</h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-radius:12px;background:#fff;border:1px solid #e9ecf1;font-size:13px;color:#6b7486;white-space:nowrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0a500" stroke-width="2.2" stroke-linecap="round"><path d="M4 11a9 9 0 019 9M4 4a16 16 0 0116 16"/><circle cx="5" cy="19" r="1" fill="#f0a500"/></svg>Synced from RSS · updated hourly</div>
+</section>
+<section style="padding:72px 72px 104px;display:flex;flex-direction:column;gap:56px">
+  <a href="#" style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:48px;align-items:center;color:#1a2238">
+    <div style="position:relative;height:460px;border-radius:20px;overflow:hidden"><image-slot id="news-feat" shape="rect" src="https://img.magnific.com/free-photo/cozy-lobby-with-bookshelf_1262-3517.jpg" placeholder="Featured article image"></image-slot></div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#6b7486"><span style="font-weight:600;color:#3f9ad9;letter-spacing:.1em;text-transform:uppercase">Aging-in-Place</span><span style="width:3px;height:3px;border-radius:50%;background:#c6cbd6"></span><span>Oct 2, 2026</span></div>
+      <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:600;line-height:1.1;text-wrap:pretty">Twelve small changes that make a home safer for a lifetime</h2>
+      <p style="margin:0;font-size:16px;line-height:1.7;color:#4b5569">From sensor lighting to lever handles — the low-cost upgrades our specialists recommend first, and why they matter.</p>
+      <span style="font-size:14px;font-weight:600">Read article →</span>
+    </div>
+  </a>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px">
+    <sc-for list="{{ posts }}" as="a" hint-placeholder-count="6">
+      <article style="display:flex;flex-direction:column;gap:16px">
+        <div style="position:relative;height:240px;border-radius:16px;overflow:hidden"><image-slot id="{{ a.slot }}" shape="rect" src="{{ a.img }}" placeholder="Featured image"></image-slot></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#6b7486"><span style="font-weight:600;color:#3f9ad9;letter-spacing:.1em;text-transform:uppercase">{{ a.cat }}</span><span style="width:3px;height:3px;border-radius:50%;background:#c6cbd6"></span><span>{{ a.date }}</span></div>
+        <h3 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:600;line-height:1.2;text-wrap:pretty">{{ a.title }}</h3>
+        <p style="margin:0;font-size:14.5px;line-height:1.65;color:#6b7486">{{ a.desc }}</p>
+        <a href="#" style="font-size:13px;font-weight:600">Read article →</a>
+      </article>
+    </sc-for>
+  </div>
+</section>
+<dc-import name="SiteFooter" hint-size="100%,480px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const I = 'https://img.magnific.com/free-photo/';
+    const posts = [
+      ['Residential','Sep 18, 2026','The heart of the home: planning a kitchen that adds value','Upgrading your kitchen improves daily function and resale value. Here\'s how we balance both.','contemporary-living-room_1150-12613.jpg'],
+      ['Healthy Home Resources','Sep 4, 2026','Light, air and calm: designing rooms that support wellbeing','What the WELL principles mean for an ordinary living room.','living-room-interior-design-zoom-calls_23-2149684494.jpg'],
+      ['Commercial','Aug 21, 2026','Reception areas that say who you are before you speak','Brand-forward arrival experiences for clinics and offices.','modern-hotel-lobby-with-leather-sofa-chairs-lamp-round-tables_1262-12373.jpg'],
+      ['Design Refresh','Aug 7, 2026','One weekend, new room: what a refresh really changes','Layout, light and editing — the three moves that matter most.','beautiful-modern-plants-deco_23-2149198562.jpg'],
+      ['Project Management','Jul 24, 2026','Why every project needs one person who owns the plan','Budgets, schedules and quality — kept together.','view-modern-office_1170-1969.jpg'],
+      ['Aging-in-Place','Jul 10, 2026','Having the "stay home" conversation with your parents','A gentle framework for a hard talk.','front-view-adorable-senior-couple-together_23-2148268640.jpg']
+    ].map(([cat,date,title,desc,img],i) => ({cat,date,title,desc,img:I+img,slot:'news-'+i}));
+    return { posts };
+  }
+}
+</script>
+</body>
+</html>

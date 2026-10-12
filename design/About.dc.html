@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>body{margin:0;background:#e9ebef;font-family:'Montserrat',sans-serif;color:#1a2238;-webkit-font-smoothing:antialiased}a{color:#1a2238;text-decoration:none}a:hover{color:#3f9ad9}*{box-sizing:border-box}</style>
+</helmet>
+<div data-screen-label="About" style="width:1440px;margin:0 auto;background:#fff;box-shadow:0 30px 80px rgba(26,34,56,.18)">
+<dc-import name="SiteNav" page-label="About Grace In Design" active="about" hint-size="100%,168px"></dc-import>
+<section style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:600px;background:#f7f8fa">
+  <div style="display:flex;flex-direction:column;justify-content:center;padding:88px 64px 88px 72px;gap:24px;min-width:0">
+    <span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Grace In Design</span>
+    <h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:62px;line-height:1.05;text-wrap:pretty">Design that honors how you live — now and for a lifetime.</h1>
+    <p style="margin:0;max-width:540px;font-size:17px;line-height:1.7;color:#4b5569">Founded in 2008, Grace In Design Services, LLC is an Atlanta-based interior design and project management firm focused on creating thoughtful spaces that support how people live, work and age.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px">
+      <span style="padding:8px 14px;border-radius:999px;background:#fff;border:1px solid #e3e6ec;font-size:12px;font-weight:600;color:#1a2238">Registered Interior Designer — Georgia</span>
+      <span style="padding:8px 14px;border-radius:999px;background:#fff;border:1px solid #e3e6ec;font-size:12px;font-weight:600;color:#1a2238">WELL AP</span>
+      <span style="padding:8px 14px;border-radius:999px;background:#fff;border:1px solid #e3e6ec;font-size:12px;font-weight:600;color:#1a2238">Certified Aging-In-Place Specialist (CAPS)</span>
+    </div>
+  </div>
+  <div style="position:relative;min-width:0;min-height:0"><div style="position:absolute;top:40px;right:40px;bottom:40px;left:0;border-radius:0 0 0 140px;overflow:hidden"><img src="./assets/studio-team.png" alt="Grace In Design studio" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block"></div></div>
+</section>
+<section style="padding:104px 72px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:72px;align-items:start">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">About Grace In Design</span>
+    <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:500;line-height:1.1;text-wrap:pretty">Spaces that work better for the people who use them.</h2>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:22px;padding-top:34px">
+    <p style="margin:0;font-size:16px;line-height:1.75;color:#4b5569">GID provides Interior Design, Aging In Place, Healthy Home Resources and Project Management services for residential and commercial clients. Our approach combines practical design expertise with a focus on wellness, accessibility, functionality and long-term livability.</p>
+    <p style="margin:0;font-size:16px;line-height:1.75;color:#4b5569">From commercial interiors and renovation projects to home assessments and Aging in Place planning, our goal is simple: create spaces that work better for the people who use them.</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:8px">
+      <div style="display:flex;flex-direction:column;gap:6px;padding:18px;border-radius:14px;background:#f7f8fa"><span style="font-size:14px;font-weight:600">Interior Design</span><span style="font-size:12.5px;line-height:1.5;color:#6b7486">Residential &amp; Commercial</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px;padding:18px;border-radius:14px;background:#f7f8fa"><span style="font-size:14px;font-weight:600">Aging In Place</span><span style="font-size:12.5px;line-height:1.5;color:#6b7486">Home assessments</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px;padding:18px;border-radius:14px;background:#f7f8fa"><span style="font-size:14px;font-weight:600">Healthy Home Resources</span><span style="font-size:12.5px;line-height:1.5;color:#6b7486">WELLness focused resources</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px;padding:18px;border-radius:14px;background:#f7f8fa"><span style="font-size:14px;font-weight:600">Project Management</span><span style="font-size:12.5px;line-height:1.5;color:#6b7486">Planning through delivery</span></div>
+    </div>
+  </div>
+</section>
+<section style="margin:0 72px 104px;padding:64px 72px;border-radius:24px;background:#f7f8fa;display:grid;grid-template-columns:260px minmax(0,1fr);gap:56px;align-items:start">
+  <div style="display:flex;flex-direction:column;gap:18px;position:sticky;top:24px">
+    <div style="position:relative;width:220px;aspect-ratio:625/991;border-radius:16px;overflow:hidden"><img src="./assets/grace-headshot-bw.jpg" alt="Grace A. Williams" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block"></div>
+    <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:18px;font-weight:600">Grace A. Williams</span><span style="font-size:12.5px;line-height:1.5;color:#6b7486">Registered Interior Designer · WELL AP · CAPS</span><span style="font-size:12.5px;color:#6b7486">Principal, Grace In Design Services</span></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Meet the founder</span>
+    <blockquote style="margin:0;font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:500;line-height:1.2;color:#1a2238;text-wrap:pretty">“I believe the best spaces are thoughtfully designed around the people who use them.”</blockquote>
+    <p style="margin:0;font-size:16px;line-height:1.75;color:#4b5569">Grace Williams is a Registered Interior Designer and Principal of Grace In Design Services, with more than 25 years of experience in interior design, project management and the built environment. Her work spans commercial interiors, workplace, retail, healthcare and residential projects — from space planning and construction documentation to renovations, home assessments and Aging In Place design.</p>
+    <p style="margin:0;font-size:16px;line-height:1.75;color:#4b5569">Today she brings that experience together with a growing focus on healthy homes, accessibility, wellness and Aging In Place — helping people create spaces that support how they live now while considering how their needs may change over time.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px">
+      <div style="display:flex;flex-direction:column;gap:8px;padding:20px;border-radius:14px;background:#fff;border:1px solid #e9ecf1"><span style="font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#3f9ad9">Education</span><span style="font-size:14px;line-height:1.6">Bachelor of Design — University of Florida</span><span style="font-size:14px;line-height:1.6">M.S. Building Construction &amp; Facilities Management — Georgia Tech</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding:20px;border-radius:14px;background:#fff;border:1px solid #e9ecf1"><span style="font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#3f9ad9">Credentials</span><span style="font-size:14px;line-height:1.6">Registered Interior Designer — Georgia</span><span style="font-size:14px;line-height:1.6">WELL Accredited Professional (WELL AP)</span><span style="font-size:14px;line-height:1.6">Certified Aging In Place Specialist (CAPS)</span></div>
+    </div>
+    <a href="Contact.dc.html" style="display:inline-flex;align-items:center;height:50px;padding:0 26px;border-radius:999px;background:#1a2238;color:#fff;font-size:14px;font-weight:600;align-self:flex-start;margin-top:6px">Schedule a Consultation</a>
+  </div>
+</section>
+<dc-import name="SiteFooter" hint-size="100%,480px"></dc-import>
+</div>
+</x-dc>
+</body>
+</html>

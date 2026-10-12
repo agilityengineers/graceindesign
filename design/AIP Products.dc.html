@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>body{margin:0;background:#e9ebef;font-family:'Montserrat',sans-serif;color:#1a2238;-webkit-font-smoothing:antialiased}a{color:#1a2238;text-decoration:none}a:hover{color:#3f9ad9}*{box-sizing:border-box}</style>
+</helmet>
+<div data-screen-label="AIP Products" style="width:1440px;margin:0 auto;background:#fff;box-shadow:0 30px 80px rgba(26,34,56,.18)">
+<dc-import name="SiteNav" page-label="Healthy Home Resources · AIP Products" active="hbd" source-key="aip-products" hint-size="100%,168px"></dc-import>
+<section style="padding:88px 72px 56px;background:#f7f8fa;display:flex;justify-content:space-between;align-items:flex-end;gap:40px">
+  <div style="display:flex;flex-direction:column;gap:16px;max-width:760px">
+    <a href="Healthy%20Home%20Resources.dc.html" style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Healthy Home Resources · AIP Products</a>
+    <h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:60px;line-height:1.05;text-wrap:pretty">Aging-in-place essentials, curated by our specialists</h1>
+    <p style="margin:0;max-width:600px;font-size:16px;line-height:1.7;color:#4b5569">Every product links to our Etsy shop. Admins add new listings from the dashboard — paste the Etsy link and it appears here.</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-radius:12px;background:#fff;border:1px solid #e9ecf1;font-size:13px;color:#6b7486;white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:#f1641e"></span>Sold on Etsy · <strong style="color:#1a2238">{{ count }} listings</strong></div>
+</section>
+
+<section style="padding:72px 0 0;display:flex;flex-direction:column;gap:28px;overflow:hidden">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:0 72px">
+    <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Featured this month</span><h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:40px;line-height:1.1">Specialist picks</h2></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:12px;color:#6b7486;margin-right:8px">{{ carPos }}</span>
+      <a href="#" onClick="{{ carPrev }}" style="width:46px;height:46px;border-radius:50%;border:1.5px solid #e3e6ec;display:flex;align-items:center;justify-content:center;color:#1a2238" style-hover="border-color:#1a2238"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="#" onClick="{{ carNext }}" style="width:46px;height:46px;border-radius:50%;background:#1a2238;display:flex;align-items:center;justify-content:center;color:#fff" style-hover="background:#6cb6e6;color:#1a2238"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </div>
+  </div>
+  <div onMouseEnter="{{ carPause }}" onMouseLeave="{{ carResume }}" style="padding:0 72px;overflow:hidden">
+    <div style="display:flex;gap:24px;transform:translateX({{ carX }});transition:transform .6s cubic-bezier(.22,.61,.36,1)">
+      <sc-for list="{{ featured }}" as="c" hint-placeholder-count="4"><a href="{{ c.url }}" target="_blank" style="flex:none;width:306px;display:flex;flex-direction:column;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e9ecf1;color:#1a2238" style-hover="box-shadow:0 18px 40px rgba(26,34,56,.10)">
+        <div style="position:relative;aspect-ratio:1/1"><image-slot id="{{ c.slot }}" shape="rect" src="{{ c.img }}" placeholder="{{ c.name }}"></image-slot><span style="position:absolute;top:12px;left:12px;padding:5px 10px;border-radius:999px;background:#fff;font-size:11px;font-weight:600;pointer-events:none">{{ c.tag }}</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:16px 18px 18px"><span style="font-size:14.5px;font-weight:500;line-height:1.4">{{ c.name }}</span><div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7486"><span style="color:#f0a500;letter-spacing:-1px">★★★★★</span><span>{{ c.reviews }}</span></div><div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:18px;font-weight:700">{{ c.price }}</span><span style="font-size:11px;font-weight:600;color:#3f9ad9">{{ c.type }}</span></div></div>
+      </a></sc-for>
+    </div>
+  </div>
+  <div style="display:flex;gap:6px;padding:0 72px"><sc-for list="{{ carDots }}" as="d" hint-placeholder-count="3"><a href="#" onClick="{{ d.go }}" style="height:4px;width:{{ d.w }};border-radius:2px;background:{{ d.bg }};transition:all .4s"></a></sc-for></div>
+</section>
+<section data-reveal style="padding:72px 72px 104px;display:flex;flex-direction:column;gap:32px">
+  <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:40px;line-height:1.1">All products</h2>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5">
+      <a href="#" onClick="{{ f.pick }}" style="display:inline-flex;align-items:center;height:40px;padding:0 18px;border-radius:999px;border:1.5px solid {{ f.border }};background:{{ f.bg }};color:{{ f.color }};font-size:13px;font-weight:600">{{ f.label }}</a>
+    </sc-for>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px">
+    <sc-for list="{{ products }}" as="p" hint-placeholder-count="8">
+      <a href="{{ p.url }}" target="_blank" style="display:flex;flex-direction:column;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e9ecf1;color:#1a2238" style-hover="box-shadow:0 18px 40px rgba(26,34,56,.10)">
+        <div style="position:relative;aspect-ratio:1/1">
+          <image-slot id="{{ p.slot }}" shape="rect" src="{{ p.img }}" placeholder="{{ p.name }}"></image-slot>
+          <span style="position:absolute;top:12px;left:12px;padding:5px 10px;border-radius:999px;background:#fff;font-size:11px;font-weight:600;pointer-events:none">{{ p.tag }}</span>
+          <span style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;pointer-events:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 8a4.5 4.5 0 0 1 7.5 2.5c0 5.4-7.5 10-7.5 10z" stroke="#1a2238" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:16px 18px 18px">
+          <span style="font-size:14.5px;font-weight:500;line-height:1.4">{{ p.name }}</span>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7486"><span style="color:#f0a500;letter-spacing:-1px">★★★★★</span><span>{{ p.reviews }}</span></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:2px"><span style="font-size:18px;font-weight:700">{{ p.price }}</span><span style="font-size:11px;font-weight:600;color:#3f9ad9">{{ p.type }}</span></div>
+          <span style="display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;height:40px;border-radius:999px;border:1.5px solid #1a2238;font-size:13px;font-weight:600">View on Etsy <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M9 7h8v8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+      </a>
+    </sc-for>
+  </div>
+</section>
+<dc-import name="SiteFooter" hint-size="100%,480px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { filter: 'All' };
+  state = { ...this.state, car: 0, paused: false };
+  CARD_W = 306; CAR_N = 8;
+  componentDidMount() {
+    this.carTimer = setInterval(() => { if (!this.state.paused) this.carStep(1); }, 4000);
+    this.io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = 1; e.target.style.transform = 'none'; this.io.unobserve(e.target); } }), { threshold: .1 });
+    this.observe();
+  }
+  componentDidUpdate() { this.observe(); }
+  observe() { document.querySelectorAll('[data-reveal]:not([data-rv])').forEach(el => { el.dataset.rv = 1; el.style.opacity = 0; el.style.transform = 'translateY(24px)'; el.style.transition = 'opacity .7s ease, transform .7s ease'; this.io.observe(el); }); }
+  componentWillUnmount() { clearInterval(this.carTimer); this.io && this.io.disconnect(); }
+  carStep(d) { const max = Math.max(0, this.CAR_N - this.carVisible()); this.setState(s => ({ car: ((s.car + d) % (max + 1) + (max + 1)) % (max + 1) })); }
+  carVisible() { return Math.floor(1296 / (this.CARD_W + 24)) || 1; }
+  carVals() {
+    const max = Math.max(0, this.CAR_N - this.carVisible()), c = Math.min(this.state.car, max);
+    return { carX: (-(c * (this.CARD_W + 24))) + 'px', carPos: (c + 1) + ' / ' + (max + 1),
+      carPrev: e => { e.preventDefault(); this.carStep(-1); }, carNext: e => { e.preventDefault(); this.carStep(1); },
+      carPause: () => this.setState({paused:true}), carResume: () => this.setState({paused:false}),
+      carDots: Array.from({length: max + 1}, (_, k) => ({ w: k===c ? '28px' : '10px', bg: k===c ? '#1a2238' : '#dfe3ea', go: e => { e.preventDefault(); this.setState({car:k}); } })) };
+  }
+  renderVals() {
+    const I = 'https://img.magnific.com/free-photo/';
+    const etsy = 'https://www.etsy.com/listing/4548113647/gid-home-readiness-assessment-aging-in';
+    const all = [
+      {cat:'Assessments', tag:'Bestseller', name:'GID Home Readiness Assessment — Aging-in-Place Checklist (PDF)', reviews:'(128)', price:'$24.00', type:'Digital download', img:I+'small-bathroom-with-window-apartment_181624-19696.jpg'},
+      {cat:'Bathroom', tag:'Guide', name:'Bathroom Safety Planner: Grab Bars, Lighting & Flooring', reviews:'(64)', price:'$18.00', type:'Digital download', img:I+'shower-with-handle_1203-481.jpg'},
+      {cat:'Workbooks', tag:'New', name:'WELLness Room-by-Room Workbook', reviews:'(41)', price:'$32.00', type:'Digital download', img:I+'interior-decor-with-mirror-potted-plant_23-2149428026.jpg'},
+      {cat:'Kits', tag:'Kit', name:'Lifetime Home Essentials Starter Kit', reviews:'(87)', price:'$149.00', type:'Ships free', img:I+'closeup-walker_53876-20434.jpg'},
+      {cat:'Kitchen', tag:'Guide', name:'Accessible Kitchen Planning Guide', reviews:'(52)', price:'$18.00', type:'Digital download', img:I+'disabled-senior-woman-sitting-wheelchair-kitchen-looking-through-window-living-with-handicapped-person-husband-helping-wife-with-disability-elderly-couple-with-happy-marriage_482257-10721.jpg'},
+      {cat:'Assessments', tag:'Bundle', name:'Family Conversation Kit: Planning to Stay Home', reviews:'(33)', price:'$28.00', type:'Digital download', img:I+'front-view-adorable-senior-couple-together_23-2148268640.jpg'},
+      {cat:'Workbooks', tag:'Guide', name:'Lighting for Aging Eyes — Room-by-Room Plan', reviews:'(19)', price:'$14.00', type:'Digital download', img:I+'armchair-near-window_1203-138.jpg'},
+      {cat:'Kits', tag:'Kit', name:'Entryway Safety Kit: Lever Handles & Sensor Lighting', reviews:'(26)', price:'$89.00', type:'Ships free', img:I+'cozy-lobby-with-bookshelf_1262-3517.jpg'}
+    ];
+    const cats = ['All','Assessments','Bathroom','Kitchen','Workbooks','Kits'];
+    const f = this.state.filter;
+    const products = all.filter(p => f==='All' || p.cat===f).map((p,i) => ({...p, slot:'aip-'+i, url: etsy}));
+    const featured = all.map((x,i) => ({...x, slot:'feat-'+i, url: etsy}));
+    return { ...this.carVals(), featured, count: all.length, products,
+      filters: cats.map(c => { const on = c===f; return { label:c, border: on?'#1a2238':'#e3e6ec', bg: on?'#1a2238':'#fff', color: on?'#fff':'#1a2238', pick: e => { e.preventDefault(); this.setState({filter:c}); } }; }) };
+  }
+}
+</script>
+</body>
+</html>

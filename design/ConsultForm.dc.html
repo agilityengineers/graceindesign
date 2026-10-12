@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<style>input,textarea,select,button{font-family:'Montserrat',sans-serif}a{text-decoration:none}</style>
+</helmet>
+<div style="font-family:'Montserrat',sans-serif;color:#1a2238;background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(26,34,56,.14);overflow:hidden;display:grid;grid-template-columns:280px minmax(0,1fr);min-height:620px">
+  <!-- LEFT RAIL -->
+  <aside style="background:#1a2238;color:#fff;padding:32px 28px;display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#6cb6e6">Schedule a consultation</span>
+      <span style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:500;line-height:1.15">{{ consultType }}</span>
+      <span style="font-size:13px;color:#c6cbd6;line-height:1.6">Free · No obligation · We reply within one business day</span>
+    </div>
+    <ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px">
+      <sc-for list="{{ steps }}" as="st" hint-placeholder-count="5">
+        <li style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:{{ st.bg }}"><span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:{{ st.dotBg }};color:{{ st.dotColor }}">{{ st.num }}</span><span style="font-size:13.5px;font-weight:{{ st.weight }};color:{{ st.color }}">{{ st.label }}</span></li>
+      </sc-for>
+    </ol>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:6px;padding:14px;border-radius:12px;background:rgba(255,255,255,.06);font-size:12px;color:#c6cbd6;line-height:1.5">
+      <span style="display:flex;align-items:center;gap:8px;color:#fff;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:#6cb6e6"></span>Lead source</span>
+      <span>{{ sourceLabel }}</span>
+      <span style="color:#8c95a8">Tracked automatically · visible on the admin dashboard</span>
+    </div>
+  </aside>
+
+  <!-- RIGHT: STEPS -->
+  <div style="padding:36px 40px;display:flex;flex-direction:column;gap:24px;min-width:0">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px">
+      <div style="display:flex;flex-direction:column;gap:4px"><h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:500;line-height:1.1">{{ stepTitle }}</h2><span style="font-size:13px;color:#6b7486">{{ stepSub }}</span></div>
+      <div style="display:inline-flex;border:1px solid #e3e6ec;border-radius:999px;padding:3px;background:#f7f8fa;flex:none">
+        <a href="#" onClick="{{ setWizard }}" style="padding:6px 12px;border-radius:999px;font-size:11px;font-weight:600;background:{{ wizBg }};color:{{ wizColor }}">Steps</a>
+        <a href="#" onClick="{{ setSingle }}" style="padding:6px 12px;border-radius:999px;font-size:11px;font-weight:600;background:{{ singleBg }};color:{{ singleColor }}">One page</a>
+      </div>
+    </div>
+
+    <!-- STEP: PATH -->
+    <sc-if value="{{ showPath }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <sc-if value="{{ inferred }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:#e6f3fc;font-size:13px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#3f9ad9" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Based on the page you came from, we've selected <strong style="margin-left:4px">{{ pathLabel }}</strong>. Change it if that's not right.</div></sc-if>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <sc-for list="{{ paths }}" as="p" hint-placeholder-count="6">
+          <a href="#" onClick="{{ p.pick }}" style="display:flex;align-items:center;gap:12px;padding:16px;border-radius:12px;border:1.5px solid {{ p.border }};background:{{ p.bg }};color:#1a2238" style-hover="border-color:#1a2238"><span style="width:10px;height:10px;border-radius:50%;background:{{ p.dot }};flex:none"></span><span style="font-size:14px;font-weight:600;line-height:1.3">{{ p.label }}</span></a>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- STEP: PROJECT (path fields + base project fields) -->
+    <sc-if value="{{ showProject }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <sc-for list="{{ projectFields }}" as="f" hint-placeholder-count="6">
+        <label style="grid-column:{{ f.span }};display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">
+          <span style="display:flex;align-items:center;gap:6px"><sc-if value="{{ f.isExtra }}" hint-placeholder-val="{{ false }}"><span style="color:#3f9ad9">●</span></sc-if>{{ f.label }}<sc-if value="{{ f.required }}" hint-placeholder-val="{{ false }}"><span style="color:#e0532f">*</span></sc-if></span>
+          <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ true }}"><select style="height:44px;padding:0 12px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;background:#fff"><option value="">Select…</option><sc-for list="{{ f.options }}" as="o" hint-placeholder-count="3"><option>{{ o }}</option></sc-for></select></sc-if>
+          <sc-if value="{{ f.isMulti }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ f.options }}" as="o" hint-placeholder-count="4"><span style="padding:8px 12px;border-radius:999px;border:1px solid #dfe3ea;font-size:12.5px;font-weight:500;color:#1a2238;cursor:pointer" style-hover="border-color:#1a2238">{{ o }}</span></sc-for></div></sc-if>
+          <sc-if value="{{ f.isText }}" hint-placeholder-val="{{ false }}"><input placeholder="{{ f.placeholder }}" style="height:44px;padding:0 12px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px"></sc-if>
+          <sc-if value="{{ f.isDate }}" hint-placeholder-val="{{ false }}"><input type="date" style="height:44px;padding:0 12px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px"></sc-if>
+          <sc-if value="{{ f.isAddress }}" hint-placeholder-val="{{ false }}"><input placeholder="Street, City, State ZIP" style="height:44px;padding:0 12px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px"></sc-if>
+          <sc-if value="{{ f.isTextarea }}" hint-placeholder-val="{{ false }}"><textarea rows="3" placeholder="What's working, what isn't, and what you're hoping for…" style="padding:12px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;resize:vertical"></textarea></sc-if>
+          <sc-if value="{{ f.isUpload }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;justify-content:center;gap:10px;height:72px;border:1.5px dashed #c6cbd6;border-radius:10px;font-size:13px;color:#6b7486;font-weight:500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6cb6e6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Drag photos here or click to upload (up to 10)</div></sc-if>
+        </label>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <!-- STEP: CONTACT -->
+    <sc-if value="{{ showContact }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <sc-for list="{{ contactFields }}" as="f" hint-placeholder-count="5">
+        <label style="grid-column:{{ f.span }};display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">
+          <span>{{ f.label }}<sc-if value="{{ f.required }}" hint-placeholder-val="{{ false }}"><span style="color:#e0532f"> *</span></sc-if></span>
+          <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ false }}"><select style="height:44px;padding:0 12px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;background:#fff"><option value="">Select…</option><sc-for list="{{ f.options }}" as="o" hint-placeholder-count="3"><option>{{ o }}</option></sc-for></select></sc-if>
+          <sc-if value="{{ f.isText }}" hint-placeholder-val="{{ true }}"><input placeholder="{{ f.placeholder }}" style="height:44px;padding:0 12px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px"></sc-if>
+        </label>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <!-- STEP: SCHEDULE -->
+    <sc-if value="{{ showSchedule }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:20px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <sc-for list="{{ days }}" as="d" hint-placeholder-count="6"><a href="#" onClick="{{ d.pick }}" style="padding:10px 14px;border-radius:10px;border:1.5px solid {{ d.border }};background:{{ d.bg }};color:{{ d.color }};font-size:13px;font-weight:600">{{ d.label }}</a></sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <sc-for list="{{ times }}" as="t" hint-placeholder-count="8"><a href="#" onClick="{{ t.pick }}" style="padding:12px 0;text-align:center;border-radius:10px;border:1.5px solid {{ t.border }};background:{{ t.bg }};color:{{ t.color }};font-size:13px;font-weight:600;text-decoration:{{ t.deco }};pointer-events:{{ t.pe }}">{{ t.label }}</a></sc-for>
+        </div>
+        <span style="font-size:12px;color:#8c95a8">Times shown in Eastern Time. Availability is set by the admin in Calendar → Availability.</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:14px;background:#f7f8fa;border:1px solid #e9ecf1">
+        <span style="font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#3f9ad9">Your appointment</span>
+        <span style="font-size:15px;font-weight:600">{{ consultType }}</span>
+        <span style="font-size:13px;color:#4b5569">{{ pickedWhen }}</span>
+        <span style="font-size:12px;color:#6b7486;line-height:1.5">With Grace A. Williams · Phone or video</span>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;font-size:12px;color:#6b7486">
+          <span style="display:flex;gap:8px;align-items:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#3f9ad9" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Email + SMS confirmation</span>
+          <span style="display:flex;gap:8px;align-items:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#3f9ad9" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Calendar invite (.ics)</span>
+          <span style="display:flex;gap:8px;align-items:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#3f9ad9" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Pre-consult checklist PDF</span>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- STEP: REVIEW -->
+    <sc-if value="{{ showReview }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div style="padding:16px;border-radius:12px;background:#f7f8fa;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6b7486">Path</span><span style="font-size:14px;font-weight:600">{{ pathLabel }}</span></div>
+        <div style="padding:16px;border-radius:12px;background:#f7f8fa;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6b7486">Appointment</span><span style="font-size:14px;font-weight:600">{{ pickedWhen }}</span></div>
+        <div style="padding:16px;border-radius:12px;background:#f7f8fa;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6b7486">Source</span><span style="font-size:14px;font-weight:600">{{ sourceLabel }}</span></div>
+      </div>
+      <sc-for list="{{ reviewFields }}" as="f" hint-placeholder-count="2">
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">
+          <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ true }}"><span>{{ f.label }}</span><select style="height:44px;padding:0 12px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;background:#fff;max-width:360px"><option value="">Select…</option><sc-for list="{{ f.options }}" as="o" hint-placeholder-count="3"><option>{{ o }}</option></sc-for></select></sc-if>
+          <sc-if value="{{ f.isConsent }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:flex-start;gap:10px;font-weight:500;font-size:13px;line-height:1.5;color:#4b5569"><input type="checkbox" style="margin-top:3px">{{ f.label }}<span style="color:#e0532f">*</span></span></sc-if>
+        </label>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <!-- SENT -->
+    <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:40px 20px;flex:1">
+      <div style="width:64px;height:64px;border-radius:50%;background:#e6f3fc;display:flex;align-items:center;justify-content:center"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#3f9ad9" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h3 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:500">You're booked.</h3>
+      <p style="margin:0;max-width:420px;font-size:15px;line-height:1.65;color:#6b7486">{{ consultType }} · {{ pickedWhen }}. A confirmation and calendar invite are on their way, and this lead is now on the <a href="Admin.dc.html" style="color:#3f9ad9;font-weight:600">admin dashboard</a> tagged “{{ sourceLabel }}”.</p>
+    </div>
+    </sc-if>
+
+    <!-- FOOTER NAV -->
+    <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:8px;border-top:1px solid #eef0f4">
+      <a href="#" onClick="{{ back }}" style="font-size:13px;font-weight:600;color:{{ backColor }};pointer-events:{{ backPe }}">← Back</a>
+      <div style="display:flex;align-items:center;gap:14px"><span style="font-size:12px;color:#8c95a8">{{ progressText }}</span><a href="#" onClick="{{ next }}" style="display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 24px;border-radius:999px;background:#1a2238;color:#fff;font-size:14px;font-weight:600" style-hover="background:#6cb6e6;color:#1a2238">{{ nextLabel }} <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+    </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1040,&quot;height&quot;:660},&quot;sourcePage&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;general&quot;,&quot;options&quot;:[&quot;general&quot;,&quot;home&quot;,&quot;residential&quot;,&quot;design-refresh&quot;,&quot;model-home&quot;,&quot;aging-in-place&quot;,&quot;commercial&quot;,&quot;project-management&quot;,&quot;aip-partners&quot;,&quot;hhr&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;wizard&quot;,&quot;options&quot;:[&quot;wizard&quot;,&quot;single&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;onSubmit&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(lead: object) =&gt; void&quot;}}">
+class Component extends DCLogic {
+  state = { S: null, mode: 'wizard', step: 0, path: null, day: null, time: null, sent: false };
+  async componentDidMount() {
+    const S = await import(new URL('form-schema.js', document.baseURI).href);
+    const page = this.props.sourcePage || 'general';
+    const path = S.PAGE_TO_PATH[page] || null;
+    this.setState({ S, path, inferred: !!path, mode: this.props.mode || 'wizard', day: S.SLOTS.days[0] });
+  }
+  renderVals() {
+    const { S, mode, step, path, day, time, sent } = this.state; if (!S) return {};
+    const pv = e => e && e.preventDefault();
+    const single = mode === 'single';
+    const P = S.PATHS.find(p => p.id === path);
+    const pageLabels = { general:'Schedule a Consultation (header)', home:'Homepage', residential:'Residential Interior Design page', 'design-refresh':'Design Refresh page', 'model-home':'Model Home Design page', 'aging-in-place':'Aging-In-Place page', 'virtual-assessment':'Virtual Home Assessments page', commercial:'Commercial Interior Design page', 'project-management':'Project Management page', 'aip-partners':'AIP Partners page', hhr:'Healthy Home Resources', 'aip-products':'AIP Products page', wellness:'WELLness Resources page', 'home-health':'Home Health Series page', caribbean:'Caribbean Connection page' };
+    const sourceLabel = pageLabels[this.props.sourcePage || 'general'] || 'Website';
+    const stepIds = S.STEPS.map(s => s.id);
+    const cur = single ? 'all' : stepIds[step];
+    const show = id => single || cur === id;
+    const dec = (f, extra) => ({ ...f, isExtra: !!extra, isSelect: f.type==='select', isMulti: f.type==='multiselect', isText: ['text','email','phone'].includes(f.type), isDate: f.type==='date', isAddress: f.type==='address', isTextarea: f.type==='textarea', isUpload: f.type==='upload', isConsent: f.type==='consent', options: f.options||[], placeholder: f.placeholder||'', span: ['textarea','upload','address','multiselect'].includes(f.type) ? '1/-1' : 'auto', required: !!f.required });
+    const projectFields = [...(S.PATH_FIELDS[path] || []).map(f => dec(f, true)), ...S.BASE_FIELDS.filter(f => f.step==='project').map(f => dec(f))];
+    const contactFields = S.BASE_FIELDS.filter(f => f.step==='contact').map(f => dec(f));
+    const reviewFields = S.BASE_FIELDS.filter(f => f.step==='review').map(f => dec(f));
+    const titles = { path:['Tell us a little about you','We tailor the next few questions to your situation.'], project:['Your project',(P?P.short:'')+' details — fields marked ● are specific to this path.'], contact:['How should we reach you?','We reply within one business day.'], schedule:['Pick a time for your '+(P?P.consult:'15-min discovery call'),'Free, no obligation.'], review:['Confirm and book','One last look before we save your request.'], all:['Schedule a consultation','All questions on one page.'] };
+    const taken = S.SLOTS.taken[day] || [];
+    const pickedWhen = day && time ? `${day} · ${time} ET` : 'No time selected yet';
+    const last = step === stepIds.length - 1;
+    return {
+      consultType: P ? P.consult.replace(/^15-min /,'15-minute ') : '15-minute discovery call', sourceLabel, inferred: !!this.state.inferred && !!P, pathLabel: P ? P.label : 'Not selected',
+      steps: S.STEPS.map((s,k) => ({ num:String(k+1), label:s.label, bg: !single && k===step ? 'rgba(255,255,255,.1)' : 'transparent', dotBg: k<step||single||sent ? '#6cb6e6' : (k===step ? '#fff' : 'rgba(255,255,255,.12)'), dotColor: k===step && !single ? '#1a2238' : (k<step||single||sent ? '#1a2238' : '#c6cbd6'), weight: k===step && !single ? 600 : 500, color: k<=step||single ? '#fff' : '#8c95a8' })),
+      stepTitle: titles[cur][0], stepSub: titles[cur][1],
+      wizBg: single?'transparent':'#1a2238', wizColor: single?'#4b5569':'#fff', singleBg: single?'#1a2238':'transparent', singleColor: single?'#fff':'#4b5569',
+      setWizard: e => { pv(e); this.setState({mode:'wizard'}); }, setSingle: e => { pv(e); this.setState({mode:'single'}); },
+      showPath: show('path') && !sent, showProject: show('project') && !sent, showContact: show('contact') && !sent, showSchedule: show('schedule') && !sent, showReview: show('review') && !sent,
+      paths: S.PATHS.map(p => ({ label:p.label, border: p.id===path?'#1a2238':'#e3e6ec', bg: p.id===path?'#f2f8fd':'#fff', dot: p.color, pick: e => { pv(e); this.setState({path:p.id, inferred:false}); } })),
+      projectFields, contactFields, reviewFields,
+      days: S.SLOTS.days.map(d => ({ label:d, border: d===day?'#1a2238':'#e3e6ec', bg: d===day?'#1a2238':'#fff', color: d===day?'#fff':'#1a2238', pick: e => { pv(e); this.setState({day:d, time:null}); } })),
+      times: S.SLOTS.times.map(t => { const tk = taken.includes(t); return { label:t, border: t===time?'#1a2238':'#e3e6ec', bg: tk?'#f2f4f7':(t===time?'#e6f3fc':'#fff'), color: tk?'#c6cbd6':'#1a2238', deco: tk?'line-through':'none', pe: tk?'none':'auto', pick: e => { pv(e); this.setState({time:t}); } }; }),
+      pickedWhen, sent, notSent: !sent,
+      back: e => { pv(e); if (step>0) this.setState({step:step-1}); }, backColor: step>0 && !single ? '#1a2238' : '#c6cbd6', backPe: step>0 && !single ? 'auto' : 'none',
+      progressText: single ? '' : `Step ${step+1} of ${stepIds.length}`,
+      nextLabel: single || last ? 'Book my consultation' : 'Continue',
+      next: e => { pv(e); if (single || last) { this.setState({sent:true}); if (this.props.onSubmit) this.props.onSubmit({ path, day, time, source: this.props.sourcePage }); } else this.setState({step: step+1}); }
+    };
+  }
+}
+</script>
+</body>
+</html>

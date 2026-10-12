@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>a{text-decoration:none}</style>
+</helmet>
+<div style="position:relative;z-index:50;font-family:'Montserrat',sans-serif">
+<div style="display:flex;align-items:center;justify-content:space-between;height:44px;padding:0 72px;background:#1a2238;color:#c6cbd6;font-size:12.5px;letter-spacing:.02em">
+  <div style="display:flex;align-items:center;gap:28px">
+    <a href="#" style="display:flex;align-items:center;gap:8px;color:#c6cbd6"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6cb6e6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.8.7a2 2 0 011.8 2z"/></svg>(770) 691-1600</a>
+    <a href="#" style="display:flex;align-items:center;gap:8px;color:#c6cbd6"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6cb6e6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>support@graceindesign.net</a>
+    <span style="display:flex;align-items:center;gap:8px;color:#fff;font-weight:600"><span style="width:6px;height:6px;border-radius:50%;background:#6cb6e6"></span>{{ label }}</span>
+  </div>
+  <a href="Contact.dc.html" onClick="{{ openModal }}" style="display:inline-flex;align-items:center;gap:10px;height:44px;padding:0 24px;margin-right:-72px;background:#6cb6e6;color:#1a2238;font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase" style-hover="background:#fff">Schedule a Consultation <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#1a2238" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+</div>
+<header style="display:flex;align-items:center;justify-content:space-between;gap:40px;height:124px;padding:0 72px;border-bottom:1px solid #eef0f4;background:#fff;position:relative;z-index:55">
+  <a href="Grace%20In%20Design%20Homepage.dc.html" style="display:block"><img src="./assets/logo-dark-transparent.png" alt="Grace In Design" style="height:60px;width:auto;display:block;flex:none"></a>
+  <nav style="display:flex;align-items:center;gap:30px;font-size:14px;font-weight:500;letter-spacing:.02em;white-space:nowrap;flex:none">
+    <sc-for list="{{ items }}" as="it" hint-placeholder-count="4">
+      <a href="{{ it.href }}" style="color:{{ it.color }};border-bottom:2px solid {{ it.border }};padding-bottom:4px;font-weight:{{ it.weight }}">{{ it.label }}</a>
+    </sc-for>
+    <div style="position:relative;padding:8px 0" onMouseEnter="{{ openSvc }}" onMouseLeave="{{ closeSvc }}">
+      <a href="Services.dc.html" style="display:flex;align-items:center;gap:6px;color:{{ svcColor }};font-weight:{{ svcWeight }};border-bottom:2px solid {{ svcBorder }};padding-bottom:4px">Services
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </a>
+      <sc-if value="{{ svcOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;top:100%;left:-20px;padding-top:14px;width:300px;z-index:60">
+      <div style="position:relative;background:#fff;border:1px solid #e6e9ef;border-radius:12px;box-shadow:0 18px 48px rgba(26,34,56,.14);padding:10px;display:flex;flex-direction:column;gap:2px">
+        <div style="position:absolute;top:-7px;left:40px;width:12px;height:12px;background:#fff;border-left:1px solid #e6e9ef;border-top:1px solid #e6e9ef;transform:rotate(45deg)"></div>
+        <a href="Service.dc.html#residential" style="display:block;padding:11px 14px;border-radius:8px;font-size:14px;font-weight:600;color:#1a2238" style-hover="background:#f2f8fd">Residential Interior Design</a>
+        <a href="Service.dc.html#design-refresh" style="display:flex;align-items:center;gap:8px;padding:9px 14px 9px 28px;border-radius:8px;font-size:13px;font-weight:500;color:#4b5569" style-hover="background:#f2f8fd"><span style="width:10px;height:1px;background:#6cb6e6"></span>Design Refresh</a>
+        <a href="Service.dc.html#model-home" style="display:flex;align-items:center;gap:8px;padding:9px 14px 9px 28px;border-radius:8px;font-size:13px;font-weight:500;color:#4b5569" style-hover="background:#f2f8fd"><span style="width:10px;height:1px;background:#6cb6e6"></span>Model Home Design</a>
+        <a href="Service.dc.html#aging-in-place" style="display:block;padding:11px 14px;border-radius:8px;font-size:14px;font-weight:600;color:#1a2238" style-hover="background:#f2f8fd">Aging-In-Place &amp; Home Assessments</a>
+        <a href="Service.dc.html#virtual-assessment" style="display:flex;align-items:center;gap:8px;padding:9px 14px 9px 28px;border-radius:8px;font-size:13px;font-weight:500;color:#4b5569" style-hover="background:#f2f8fd"><span style="width:10px;height:1px;background:#6cb6e6"></span>Virtual Home Assessments</a>
+        <a href="Service.dc.html#commercial" style="display:block;padding:11px 14px;border-radius:8px;font-size:14px;font-weight:600;color:#1a2238" style-hover="background:#f2f8fd">Commercial Interior Design</a>
+        <a href="Service.dc.html#project-management" style="display:block;padding:11px 14px;border-radius:8px;font-size:14px;font-weight:600;color:#1a2238" style-hover="background:#f2f8fd">Project Management</a>
+        <a href="Services.dc.html" style="display:block;margin-top:4px;padding:11px 14px;border-top:1px solid #eef0f4;font-size:13px;font-weight:500;color:#3f9ad9">View all services →</a>
+      </div>
+      </div>
+      </sc-if>
+    </div>
+    <div style="position:relative;padding:8px 0" onMouseEnter="{{ open }}" onMouseLeave="{{ close }}">
+      <a href="Healthy%20Home%20Resources.dc.html" style="display:flex;align-items:center;gap:6px;color:#1a2238;font-weight:600;border-bottom:2px solid {{ hbdBorder }};padding-bottom:4px">Healthy Home Resources
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1a2238" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </a>
+      <sc-if value="{{ isOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;top:100%;left:-20px;padding-top:14px;width:272px;z-index:60">
+      <div style="position:relative;background:#fff;border:1px solid #e6e9ef;border-radius:12px;box-shadow:0 18px 48px rgba(26,34,56,.14);padding:10px;display:flex;flex-direction:column;gap:2px">
+        <div style="position:absolute;top:-7px;left:40px;width:12px;height:12px;background:#fff;border-left:1px solid #e6e9ef;border-top:1px solid #e6e9ef;transform:rotate(45deg)"></div>
+        <a href="AIP%20Products.dc.html" style="display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:8px" style-hover="background:#f2f8fd"><span style="font-size:14px;font-weight:600;color:#1a2238">AIP Products</span><span style="font-size:12px;font-weight:400;color:#6b7486;letter-spacing:0">Aging-in-place essentials from our shop</span></a>
+        <a href="WELLness%20Resources.dc.html" style="display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:8px" style-hover="background:#f2f8fd"><span style="font-size:14px;font-weight:600;color:#1a2238">WELLness Resources</span><span style="font-size:12px;font-weight:400;color:#6b7486;letter-spacing:0">Guides for healthier living spaces</span></a>
+        <a href="Home%20Health%20Series.dc.html" style="display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:8px" style-hover="background:#f2f8fd"><span style="font-size:14px;font-weight:600;color:#1a2238">Home Health Series</span><span style="font-size:12px;font-weight:400;color:#6b7486;letter-spacing:0">Articles &amp; videos on home wellness</span></a>
+        <a href="Service.dc.html#aip-partners" style="display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:8px" style-hover="background:#f2f8fd"><span style="font-size:14px;font-weight:600;color:#1a2238">AIP Partners</span><span style="font-size:12px;font-weight:400;color:#6b7486;letter-spacing:0">Join our aging-in-place network</span></a>
+      </div>
+      </div>
+      </sc-if>
+    </div>
+    <a href="Caribbean%20Connection.dc.html" style="color:{{ carColor }};border-bottom:2px solid {{ carBorder }};padding-bottom:4px;font-weight:{{ carWeight }}">Caribbean Connection</a>
+    <a href="News%20%26%20Insights.dc.html" style="color:{{ newsColor }};border-bottom:2px solid {{ newsBorder }};padding-bottom:4px;font-weight:{{ newsWeight }}">News &amp; Insights</a>
+  </nav>
+</header>
+<sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(26,34,56,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:32px">
+  <div onClick="{{ stop }}" style="position:relative;width:1040px;max-width:100%;max-height:92vh;overflow:auto;border-radius:20px">
+    <a href="#" onClick="{{ closeModal }}" style="position:absolute;top:14px;right:14px;z-index:2;width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(26,34,56,.2)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a2238" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+    <dc-import name="ConsultForm" source-page="{{ sourceKey }}" hint-size="1040px,660px"></dc-import>
+  </div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:168},&quot;active&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;about&quot;,&quot;services&quot;,&quot;news&quot;,&quot;hbd&quot;]},&quot;pageLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { hover: false, svc: false, modal: false };
+  renderVals() {
+    const active = this.props.active ?? 'home';
+    const defs = [['home','Home','Grace%20In%20Design%20Homepage.dc.html'],['about','About','About.dc.html']];
+    const svcOn = active==='services', newsOn = active==='news', carOn = active==='caribbean';
+    const items = defs.map(([k,label,href]) => { const on = k===active; return {label, href, color: on?'#1a2238':'#4b5569', border: on?'#6cb6e6':'transparent', weight: on?600:500}; });
+    const hbd = active==='hbd';
+    const sourceKey = this.props.sourceKey || (active === 'home' ? 'home' : 'general');
+    return { items, modalOpen: this.state.modal, sourceKey,
+      openModal: e => { e.preventDefault(); this.setState({modal:true}); }, closeModal: e => { e.preventDefault(); this.setState({modal:false}); }, stop: e => e.stopPropagation(),
+      carColor: carOn?'#1a2238':'#4b5569', carWeight: carOn?600:500, carBorder: carOn?'#6cb6e6':'transparent',
+      label: this.props.pageLabel || 'Certified Aging-in-Place Specialists', newsColor: newsOn?'#1a2238':'#4b5569', newsWeight: newsOn?600:500, newsBorder: newsOn?'#6cb6e6':'transparent', svcColor: svcOn?'#1a2238':'#4b5569', svcWeight: svcOn?600:500, svcBorder: svcOn?'#6cb6e6':'transparent', svcOpen: this.state.svc,
+      openSvc: () => this.setState({svc:true}), closeSvc: () => this.setState({svc:false}), hbdBorder: hbd?'#6cb6e6':'transparent', isOpen: this.state.hover,
+      open: () => this.setState({hover:true}), close: () => this.setState({hover:false}) };
+  }
+}
+</script>
+</body>
+</html>

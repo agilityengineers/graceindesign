@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+body{margin:0;background:#e9ebef;font-family:'Montserrat',sans-serif;color:#1a2238;-webkit-font-smoothing:antialiased}a{color:#1a2238;text-decoration:none}a:hover{color:#3f9ad9}*{box-sizing:border-box}input,textarea,select{font-family:'Montserrat',sans-serif}
+@keyframes kb{from{transform:scale(1.04) translate(0,0)}to{transform:scale(1.14) translate(-1.5%,-1%)}}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.6);opacity:0}}
+</style>
+</helmet>
+<div data-screen-label="Residential — Alt Hero" style="width:1440px;margin:0 auto;background:#fff;box-shadow:0 30px 80px rgba(26,34,56,.18)">
+<dc-import name="SiteNav" page-label="Residential Interior Design" active="services" hint-size="100%,168px"></dc-import>
+
+<!-- HERO: cinematic rotating rooms -->
+<section style="position:relative;height:760px;background:#1a2238;color:#fff;overflow:hidden">
+  {{ heroStack }}
+  <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(26,34,56,.92) 0%,rgba(26,34,56,.72) 42%,rgba(26,34,56,.15) 75%,rgba(26,34,56,0) 100%);pointer-events:none"></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(26,34,56,.7) 0%,rgba(26,34,56,0) 35%);pointer-events:none"></div>
+  <div style="position:relative;height:100%;display:grid;grid-template-columns:minmax(0,1fr) 300px;padding:0 72px;gap:48px;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:28px;max-width:720px">
+      <a href="Services.dc.html" style="display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#6cb6e6"><span style="width:28px;height:2px;background:#6cb6e6;display:block"></span>Residential Interior Design</a>
+      <h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:76px;line-height:1.02;letter-spacing:-.01em;text-wrap:pretty">Your <span style="position:relative;display:inline-block;color:#6cb6e6;font-style:italic;min-width:300px">{{ roomWord }}<span style="position:absolute;left:0;right:0;bottom:6px;height:2px;background:#6cb6e6;transform-origin:left;transform:scaleX({{ progress }});transition:transform .3s linear"></span></span><br>deserves to feel like you.</h1>
+      <p style="margin:0;max-width:560px;font-size:18px;line-height:1.65;color:#dfe3ea;text-wrap:pretty">{{ roomLine }}</p>
+      <div style="display:flex;align-items:center;gap:22px;margin-top:4px">
+        <a href="#lead-form" onClick="{{ scrollToForm }}" style="display:inline-flex;align-items:center;gap:12px;height:58px;padding:0 32px;border-radius:999px;background:#6cb6e6;color:#1a2238;font-size:15px;font-weight:700;box-shadow:0 12px 30px rgba(108,182,230,.35)">Start My Home Project <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#1a2238" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <a href="#before-after" onClick="{{ scrollToBA }}" style="display:inline-flex;align-items:center;gap:10px;font-size:15px;font-weight:600;color:#fff"><span style="position:relative;width:38px;height:38px;border-radius:50%;border:1.5px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center"><span style="position:absolute;inset:-1px;border-radius:50%;border:1.5px solid #6cb6e6;animation:pulse 2.2s ease-out infinite"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></span>See a before &amp; after</a>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;justify-self:end;align-self:end;margin-bottom:72px">
+      <span style="font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#c6cbd6;margin-bottom:8px">Rooms we design</span>
+      <sc-for list="{{ rooms }}" as="r" hint-placeholder-count="4">
+        <a href="#" onClick="{{ r.pick }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:12px;background:{{ r.bg }};color:#fff;border:1px solid {{ r.border }};transition:all .3s">
+          <span style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#6cb6e6;width:28px">{{ r.num }}</span>
+          <span style="display:flex;flex-direction:column;gap:3px;flex:1"><span style="font-size:14px;font-weight:600">{{ r.name }}</span><span style="height:2px;background:rgba(255,255,255,.18);border-radius:2px;overflow:hidden"><span style="display:block;height:100%;width:{{ r.pct }};background:#6cb6e6;transition:width .25s linear"></span></span></span>
+        </a>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position:absolute;left:72px;bottom:28px;display:flex;align-items:center;gap:14px;font-size:12px;color:#c6cbd6"><span style="width:1px;height:36px;background:rgba(255,255,255,.3)"></span>Scroll to explore</div>
+</section>
+
+<!-- MARQUEE -->
+<div style="height:64px;border-bottom:1px solid #eef0f4;display:flex;align-items:center;overflow:hidden;background:#fff">{{ marquee }}</div>
+
+<!-- PROBLEM / GUIDE -->
+<section style="padding:112px 72px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:80px;align-items:start">
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Sound familiar?</span>
+    <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:48px;line-height:1.08;text-wrap:pretty">Your home should soothe you — but the kitchen is cramped, the bath is dated, and every quote feels like a leap of faith.</h2>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:28px;padding-top:40px">
+    <p style="margin:0;font-size:18px;line-height:1.7;color:#4b5569">We know how personal a home is — and how overwhelming it feels to change it. Our number one priority is your design goal: we work within your budget, incorporate your style, and plan for the needs of future generations too.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+      <div style="padding:20px;border-radius:14px;background:#f7f8fa;display:flex;flex-direction:column;gap:6px"><span style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;line-height:1">6</span><span style="font-size:12px;color:#6b7486;line-height:1.5">step process, start to final review</span></div>
+      <div style="padding:20px;border-radius:14px;background:#f7f8fa;display:flex;flex-direction:column;gap:6px"><span style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;line-height:1">1</span><span style="font-size:12px;color:#6b7486;line-height:1.5">guide owns your project throughout</span></div>
+      <div style="padding:20px;border-radius:14px;background:#f7f8fa;display:flex;flex-direction:column;gap:6px"><span style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;line-height:1">CAPS</span><span style="font-size:12px;color:#6b7486;line-height:1.5">certified for lifetime-ready homes</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- BEFORE / AFTER -->
+<section id="before-after" ref="{{ baRef }}" style="padding:0 72px 112px;display:flex;flex-direction:column;gap:32px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:40px">
+    <div style="display:flex;flex-direction:column;gap:12px"><span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Drag to compare</span><h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:44px;line-height:1.1">The same kitchen, reimagined</h2></div>
+    <span style="font-size:14px;color:#6b7486;max-width:360px;line-height:1.6">Admins swap these two photos per project in the CMS — the slider does the rest.</span>
+  </div>
+  <div ref="{{ sliderRef }}" onPointerDown="{{ baDown }}" onPointerMove="{{ baMove }}" onPointerUp="{{ baUp }}" style="position:relative;height:620px;border-radius:22px;overflow:hidden;cursor:ew-resize;user-select:none;touch-action:none;background:#e9ebef">
+    <img src="https://img.magnific.com/free-photo/beautiful-shot-modern-house-kitchen_181624-4007.jpg" alt="After" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+    <div style="position:absolute;inset:0;width:{{ baPct }};overflow:hidden"><img src="https://img.magnific.com/free-photo/view-empty-kitchen_1170-2792.jpg" alt="Before" draggable="false" style="position:absolute;top:0;left:0;width:1296px;height:100%;object-fit:cover;filter:saturate(.75)"></div>
+    <div style="position:absolute;top:0;bottom:0;left:{{ baPct }};width:2px;background:#fff;transform:translateX(-1px);box-shadow:0 0 24px rgba(0,0,0,.3)"><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(26,34,56,.3)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M9 6l-6 6 6 6M15 6l6 6-6 6" stroke="#1a2238" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+    <span style="position:absolute;top:20px;left:20px;padding:8px 14px;border-radius:999px;background:rgba(26,34,56,.8);color:#fff;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">Before</span>
+    <span style="position:absolute;top:20px;right:20px;padding:8px 14px;border-radius:999px;background:#6cb6e6;color:#1a2238;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">After</span>
+  </div>
+</section>
+
+<!-- PLAN -->
+<section style="background:#1a2238;color:#fff;padding:96px 72px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:80px;align-items:center">
+  <div style="display:flex;flex-direction:column;gap:16px"><span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#6cb6e6">The Plan</span><h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:48px;line-height:1.08">Three simple steps. One guide the whole way.</h2><p style="margin:0;font-size:15px;line-height:1.7;color:#c6cbd6">Our six-step onboarding — consultation, proposal, contract, development, implementation, final review — distilled into what you'll actually experience.</p></div>
+  <div style="display:flex;flex-direction:column">
+    <div style="display:flex;gap:28px;padding:28px 0;border-top:1px solid rgba(255,255,255,.12)"><span style="font-family:'Cormorant Garamond',serif;font-size:40px;color:#6cb6e6;line-height:1;width:56px">01</span><div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:19px;font-weight:600">Tell us about your home</span><span style="font-size:14px;line-height:1.65;color:#c6cbd6">A short form, then an in-home consultation to measure and listen.</span></div></div>
+    <div style="display:flex;gap:28px;padding:28px 0;border-top:1px solid rgba(255,255,255,.12)"><span style="font-family:'Cormorant Garamond',serif;font-size:40px;color:#6cb6e6;line-height:1;width:56px">02</span><div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:19px;font-weight:600">Approve a clear plan</span><span style="font-size:14px;line-height:1.65;color:#c6cbd6">Scope, concepts and budget — presented for your review before anything is ordered.</span></div></div>
+    <div style="display:flex;gap:28px;padding:28px 0;border-top:1px solid rgba(255,255,255,.12);border-bottom:1px solid rgba(255,255,255,.12)"><span style="font-family:'Cormorant Garamond',serif;font-size:40px;color:#6cb6e6;line-height:1;width:56px">03</span><div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:19px;font-weight:600">Love where you live</span><span style="font-size:14px;line-height:1.65;color:#c6cbd6">We coordinate contractors and installation, then walk the finished space with you.</span></div></div>
+  </div>
+</section>
+
+<!-- LEAD FORM -->
+<section id="lead-form" ref="{{ formRef }}" style="margin:104px 72px;padding:72px;border-radius:24px;background:#e6f3fc;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:64px;align-items:start">
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Take the first step</span>
+    <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:46px;line-height:1.1">Tell us about your home</h2>
+    <p style="margin:0;font-size:16px;line-height:1.7;color:#4b5569">A few details is all we need. We'll follow up within one business day — no obligation.</p>
+    <div style="display:inline-flex;align-items:center;gap:8px;align-self:flex-start;margin-top:8px;padding:8px 14px;border-radius:999px;background:#fff;font-size:12px;color:#6b7486"><span style="width:8px;height:8px;border-radius:50%;background:#6cb6e6"></span>Lead source: <strong style="color:#1a2238;font-weight:600">Residential (alt hero) page</strong></div>
+  </div>
+  <form onSubmit="{{ submit }}" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;background:#fff;padding:32px;border-radius:18px;box-shadow:0 18px 44px rgba(26,34,56,.08)">
+    <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">Full name<input required="required" placeholder="Jane Doe" style="height:46px;padding:0 14px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px"></label>
+    <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">Email<input required="required" type="email" placeholder="jane@email.com" style="height:46px;padding:0 14px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px"></label>
+    <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">Which room?<select style="height:46px;padding:0 12px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;background:#fff"><option>Kitchen</option><option>Bedroom</option><option>Living room</option><option>Bathroom</option><option>Whole home</option></select></label>
+    <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">Budget range<select style="height:46px;padding:0 12px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;background:#fff"><option>Not sure yet</option><option>Under $10k</option><option>$10k–$50k</option><option>$50k–$150k</option><option>$150k+</option></select></label>
+    <label style="grid-column:1/-1;display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">What isn't working today?<textarea rows="4" placeholder="Tell us about the space…" style="padding:12px 14px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;resize:vertical"></textarea></label>
+    <button type="submit" style="grid-column:1/-1;height:54px;border:0;border-radius:999px;background:#1a2238;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif" style-hover="background:#6cb6e6;color:#1a2238">{{ submitLabel }}</button>
+  </form>
+</section>
+<dc-import name="SiteFooter" hint-size="100%,480px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;autoplay&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;slideSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:5,&quot;min&quot;:3,&quot;max&quot;:10,&quot;step&quot;:1,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Hero&quot;}}">
+class Component extends DCLogic {
+  state = { i: 0, t: 0, ba: 50, drag: false, sent: false };
+  formRef = React.createRef(); baRef = React.createRef(); sliderRef = React.createRef();
+  rooms = [
+    { name:'Kitchen', word:'kitchen', line:'The heart of every home. Upgrading your kitchen improves daily function — and value when it comes time to sell.', img:'https://img.magnific.com/free-photo/interior-shot-modern-house-kitchen-with-large-windows_181624-24368.jpg' },
+    { name:'Bedroom', word:'bedroom', line:'We spend a third of our lives sleeping, or trying to. You deserve an oasis to relax in.', img:'https://img.magnific.com/free-photo/cozy-bedroom-with-comfortable-furniture-modern-apartment_181624-58069.jpg' },
+    { name:'Living room', word:'living room', line:'Relaxing, entertaining, working — one room, many lives. Let\'s make it inviting for all of them.', img:'https://img.magnific.com/free-photo/beautiful-summer-modern-home-interior-design_181624-60483.jpg' },
+    { name:'Bathroom', word:'bathroom', line:'The room where you start your day should be a calming retreat — and your oasis at the end of it.', img:'https://img.magnific.com/free-photo/small-bathroom-with-window-apartment_181624-19696.jpg' }
+  ];
+  componentDidMount() {
+    const dur = (this.props.slideSeconds ?? 5) * 1000, step = 100;
+    this.timer = setInterval(() => {
+      if (this.props.autoplay === false) return;
+      this.setState(s => { const t = s.t + step; return t >= dur ? { t: 0, i: (s.i + 1) % this.rooms.length } : { t }; });
+    }, step);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const dur = (this.props.slideSeconds ?? 5) * 1000;
+    const i = this.state.i, r = this.rooms[i], prog = this.state.t / dur;
+    const heroStack = React.createElement('div', { style:{ position:'absolute', inset:0 } },
+      this.rooms.map((x, k) => React.createElement('img', { key:k, src:x.img, alt:x.name, style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', opacity: k===i ? 1 : 0, transition:'opacity 1.1s ease', animation: k===i ? `kb ${dur/1000+1.5}s ease-out forwards` : 'none' } })));
+    const words = ['Kitchens','Bedrooms','Living rooms','Bathrooms','Laundry rooms','Home offices','Aging-in-place ready','Within your budget','Your style, elevated'];
+    const seq = [...words, ...words].map((w, k) => React.createElement('span', { key:k, style:{ display:'inline-flex', alignItems:'center', gap:28, padding:'0 14px', fontSize:13, fontWeight:600, letterSpacing:'.16em', textTransform:'uppercase', color:'#4b5569', whiteSpace:'nowrap' } }, w, React.createElement('span', { style:{ width:6, height:6, borderRadius:'50%', background:'#6cb6e6' } })));
+    const marquee = React.createElement('div', { style:{ display:'flex', width:'max-content', animation:'marquee 40s linear infinite' } }, seq);
+    const pct = v => Math.round(v) + '%';
+    const setBa = e => { const el = this.sliderRef.current; if (!el) return; const b = el.getBoundingClientRect(); this.setState({ ba: Math.max(3, Math.min(97, (e.clientX - b.left) / b.width * 100)) }); };
+    return {
+      heroStack, marquee, roomWord: r.word, roomLine: r.line, progress: prog,
+      rooms: this.rooms.map((x, k) => ({ name:x.name, num:String(k+1).padStart(2,'0'), bg: k===i ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,0)', border: k===i ? 'rgba(255,255,255,.25)' : 'transparent', pct: k===i ? pct(prog*100) : (k < i ? '100%' : '0%'), pick: e => { e.preventDefault(); this.setState({ i:k, t:0 }); } })),
+      baPct: pct(this.state.ba), baRef: this.baRef, sliderRef: this.sliderRef, formRef: this.formRef,
+      baDown: e => { e.currentTarget.setPointerCapture(e.pointerId); this.setState({ drag:true }); setBa(e); },
+      baMove: e => { if (this.state.drag) setBa(e); },
+      baUp: () => this.setState({ drag:false }),
+      submitLabel: this.state.sent ? 'Thank you — we\'ll be in touch' : 'Start My Home Project',
+      submit: e => { e.preventDefault(); this.setState({ sent:true }); },
+      scrollToForm: e => { e.preventDefault(); const el = this.formRef.current; if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 24, behavior:'smooth' }); },
+      scrollToBA: e => { e.preventDefault(); const el = this.baRef.current; if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 24, behavior:'smooth' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

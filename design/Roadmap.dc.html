@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#f2f4f7;font-family:'Montserrat',sans-serif;color:#1a2238;-webkit-font-smoothing:antialiased}a{color:#1a2238;text-decoration:none}a:hover{color:#3f9ad9}*{box-sizing:border-box}code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#f2f4f7;padding:2px 6px;border-radius:4px}</style>
+</helmet>
+<div data-screen-label="Roadmap & Spec" style="max-width:1200px;margin:0 auto;padding:56px 40px 96px;display:flex;flex-direction:column;gap:48px">
+  <header style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:14px"><img src="./assets/gid-circle.png" alt="GID" style="width:40px;height:40px;display:block"><span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Build plan · for Claude Code handoff</span></div>
+    <h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:500;line-height:1.05;max-width:900px">Grace In Design — site, consultation funnel, CMS and social: a four-phase roadmap</h1>
+    <p style="margin:0;max-width:760px;font-size:16px;line-height:1.7;color:#4b5569">Everything decided in Claude Design, organized so each phase ships something usable. Phase 1 is the revenue path: site, consultation form, bookings and the leads pipeline. Later phases add editing, publishing and follow-up automation.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px">
+      <a href="Grace%20In%20Design%20Homepage.dc.html" style="padding:8px 14px;border-radius:999px;border:1px solid #e3e6ec;background:#fff;font-weight:600;white-space:nowrap">Live site mockup →</a>
+      <a href="Contact.dc.html" style="padding:8px 14px;border-radius:999px;border:1px solid #e3e6ec;background:#fff;font-weight:600;white-space:nowrap">Consultation form →</a>
+      <a href="Admin.dc.html" style="padding:8px 14px;border-radius:999px;border:1px solid #e3e6ec;background:#fff;font-weight:600;white-space:nowrap">Admin mockup →</a>
+    </div>
+  </header>
+
+  <section style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+    <sc-for list="{{ phases }}" as="p" hint-placeholder-count="4">
+      <div style="display:flex;flex-direction:column;gap:14px;padding:24px;border-radius:18px;background:{{ p.bg }};color:{{ p.color }};border:1px solid #e3e6ec">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:{{ p.kicker }}">Phase {{ p.n }}</span><span style="font-size:11px;font-weight:600;color:{{ p.sub }}">{{ p.weeks }}</span></div>
+        <span style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-height:1.1">{{ p.title }}</span>
+        <span style="font-size:13px;line-height:1.55;color:{{ p.sub }}">{{ p.goal }}</span>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.45"><sc-for list="{{ p.items }}" as="it" hint-placeholder-count="6"><li>{{ it }}</li></sc-for></ul>
+        <div style="margin-top:auto;padding-top:10px;border-top:1px solid {{ p.rule }};font-size:12px;color:{{ p.sub }}"><strong style="color:{{ p.color }}">Done when:</strong> {{ p.done }}</div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:20px">
+    <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:500">Consultation funnel — how a lead flows</h2>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px">
+      <sc-for list="{{ flow }}" as="f" hint-placeholder-count="6">
+        <div style="display:flex;flex-direction:column;gap:8px;padding:18px;border-radius:14px;background:#fff;border:1px solid #e3e6ec"><span style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#6cb6e6;line-height:1">{{ f.n }}</span><span style="font-size:14px;font-weight:600">{{ f.title }}</span><span style="font-size:12px;line-height:1.5;color:#6b7486">{{ f.desc }}</span></div>
+      </sc-for>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="padding:22px;border-radius:14px;background:#fff;border:1px solid #e3e6ec;display:flex;flex-direction:column;gap:10px"><span style="font-size:14px;font-weight:600">Source tracking</span><p style="margin:0;font-size:13px;line-height:1.6;color:#4b5569">Every entry point passes a <code>source_page</code> (<code>residential</code>, <code>aging-in-place</code>, <code>home</code>, <code>general</code>…). The form maps it to a <code>path</code> via <code>PAGE_TO_PATH</code>, pre-selects it and asks the visitor to confirm. Both values are stored on the lead and drive "Leads by source page" and per-path filters. UTM parameters are captured alongside.</p></div>
+      <div style="padding:22px;border-radius:14px;background:#fff;border:1px solid #e3e6ec;display:flex;flex-direction:column;gap:10px"><span style="font-size:14px;font-weight:600">Admin-configurable questions</span><p style="margin:0;font-size:13px;line-height:1.6;color:#4b5569">The form renders from <code>form_fields</code> rows, not hard-coded UI. <strong>Base</strong> fields appear on every path; <strong>path</strong> fields only for that audience. Admin adds, edits, reorders, requires or hides any field and picks <strong>wizard</strong> or <strong>single-page</strong> mode. Types: text, email, phone, select, multiselect, textarea, address, date, upload, consent.</p></div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:20px">
+    <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:500">Data model</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+      <sc-for list="{{ tables }}" as="t" hint-placeholder-count="12">
+        <div style="display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:14px;background:#fff;border:1px solid #e3e6ec">
+          <div style="display:flex;justify-content:space-between;align-items:center"><code style="font-size:13px;font-weight:700;background:#1a2238;color:#fff;padding:4px 8px">{{ t.name }}</code><span style="padding:3px 8px;border-radius:999px;background:#f2f4f7;font-size:10px;font-weight:700;color:#6b7486">PHASE {{ t.phase }}</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><sc-for list="{{ t.fields }}" as="fl" hint-placeholder-count="6"><span style="font-size:12px;line-height:1.5;color:#4b5569"><code>{{ fl }}</code></span></sc-for></div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:14px;padding:24px;border-radius:14px;background:#fff;border:1px solid #e3e6ec">
+      <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:500">Roles &amp; permissions</h2>
+      <div style="display:grid;grid-template-columns:1.2fr repeat(4,1fr);gap:6px;font-size:12px">
+        <span></span><span style="font-weight:700;text-align:center">Owner</span><span style="font-weight:700;text-align:center">Editor</span><span style="font-weight:700;text-align:center">Sales</span><span style="font-weight:700;text-align:center">Social</span>
+        <sc-for list="{{ perms }}" as="r" hint-placeholder-count="8"><span style="padding:8px 0;border-top:1px solid #eef0f4;color:#4b5569">{{ r.area }}</span><span style="padding:8px 0;border-top:1px solid #eef0f4;text-align:center">{{ r.o }}</span><span style="padding:8px 0;border-top:1px solid #eef0f4;text-align:center">{{ r.e }}</span><span style="padding:8px 0;border-top:1px solid #eef0f4;text-align:center">{{ r.s }}</span><span style="padding:8px 0;border-top:1px solid #eef0f4;text-align:center">{{ r.m }}</span></sc-for>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;padding:24px;border-radius:14px;background:#fff;border:1px solid #e3e6ec">
+      <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:500">Recommended stack &amp; constraints</h2>
+      <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.55;color:#4b5569">
+        <li><strong>Next.js (App Router) + Supabase</strong> (Postgres, Auth, Storage, Row-Level Security for roles). Vercel hosting on <strong>graceindesign.net</strong>.</li>
+        <li>Content stored as structured <code>page_blocks</code>; public pages render from the database so the CMS is real, not a theme editor.</li>
+        <li>Email via Resend, SMS via Twilio, .ics generated server-side; cron for 24h reminders and RSS/Etsy sync.</li>
+        <li>Social publishing through Meta Graph API, LinkedIn, Pinterest and YouTube Data APIs (Phase 3); posts are scheduled as rows and dispatched by a worker.</li>
+        <li>Phase 4 integrations (HubSpot, Stripe, e-sign) are isolated behind an <code>integrations</code> table so they can be swapped.</li>
+        <li>Keep the existing Etsy shop as the storefront; the site only lists and links.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:14px;padding:24px;border-radius:14px;background:#1a2238;color:#fff">
+    <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:500">Open items before handoff</h2>
+    <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.55;color:#c6cbd6">
+      <li>Model Home tier pricing (flyer has none) and one developer testimonial.</li>
+      <li>Business address for the footer; hours confirmed as Mon–Fri 9–5 ET.</li>
+      <li>Reversed (white) logo file if one exists — currently derived from the dark wordmark.</li>
+      <li>Project photography to replace stock interiors on Residential and Design Refresh.</li>
+      <li>Blog/RSS feed URL(s) to import; Etsy shop URL for product sync.</li>
+      <li>Social account access for Phase 3 connections.</li>
+    </ul>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = { bg:'#1a2238', color:'#fff', kicker:'#6cb6e6', sub:'#c6cbd6', rule:'rgba(255,255,255,.15)' }, light = { bg:'#fff', color:'#1a2238', kicker:'#3f9ad9', sub:'#6b7486', rule:'#eef0f4' };
+    return {
+      phases: [
+        { n:1, weeks:'Weeks 1–5', title:'Site + consultation funnel', goal:'Launch the new site and start capturing, booking and tracking leads.', items:['All public pages (home, about, services + sub-pages, Healthy Home Resources, news, contact)','Consultation form: wizard + single-page, path-aware, source-tracked, modal + /contact','Built-in calendar booking with admin availability blocks','Leads pipeline: table + Kanban board with drag-and-drop between stage columns (logs a stage-change activity), detail drawer, notes, owner, reminders, tags, CSV export','Form builder: base + per-path fields, add/edit/reorder/require','Hero editor (Classic/Cinematic, scenes, photos)','Email + SMS confirmations, .ics invite, checklist PDF, 24h reminder','Project Pipeline: lead “Mark signed” → project (copies answers/notes, lead → Won); configurable phases & stages (add/rename/reorder/remove, per-stage automation hooks); board drag-and-drop + table; project detail with contract value, invoices/billing, milestones, documents; closed/archived','Auth with 4 roles'], done:'A visitor on any page books a 15-min call and it appears in Leads + Calendar with the right source and path.', ...dark },
+        { n:2, weeks:'Weeks 6–9', title:'Content management', goal:'Grace edits every page without a developer.', items:['Page editor: block-based copy & image editing with preview/publish','Services: add, edit, reorder, nest; auto-creates landing page + form path','News: write posts + RSS import, categories, featured image','Testimonials, About/team bio, media library','Site settings: contact, hours, footer, social links, SEO per page','Etsy product manager (paste URL → listing; featured toggle)','Caribbean Connection: public “suggest a resource / list my organization” and “submit an event” forms → Pending queue; admin approve/reject (emails submitter), edit, unpublish; curated regional RSS by country; country on/off switches; newsletter segments + CSV export'], done:'Every piece of copy and imagery on the live site is editable in admin and publishes instantly.', ...light },
+        { n:3, weeks:'Weeks 10–13', title:'Social media', goal:'Plan, publish and measure social from the same admin.', items:['Connect Instagram, Facebook, LinkedIn, Pinterest, YouTube','Compose + schedule posts; content calendar view','Auto-share new blog posts per network with templates','On-site Instagram feed block','Engagement analytics + leads attributed to social','Social-manager role scoped to this area'], done:'A published blog post goes out to selected networks automatically; weekly engagement shows on the dashboard.', ...light },
+        { n:4, weeks:'Weeks 14+', title:'Follow-up & client ops', goal:'Turn leads into clients with less manual work.', items:['Email sequences / drip by path and stage','SMS follow-up templates','Proposals with e-sign','Invoicing & payments (Stripe)','Client portal: documents, schedule, approvals','HubSpot (or other CRM) sync'], done:'A won lead receives proposal, signs, pays a deposit and sees project status — all tracked in admin.', ...light }
+      ],
+      flow: [
+        { n:'01', title:'Entry', desc:'Header CTA (modal), hero CTAs, /contact. Carries source_page + UTM.' },
+        { n:'02', title:'Path', desc:'One of 7 paths (incl. Virtual Home Assessment), inferred from page and confirmed by visitor.' },
+        { n:'03', title:'Questions', desc:'Base fields + path fields from the form builder. Photos, address, budget, timeline, decision-maker.' },
+        { n:'04', title:'Book', desc:'Pick a slot inside admin-defined availability. 15-min discovery call.' },
+        { n:'05', title:'Confirm', desc:'Consent + source. Email, SMS, .ics and checklist PDF sent.' },
+        { n:'06', title:'Pipeline', desc:'Lead lands in New with owner, reminders, notes; moves through 7 stages.' }
+      ],
+      tables: [
+        { name:'leads', phase:1, fields:['id, created_at','name, email, phone','contact_pref, contact_time','source_page, path, utm_*','stage (enum 7), owner_id','tags[], consent_at','budget, timeline, address','answers (jsonb)'] },
+        { name:'bookings', phase:1, fields:['id, lead_id','type (discovery_15)','starts_at, ends_at, tz','status (booked|done|no_show|cancelled)','ics_sent_at, reminder_sent_at'] },
+        { name:'availability_blocks', phase:1, fields:['id, weekday[] or date','start_time, end_time','duration_min, buffer_min','min_notice_hours'] },
+        { name:'form_fields', phase:1, fields:['id, key, label, type','options (jsonb), required','scope (base|path), path_id','step, order, visible'] },
+        { name:'paths', phase:1, fields:['id, label, short','consult_type','page_keys[], color'] },
+        { name:'lead_activity', phase:1, fields:['id, lead_id, user_id','type (note|call|email|sms|proposal|stage)','body, attachment_url','created_at'] },
+        { name:'projects / project_stages', phase:1, fields:['project: id, code, lead_id, service_id, name, stage_id, owner_id','project: contract_value, signed_at, target_date, address, scope','project: status (active|closed|archived)','stage: id, phase_id, name, order, automation','phase: id, name, color, order'] },
+        { name:'invoices / milestones / documents', phase:1, fields:['invoice: project_id, label, amount, status (pending|scheduled|paid), due_at, paid_at','milestone: project_id, title, due_at, done_at','document: project_id, name, url, type'] },
+        { name:'users', phase:1, fields:['id, name, email','role (owner|editor|sales|social)','avatar_url'] },
+        { name:'pages / page_blocks', phase:2, fields:['page: id, slug, title, status, seo_*','block: page_id, type, order','block: content (jsonb), visible'] },
+        { name:'services', phase:2, fields:['id, slug, title, parent_id, order','hero_style, scenes (jsonb)','before_after (jsonb), tiers (jsonb)','path_id, status'] },
+        { name:'posts / rss_sources', phase:2, fields:['post: id, title, slug, body, image','post: category, origin (written|rss)','post: status, published_at','rss: url, name, last_synced_at'] },
+        { name:'products / testimonials / media', phase:2, fields:['product: etsy_url, title, price, image, featured','testimonial: quote, who, where, visible','media: url, name, used_on[]'] },
+        { name:'cc_resources / cc_events / cc_subscribers', phase:2, fields:['resource: name, category, country, area, type, url, desc','resource: status (pending|published|rejected), submitted_by, kind (own|suggestion|curated), reviewed_by, review_note','event: title, starts_at, tz, where, format, host, url, cost, desc','event: status, submitted_by, reviewed_by, review_note','subscriber: email, segment, location, country, consented_at'] },
+        { name:'social_accounts / social_posts', phase:3, fields:['account: network, token, status','post: body, image, networks[]','post: scheduled_at, status, metrics (jsonb)'] }
+      ],
+      perms: [['Leads & calendar','✓','—','✓','—'],['Form builder','✓','—','—','—'],['Pages & services','✓','✓','—','—'],['News posts','✓','✓','—','✓'],['Media library','✓','✓','—','✓'],['Etsy products','✓','✓','—','—'],['Social publishing','✓','—','—','✓'],['Users, roles, integrations','✓','—','—','—']].map(([area,o,e,s,m]) => ({area,o,e,s,m}))
+    };
+  }
+}
+</script>
+</body>
+</html>

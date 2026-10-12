@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+body{margin:0;background:#e9ebef;font-family:'Montserrat',sans-serif;color:#1a2238;-webkit-font-smoothing:antialiased}a{color:#1a2238;text-decoration:none}a:hover{color:#3f9ad9}*{box-sizing:border-box}input,textarea,select{font-family:'Montserrat',sans-serif}
+@keyframes kb{from{transform:scale(1.04) translate(0,0)}to{transform:scale(1.14) translate(-1.5%,-1%)}}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.6);opacity:0}}
+</style>
+</helmet>
+<div data-screen-label="Service Landing" style="width:1440px;margin:0 auto;background:#fff;box-shadow:0 30px 80px rgba(26,34,56,.18)">
+<dc-import name="SiteNav" page-label="{{ s.title }}" active="{{ navActive }}" source-key="{{ s.slug }}" hint-size="100%,168px"></dc-import>
+
+<!-- DEMO: hero style switch -->
+<div style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:14px;padding:8px 8px 8px 16px;border-radius:999px;background:#1a2238;color:#fff;box-shadow:0 18px 44px rgba(26,34,56,.35);font-size:12px;white-space:nowrap">
+  <span style="display:flex;align-items:center;gap:8px;color:#c6cbd6;flex:none"><span style="width:7px;height:7px;border-radius:50%;background:#6cb6e6"></span>Admin preview · Hero style</span>
+  <a href="#" onClick="{{ toggleStyle }}" style="position:relative;display:flex;align-items:center;width:188px;flex:none;height:34px;border-radius:999px;background:rgba(255,255,255,.1);padding:3px">
+    <span style="position:absolute;top:3px;left:{{ knobLeft }};width:calc(50% - 3px);height:28px;border-radius:999px;background:#6cb6e6;transition:left .3s cubic-bezier(.22,.61,.36,1)"></span>
+    <span style="position:relative;flex:1;text-align:center;font-size:12px;font-weight:600;color:{{ classicColor }}">Classic</span>
+    <span style="position:relative;flex:1;text-align:center;font-size:12px;font-weight:600;color:{{ cineColor }}">Cinematic</span>
+  </a>
+  <a href="Admin.dc.html#hero" style="flex:none;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.25);color:#fff;font-size:12px;font-weight:600">Edit in admin</a>
+</div>
+
+<!-- HERO: CINEMATIC -->
+<sc-if value="{{ isCinematic }}" hint-placeholder-val="{{ true }}">
+<section style="position:relative;height:760px;background:#1a2238;color:#fff;overflow:hidden">
+  {{ heroStack }}
+  <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(26,34,56,.92) 0%,rgba(26,34,56,.72) 42%,rgba(26,34,56,.15) 75%,rgba(26,34,56,0) 100%);pointer-events:none"></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(26,34,56,.7) 0%,rgba(26,34,56,0) 35%);pointer-events:none"></div>
+  <div style="position:relative;height:100%;display:grid;grid-template-columns:minmax(0,1fr) 300px;padding:0 72px;gap:48px;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:28px;max-width:720px">
+      <a href="Services.dc.html" style="display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#6cb6e6"><span style="width:28px;height:2px;background:#6cb6e6;display:block"></span>{{ s.kicker }}</a>
+      <h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:72px;line-height:1.02;letter-spacing:-.01em;text-wrap:pretty">{{ s.cineLead }} <span style="position:relative;display:inline-block;color:#6cb6e6;font-style:italic">{{ sceneWord }}<span style="position:absolute;left:0;right:0;bottom:6px;height:2px;background:#6cb6e6;transform-origin:left;transform:scaleX({{ progress }});transition:transform .3s linear"></span></span><br>{{ s.cineTail }}</h1>
+      <p style="margin:0;max-width:560px;font-size:18px;line-height:1.65;color:#dfe3ea;text-wrap:pretty">{{ sceneLine }}</p>
+      <div style="display:flex;align-items:center;gap:22px;margin-top:4px">
+        <a href="{{ contactHref }}" style="display:inline-flex;align-items:center;gap:12px;height:58px;padding:0 32px;border-radius:999px;background:#6cb6e6;color:#1a2238;font-size:15px;font-weight:700;box-shadow:0 12px 30px rgba(108,182,230,.35)">{{ s.cta }} <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#1a2238" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <sc-if value="{{ hasBA }}" hint-placeholder-val="{{ false }}">
+        <a href="#before-after" onClick="{{ scrollToBA }}" style="display:inline-flex;align-items:center;gap:10px;font-size:15px;font-weight:600;color:#fff"><span style="position:relative;width:38px;height:38px;border-radius:50%;border:1.5px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center"><span style="position:absolute;inset:-1px;border-radius:50%;border:1.5px solid #6cb6e6;animation:pulse 2.2s ease-out infinite"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></span>See a before &amp; after</a>
+        </sc-if>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;justify-self:end;align-self:end;margin-bottom:72px;width:300px">
+      <span style="font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#c6cbd6;margin-bottom:8px">{{ s.scenesLabel }}</span>
+      <sc-for list="{{ scenes }}" as="r" hint-placeholder-count="4">
+        <a href="#" onClick="{{ r.pick }}" style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:12px;background:{{ r.bg }};color:#fff;border:1px solid {{ r.border }};transition:all .3s">
+          <span style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#6cb6e6;width:28px">{{ r.num }}</span>
+          <span style="display:flex;flex-direction:column;gap:3px;flex:1"><span style="font-size:14px;font-weight:600">{{ r.name }}</span><span style="height:2px;background:rgba(255,255,255,.18);border-radius:2px;overflow:hidden"><span style="display:block;height:100%;width:{{ r.pct }};background:#6cb6e6;transition:width .25s linear"></span></span></span>
+        </a>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position:absolute;left:72px;bottom:28px;display:flex;align-items:center;gap:14px;font-size:12px;color:#c6cbd6"><span style="width:1px;height:36px;background:rgba(255,255,255,.3)"></span>Scroll to explore</div>
+</section>
+<div style="height:64px;border-bottom:1px solid #eef0f4;display:flex;align-items:center;overflow:hidden;background:#fff">{{ marquee }}</div>
+</sc-if>
+
+<!-- HERO: CLASSIC -->
+<sc-if value="{{ isClassic }}" hint-placeholder-val="{{ false }}">
+<section style="display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);min-height:640px;background:#f7f8fa">
+  <div style="display:flex;flex-direction:column;justify-content:center;padding:88px 64px 88px 72px;gap:26px;min-width:0">
+    <a href="Services.dc.html" style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 18l-6-6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>{{ s.kicker }}</a>
+    <h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:62px;line-height:1.05;letter-spacing:-.01em;text-wrap:pretty">{{ s.hero }}</h1>
+    <p style="margin:0;max-width:540px;font-size:17px;line-height:1.7;color:#4b5569;text-wrap:pretty">{{ s.sub }}</p>
+    <div style="display:flex;align-items:center;gap:20px;margin-top:6px">
+      <a href="{{ contactHref }}" style="display:inline-flex;align-items:center;gap:12px;height:56px;padding:0 30px;border-radius:999px;background:#6cb6e6;color:#1a2238;font-size:15px;font-weight:700;box-shadow:0 12px 30px rgba(108,182,230,.4)">{{ s.cta }} <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#1a2238" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <span style="font-size:13px;color:#6b7486">Free · No obligation · Reply within one business day</span>
+    </div>
+  </div>
+  <div style="position:relative;min-width:0;min-height:0"><div style="position:absolute;top:40px;right:40px;bottom:40px;left:0;border-radius:0 0 0 140px;overflow:hidden"><image-slot id="{{ heroSlot }}" shape="rect" src="{{ s.img }}" placeholder="Service hero photo"></image-slot></div></div>
+</section>
+</sc-if>
+
+<!-- PROBLEM -->
+<section style="padding:104px 72px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:80px;align-items:start">
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Sound familiar?</span>
+    <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:46px;line-height:1.1;text-wrap:pretty">{{ s.problem }}</h2>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:28px;padding-top:40px">
+    <p style="margin:0;font-size:18px;line-height:1.7;color:#4b5569;text-wrap:pretty">{{ s.empathy }}</p>
+    <div style="display:flex;gap:16px;align-items:flex-start;padding:24px 28px;border-radius:16px;background:#e6f3fc"><div style="width:40px;height:40px;flex:none;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" stroke="#3f9ad9" stroke-width="1.8" stroke-linejoin="round"/></svg></div><p style="margin:0;font-size:15px;line-height:1.65;color:#1a2238">{{ s.authority }}</p></div>
+  </div>
+</section>
+
+<!-- BEFORE / AFTER -->
+<sc-if value="{{ hasBA }}" hint-placeholder-val="{{ false }}">
+<section id="before-after" ref="{{ baRef }}" style="padding:0 72px 104px;display:flex;flex-direction:column;gap:32px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:40px">
+    <div style="display:flex;flex-direction:column;gap:12px"><span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Drag to compare</span><h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:44px;line-height:1.1">{{ baTitle }}</h2></div>
+    <span style="font-size:14px;color:#6b7486;max-width:360px;line-height:1.6">Admins swap these two photos per project in the CMS — the slider does the rest.</span>
+  </div>
+  <div ref="{{ sliderRef }}" onPointerDown="{{ baDown }}" onPointerMove="{{ baMove }}" onPointerUp="{{ baUp }}" style="position:relative;height:620px;border-radius:22px;overflow:hidden;cursor:ew-resize;user-select:none;touch-action:none;background:#e9ebef">
+    {{ baImgs }}
+    <div style="position:absolute;top:0;bottom:0;left:{{ baPct }};width:2px;background:#fff;transform:translateX(-1px);box-shadow:0 0 24px rgba(0,0,0,.3)"><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(26,34,56,.3)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M9 6l-6 6 6 6M15 6l6 6-6 6" stroke="#1a2238" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+    <span style="position:absolute;top:20px;left:20px;padding:8px 14px;border-radius:999px;background:rgba(26,34,56,.8);color:#fff;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">Before</span>
+    <span style="position:absolute;top:20px;right:20px;padding:8px 14px;border-radius:999px;background:#6cb6e6;color:#1a2238;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">After</span>
+  </div>
+</section>
+</sc-if>
+
+<!-- WHAT'S INCLUDED -->
+<sc-if value="{{ hasFeatures }}" hint-placeholder-val="{{ true }}">
+<section style="padding:0 72px 104px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:64px;align-items:center">
+  <div style="position:relative;height:520px;border-radius:18px;overflow:hidden"><image-slot id="{{ img2Slot }}" shape="rect" src="{{ s.img2 }}" placeholder="Detail photo"></image-slot></div>
+  <div style="display:flex;flex-direction:column;gap:28px">
+    <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:42px;line-height:1.1">What we help with</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <sc-for list="{{ features }}" as="f" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;gap:8px;padding:22px;border-radius:14px;border:1px solid #e9ecf1"><span style="font-size:15px;font-weight:600">{{ f.title }}</span><span style="font-size:13.5px;line-height:1.6;color:#6b7486">{{ f.desc }}</span></div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+</sc-if>
+
+
+<!-- PACKAGES (model home) -->
+<sc-if value="{{ hasTiers }}" hint-placeholder-val="{{ false }}">
+<section style="padding:0 72px 104px;display:flex;flex-direction:column;gap:36px">
+  <div style="display:flex;flex-direction:column;gap:12px;max-width:700px"><span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Flexible service tiers</span><h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:44px;line-height:1.1">{{ tiersTitle }}</h2><p style="margin:0;font-size:15px;line-height:1.7;color:#6b7486">{{ tiersSub }}</p></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px">
+    <sc-for list="{{ tiers }}" as="t" hint-placeholder-count="3">
+      <div style="display:flex;flex-direction:column;gap:14px;padding:32px;border-radius:18px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.color }}">
+        <span style="font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:{{ t.kicker }}">{{ t.label }}</span>
+        <span style="font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:600;line-height:1.1">{{ t.name }}</span>
+        <p style="margin:0;font-size:14.5px;line-height:1.65;color:{{ t.sub }};flex:1">{{ t.desc }}</p>
+        <span style="display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600"><span style="width:6px;height:6px;border-radius:50%;background:#6cb6e6"></span>{{ t.price }}</span>
+        <a href="{{ contactHref }}" style="display:inline-flex;align-items:center;justify-content:center;height:46px;border-radius:999px;border:1.5px solid {{ t.btnBorder }};background:{{ t.btnBg }};color:{{ t.btnColor }};font-size:13px;font-weight:600">Request a quote</a>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{ hasSteps }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;gap:18px;padding-top:24px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Our approach</span>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:1px solid #e9ecf1;border-radius:16px;overflow:hidden">
+      <sc-for list="{{ steps }}" as="st" hint-placeholder-count="5">
+        <div style="display:flex;flex-direction:column;gap:8px;padding:24px 22px;border-left:1px solid #e9ecf1;background:{{ st.bg }}"><span style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#6cb6e6;line-height:1">{{ st.num }}</span><span style="font-size:16px;font-weight:600;color:{{ st.color }}">{{ st.name }}</span></div>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;padding:20px 24px;border-radius:14px;background:#f7f8fa;border:1px dashed #c6cbd6"><span style="width:44px;height:44px;flex:none;border-radius:50%;background:#e6f3fc"></span><div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;line-height:1.5;color:#4b5569;font-style:italic">"Developer testimonial goes here — two sentences about absorption, buyer response or the install experience."</span><span style="font-size:12px;color:#8c95a8">Name, Title · Developer (placeholder)</span></div></div>
+  </div>
+  </sc-if>
+</section>
+</sc-if>
+
+<!-- PLAN -->
+<section style="background:#1a2238;color:#fff;padding:96px 72px;display:flex;flex-direction:column;gap:56px">
+  <div style="display:flex;flex-direction:column;gap:14px;max-width:700px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#6cb6e6">The Plan</span>
+    <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:46px;line-height:1.1">Three simple steps. One guide the whole way.</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:28px">
+    <sc-for list="{{ plan }}" as="p" hint-placeholder-count="3">
+      <div style="display:flex;flex-direction:column;gap:14px;padding:32px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)"><span style="font-family:'Cormorant Garamond',serif;font-size:44px;color:#6cb6e6;line-height:1">{{ p.num }}</span><span style="font-size:18px;font-weight:600">{{ p.title }}</span><span style="font-size:14px;line-height:1.65;color:#c6cbd6">{{ p.desc }}</span></div>
+    </sc-for>
+  </div>
+</section>
+
+<!-- SUCCESS vs FAILURE -->
+<section style="padding:104px 72px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:80px;align-items:center">
+  <div style="display:flex;flex-direction:column;gap:24px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Picture the result</span>
+    <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:44px;line-height:1.1">What success looks like</h2>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <sc-for list="{{ success }}" as="w" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;gap:14px;font-size:17px"><span style="width:30px;height:30px;flex:none;border-radius:50%;background:#e6f3fc;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#3f9ad9" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>{{ w.text }}</div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="padding:36px;border-radius:18px;border:1px solid #e9ecf1;background:#f7f8fa;display:flex;flex-direction:column;gap:12px"><span style="font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#6b7486">Or, without a guide…</span><p style="margin:0;font-family:'Cormorant Garamond',serif;font-size:28px;line-height:1.3;color:#1a2238">{{ s.failure }}</p></div>
+</section>
+
+<!-- LEAD FORM (shared base + audience extras) -->
+<section id="lead-form" ref="{{ formRef }}" style="margin:0 72px 104px;padding:72px;border-radius:24px;background:#e6f3fc;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:64px;align-items:start">
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#3f9ad9">Take the first step</span>
+    <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:46px;line-height:1.1;text-wrap:pretty">Tell us about your project</h2>
+    <p style="margin:0;font-size:16px;line-height:1.7;color:#4b5569">A few details is all we need. We'll follow up within one business day with next steps — no obligation.</p>
+    <div style="display:inline-flex;align-items:center;gap:8px;align-self:flex-start;margin-top:8px;padding:8px 14px;border-radius:999px;background:#fff;font-size:12px;color:#6b7486"><span style="width:8px;height:8px;border-radius:50%;background:#6cb6e6"></span>Lead source: <strong style="color:#1a2238;font-weight:600">{{ s.title }} page</strong></div>
+    <span style="font-size:12px;color:#6b7486;line-height:1.6">Questions marked <span style="color:#3f9ad9;font-weight:600">●</span> are audience-specific extras configured in the admin form builder.</span>
+  </div>
+  <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+  <form onSubmit="{{ submit }}" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;background:#fff;padding:32px;border-radius:18px;box-shadow:0 18px 44px rgba(26,34,56,.08)">
+    <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">Full name<input required="required" placeholder="Jane Doe" style="height:46px;padding:0 14px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;color:#1a2238"></label>
+    <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">Email<input required="required" type="email" placeholder="jane@email.com" style="height:46px;padding:0 14px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;color:#1a2238"></label>
+    <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">Phone<input placeholder="(555) 555-5555" style="height:46px;padding:0 14px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;color:#1a2238"></label>
+    <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">Service of interest<input readOnly value="{{ s.title }}" style="height:46px;padding:0 14px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;color:#1a2238;background:#f7f8fa"></label>
+    <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">Timeline<select style="height:46px;padding:0 12px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;color:#1a2238;background:#fff"><option>As soon as possible</option><option>1–3 months</option><option>3–6 months</option><option>Just exploring</option></select></label>
+    <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">Budget range<select style="height:46px;padding:0 12px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;color:#1a2238;background:#fff"><option>Not sure yet</option><option>Under $10k</option><option>$10k–$50k</option><option>$50k–$150k</option><option>$150k+</option></select></label>
+    <sc-for list="{{ extras }}" as="q" hint-placeholder-count="2">
+      <label style="grid-column:{{ q.span }};display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569"><span><span style="color:#3f9ad9">● </span>{{ q.label }}</span>
+        <sc-if value="{{ q.isSelect }}" hint-placeholder-val="{{ true }}"><select style="height:46px;padding:0 12px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;color:#1a2238;background:#fff"><sc-for list="{{ q.options }}" as="o" hint-placeholder-count="3"><option>{{ o }}</option></sc-for></select></sc-if>
+        <sc-if value="{{ q.isText }}" hint-placeholder-val="{{ false }}"><input placeholder="{{ q.placeholder }}" style="height:46px;padding:0 14px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;color:#1a2238"></sc-if>
+      </label>
+    </sc-for>
+    <label style="grid-column:1/-1;display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#4b5569">Tell us about your space<textarea rows="4" placeholder="What's working, what isn't, and what you're hoping for…" style="padding:12px 14px;border:1px solid #dfe3ea;border-radius:10px;font-size:14px;color:#1a2238;resize:vertical"></textarea></label>
+    <button type="submit" style="grid-column:1/-1;height:54px;border:0;border-radius:999px;background:#1a2238;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif" style-hover="background:#6cb6e6;color:#1a2238">{{ s.cta }}</button>
+    <span style="grid-column:1/-1;font-size:12px;color:#8c95a8;text-align:center">Submissions appear on the <a href="Admin.dc.html" style="color:#3f9ad9;font-weight:600">admin dashboard</a> tagged with the source page.</span>
+  </form>
+  </sc-if>
+  <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#fff;padding:64px 32px;border-radius:18px;text-align:center;box-shadow:0 18px 44px rgba(26,34,56,.08)">
+    <div style="width:64px;height:64px;border-radius:50%;background:#e6f3fc;display:flex;align-items:center;justify-content:center"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#3f9ad9" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <h3 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:500">Thank you — we've got it.</h3>
+    <p style="margin:0;max-width:380px;font-size:15px;line-height:1.65;color:#6b7486">Your request from the <strong>{{ s.title }}</strong> page is on our dashboard. Expect a reply within one business day.</p>
+    <a href="Admin.dc.html" style="font-size:13px;font-weight:600;color:#3f9ad9">See it in the admin dashboard →</a>
+  </div>
+  </sc-if>
+</section>
+
+<!-- OTHER SERVICES -->
+<section style="padding:0 72px 104px;display:flex;flex-direction:column;gap:28px">
+  <h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:34px">{{ othersTitle }}</h2>
+  <div style="display:flex;flex-wrap:wrap;gap:12px">
+    <sc-for list="{{ others }}" as="o" hint-placeholder-count="5">
+      <a href="{{ o.href }}" style="display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:999px;border:1.5px solid #e3e6ec;font-size:14px;font-weight:500;color:#1a2238" style-hover="border-color:#1a2238">{{ o.title }}</a>
+    </sc-for>
+  </div>
+</section>
+<dc-import name="SiteFooter" hint-size="100%,480px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;cinematic&quot;,&quot;options&quot;:[&quot;cinematic&quot;,&quot;classic&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;autoplay&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;slideSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:5,&quot;min&quot;:3,&quot;max&quot;:10,&quot;step&quot;:1,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Hero&quot;}}">
+class Component extends DCLogic {
+  state = { data: null, slug: (location.hash||'#general').slice(1), sent: false, style: 'cinematic', i: 0, t: 0, ba: 50, drag: false };
+  formRef = React.createRef(); baRef = React.createRef(); sliderRef = React.createRef();
+  CINE = {
+    general: ['Design for your', 'that works as beautifully as you do.', 'What we design'],
+    residential: ['Your', 'deserves to feel like you.', 'Rooms we design'],
+    'aging-in-place': ['A safer', 'you never have to leave.', 'Where we help'],
+    'virtual-assessment': ['A home assessment over', '— wherever you are.', 'How it works'],
+    'aip-partners': ['Better outcomes with', 'who share your standards.', 'Who we partner with'],
+    commercial: ['A', 'that works for your people — and your brand.', 'Spaces we design'],
+    'design-refresh': ['Fresh', 'without the renovation.', 'What a refresh changes'],
+    'model-home': ['Sell', 'buyers can picture themselves in.', 'What we merchandise'],
+    'project-management': ['From', 'to done — on time and on budget.', 'How we deliver']
+  };
+  EXTRAS = {
+    residential: [{label:'Which rooms?',type:'select',options:['Kitchen','Bathroom','Bedroom','Living room','Whole home'],span:'auto'},{label:'Do you own the home?',type:'select',options:['Yes','No — renting','Buying soon'],span:'auto'}],
+    'aging-in-place': [{label:'Who is the home for?',type:'select',options:['Myself','A parent or relative','A client'],span:'auto'},{label:'Mobility aids used today',type:'select',options:['None','Cane or walker','Wheelchair','Not sure'],span:'auto'}],
+    'virtual-assessment': [{label:'Who is the home for?',type:'select',options:['Myself','A parent or relative','A client I care for'],span:'auto'},{label:'Where is the home?',type:'text',placeholder:'City, State',span:'auto'},{label:'Preferred format',type:'select',options:['Live video walkthrough','Photo & video review','Not sure'],span:'auto'},{label:'Biggest concerns',type:'select',options:['Bathroom safety','Stairs / entry','Kitchen access','Lighting','Recent fall','General check-up'],span:'auto'}],
+    'aip-partners': [{label:'Your profession',type:'select',options:['Contractor / installer','Occupational or physical therapist','Realtor / senior-living advisor','Care manager','Other'],span:'auto'},{label:'Company',type:'text',placeholder:'Company name',span:'auto'}],
+    commercial: [{label:'Company',type:'text',placeholder:'Company name',span:'auto'},{label:'Approximate square footage',type:'select',options:['Under 2,000','2,000–10,000','10,000–50,000','50,000+'],span:'auto'},{label:'Space type',type:'select',options:['Office','Healthcare / wellness','Hospitality / retail','Mixed'],span:'1/-1'}],
+    'model-home': [{label:'I am a…',type:'select',options:['Builder / developer','Real estate agent or broker','Property manager','Other'],span:'auto'},{label:'Number of models',type:'select',options:['1','2–3','4+'],span:'auto'},{label:'Target opening date',type:'text',placeholder:'e.g. Spring 2027',span:'1/-1'}],
+    'design-refresh': [{label:'Rooms to refresh',type:'select',options:['One room','2–3 rooms','Whole home'],span:'auto'},{label:'Keep existing furniture?',type:'select',options:['Mostly yes','Some','Open to replacing'],span:'auto'}],
+    'project-management': [{label:'Project type',type:'select',options:['Residential renovation','Commercial build-out','New construction'],span:'auto'},{label:'Do you have plans or a contractor?',type:'select',options:['Plans only','Contractor only','Both','Neither yet'],span:'auto'}],
+    general: [{label:'I am a…',type:'select',options:['Homeowner','Business owner','Caregiver or family member','Industry professional'],span:'1/-1'}]
+  };
+  loadStyles() { try { return JSON.parse(localStorage.getItem('gid-hero-styles') || '{}'); } catch (e) { return {}; } }
+  saveStyle(slug, style) { const all = this.loadStyles(); all[slug] = style; localStorage.setItem('gid-hero-styles', JSON.stringify(all)); }
+  styleFor(slug) { return this.loadStyles()[slug] || this.props.defaultStyle || 'cinematic'; }
+  async componentDidMount() {
+    const m = await import(new URL('services-data.js', document.baseURI).href); this.setState({ data: m, style: this.styleFor(this.state.slug) });
+    this.onHash = () => { const slug = (location.hash||'#general').slice(1); this.setState({ slug, style: this.styleFor(slug), sent:false, i:0, t:0 }); window.scrollTo(0,0); };
+    window.addEventListener('hashchange', this.onHash);
+    const dur = (this.props.slideSeconds ?? 5) * 1000, step = 100;
+    this.timer = setInterval(() => { if (this.state.style !== 'cinematic' || this.props.autoplay === false) return;
+      this.setState(s => { const t = s.t + step; return t >= dur ? { t:0, i:(s.i+1) % 4 } : { t }; }); }, step);
+  }
+  componentWillUnmount() { window.removeEventListener('hashchange', this.onHash); clearInterval(this.timer); }
+  renderVals() {
+    const M = this.state.data; if (!M) return { hasBA:false, isCinematic:false, isClassic:false, hasFeatures:false, notSent:false, sent:false, s:{}, scenes:[], plan:[], success:[], others:[], extras:[], features:[], baAfter:'', baBefore:'' };
+    const D = M.SERVICES, s = D[this.state.slug] || D.general, slug = s.slug;
+    const dur = (this.props.slideSeconds ?? 5) * 1000, prog = this.state.t / dur, i = this.state.i;
+    const scenes = (M.SCENES[slug] || M.SCENES.general).map(([name,word,line,img]) => ({name,word,line,img}));
+    const cur = scenes[i] || scenes[0];
+    const cine = this.CINE[slug] || this.CINE.general;
+    const heroStack = React.createElement('div', { style:{ position:'absolute', inset:0 } },
+      scenes.map((x,k) => React.createElement('img', { key:slug+k, src:x.img, alt:x.name, style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', opacity: k===i?1:0, transition:'opacity 1.1s ease', animation: k===i ? `kb ${dur/1000+1.5}s ease-out forwards` : 'none' } })));
+    const words = [...scenes.map(x=>x.name), ...s.success];
+    const seq = [...words, ...words].map((w,k) => React.createElement('span', { key:k, style:{ display:'inline-flex', alignItems:'center', gap:28, padding:'0 14px', fontSize:13, fontWeight:600, letterSpacing:'.16em', textTransform:'uppercase', color:'#4b5569', whiteSpace:'nowrap' } }, w, React.createElement('span', { style:{ width:6, height:6, borderRadius:'50%', background:'#6cb6e6' } })));
+    const marquee = React.createElement('div', { style:{ display:'flex', width:'max-content', animation:'marquee 40s linear infinite' } }, seq);
+    const ba = M.BEFORE_AFTER[slug];
+    const pct = v => Math.round(v) + '%';
+    const setBa = e => { const el = this.sliderRef.current; if (!el) return; const b = el.getBoundingClientRect(); this.setState({ ba: Math.max(3, Math.min(97, (e.clientX - b.left) / b.width * 100)) }); };
+    const others = slug === 'aip-partners'
+      ? [{title:'AIP Products', href:'AIP%20Products.dc.html'},{title:'WELLness Resources', href:'WELLness%20Resources.dc.html'},{title:'Home Health Series', href:'Home%20Health%20Series.dc.html'},{title:'Aging-In-Place & Home Assessments', href:'Service.dc.html#aging-in-place'}]
+      : Object.values(D).filter(x => x.slug !== slug && x.slug !== 'general' && x.slug !== 'aip-partners' && x.slug !== 'design-refresh' && x.slug !== 'model-home' && x.slug !== 'virtual-assessment').map(x => ({ title:x.title, href:'Service.dc.html#'+x.slug }));
+    if (slug === 'residential') others.unshift({ title:'Design Refresh', href:'Service.dc.html#design-refresh' }, { title:'Model Home Design', href:'Service.dc.html#model-home' });
+    if (slug === 'design-refresh') others.unshift({ title:'Residential Interior Design', href:'Service.dc.html#residential' }, { title:'Model Home Design', href:'Service.dc.html#model-home' });
+    if (slug === 'aging-in-place') others.unshift({ title:'Virtual Home Assessments', href:'Service.dc.html#virtual-assessment' });
+    if (slug === 'virtual-assessment') others.unshift({ title:'Aging-In-Place & Home Assessments', href:'Service.dc.html#aging-in-place' }, { title:'AIP Partners', href:'Service.dc.html#aip-partners' });
+    if (slug === 'model-home') others.unshift({ title:'Residential Interior Design', href:'Service.dc.html#residential' }, { title:'Design Refresh', href:'Service.dc.html#design-refresh' });
+    const isC = this.state.style === 'cinematic';
+    const go = el => el && window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 24, behavior:'smooth' });
+    return {
+      contactHref: 'Contact.dc.html?from=' + slug,
+      othersTitle: slug === 'aip-partners' ? 'More from Healthy Home Resources' : 'Explore other services',
+      navActive: slug === 'aip-partners' ? 'hbd' : 'services',
+      s: { ...s, cineLead: cine[0], cineTail: cine[1], scenesLabel: cine[2], kicker: s.kicker }, heroSlot:'hero-'+slug, img2Slot:'img2-'+slug,
+      isCinematic: isC, isClassic: !isC,
+      knobLeft: isC?'50%':'3px', classicColor: isC?'#c6cbd6':'#1a2238', cineColor: isC?'#1a2238':'#c6cbd6',
+      toggleStyle: e => { e.preventDefault(); const next = isC?'classic':'cinematic'; this.setState({style:next}); this.saveStyle(slug, next); },
+      heroStack, marquee, sceneWord: cur.word, sceneLine: cur.line, progress: prog,
+      scenes: scenes.map((x,k) => ({ name:x.name, num:String(k+1).padStart(2,'0'), bg: k===i?'rgba(255,255,255,.12)':'rgba(255,255,255,0)', border: k===i?'rgba(255,255,255,.25)':'transparent', pct: k===i?pct(prog*100):(k<i?'100%':'0%'), pick: e => { e.preventDefault(); this.setState({i:k,t:0}); } })),
+      hasBA: !!ba, baImgs: ba ? React.createElement(React.Fragment, null,
+        React.createElement('img', { src: ba[1], alt:'After', draggable:false, style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' } }),
+        React.createElement('div', { style:{ position:'absolute', inset:0, width: pct(this.state.ba), overflow:'hidden' } }, React.createElement('img', { src: ba[0], alt:'Before', draggable:false, style:{ position:'absolute', top:0, left:0, width:1296, height:'100%', objectFit:'cover', filter:'saturate(.75)' } }))) : null, baTitle: ba?ba[2]:'', baPct: pct(this.state.ba), baRef: this.baRef, sliderRef: this.sliderRef,
+      baDown: e => { e.currentTarget.setPointerCapture(e.pointerId); this.setState({drag:true}); setBa(e); }, baMove: e => { if (this.state.drag) setBa(e); }, baUp: () => this.setState({drag:false}),
+      hasSteps: !!(s.steps && s.steps.length),
+      steps: (s.steps||[]).map((name,k) => ({ name, num:String(k+1).padStart(2,'0'), bg: k%2?'#fbfcfd':'#fff', color:'#1a2238' })),
+      tiersTitle: slug === 'virtual-assessment' ? 'Choose how you\'d like to be assessed' : 'Choose the level that fits your community',
+      tiersSub: slug === 'virtual-assessment' ? 'Flat-fee options, quoted at booking. Fees credit toward an in-home assessment or design project.' : 'Pricing is quoted per model based on floor plan, tier and schedule. Tell us about the community and we\'ll follow up with a proposal.',
+      hasTiers: !!s.tiers, tiers: (s.tiers||[]).map(([name,desc,price],k) => { const hi = k===1; return { label: k===0?'Tier 1':(k===1?'Tier 2':'Tier 3'), name, desc, price, border: hi?'#1a2238':'#e9ecf1', bg: hi?'#1a2238':'#fff', color: hi?'#fff':'#1a2238', sub: hi?'#c6cbd6':'#6b7486', kicker: hi?'#6cb6e6':'#3f9ad9', btnBorder: hi?'#6cb6e6':'#1a2238', btnBg: hi?'#6cb6e6':'transparent', btnColor:'#1a2238' }; }),
+      hasFeatures: s.features.length > 0, features: s.features.map(([title,desc]) => ({title,desc})),
+      plan: s.plan.map(([title,desc],k) => ({num:String(k+1).padStart(2,'0'),title,desc})), success: s.success.map(text => ({text})), others,
+      extras: (this.EXTRAS[slug] || []).map(q => ({ ...q, isSelect: q.type==='select', isText: q.type==='text', options: q.options || [], placeholder: q.placeholder || '' })),
+      formRef: this.formRef, sent: this.state.sent, notSent: !this.state.sent,
+      submit: e => { e.preventDefault(); this.setState({sent:true}); },
+      scrollToForm: e => { e.preventDefault(); go(this.formRef.current); }, scrollToBA: e => { e.preventDefault(); go(this.baRef.current); }
+    };
+  }
+}
+</script>
+</body>
+</html>
