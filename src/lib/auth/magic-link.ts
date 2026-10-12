@@ -1,0 +1,34 @@
+import "server-only";
+import { eq, and, isNull, gt } from "drizzle-orm";
+import { db, magicLinkTokens, users } from "@/lib/db";
+import { env } from "@/lib/env";
+import { randomToken, sha256Hex } from "@/lib/server/crypto";
+import { sendEmail } from "@/lib/server/outbox";
+
+const TTL_MIN = 20;
+
+/** Issue a magic link. Only existing, active users receive one (invite-only admin). */
+export async function issueMagicLink(emailRaw: string, redirectTo = "/admin") {
+  const email = emailRaw.trim().toLowerCase();
+  const user = await db.query.users.findFirst({ where: and(eq(users.email, email), eq(users.isActive, true)) });
+  // Always respond identically to avoid account enumeration.
+  if (!user) return { ok: true as const, sent: false, devLink: null as string | null };
+  const token = randomToken(32);
+  await db.insert(magicLinkTokens).values({ email, tokenHash: sha256Hex(token), redirectTo, expiresAt: new Date(Date.now() + TTL_MIN * 60000) });
+  const link = `${env.baseUrl}/auth/verify?token=${encodeURIComponent(token)}`;
+  await sendEmail({
+    to: email, subject: "Your Grace In Design sign-in link", relatedType: "user", relatedId: user.id,
+    text: `Hi ${user.name.split(" ")[0]},\n\nClick to sign in to the Grace In Design admin:\n${link}\n\nThis link expires in ${TTL_MIN} minutes and can be used once. If you didn't request it, you can ignore this email.`,
+  });
+  return { ok: true as const, sent: true, devLink: env.sendgridApiKey ? null : link };
+}
+
+export async function consumeMagicLink(token: string) {
+  const hash = sha256Hex(token);
+  const row = await db.query.magicLinkTokens.findFirst({ where: and(eq(magicLinkTokens.tokenHash, hash), isNull(magicLinkTokens.usedAt), gt(magicLinkTokens.expiresAt, new Date())) });
+  if (!row) return null;
+  await db.update(magicLinkTokens).set({ usedAt: new Date() }).where(eq(magicLinkTokens.id, row.id));
+  const user = await db.query.users.findFirst({ where: and(eq(users.email, row.email), eq(users.isActive, true)) });
+  if (!user) return null;
+  return { user, redirectTo: row.redirectTo || "/admin" };
+}
