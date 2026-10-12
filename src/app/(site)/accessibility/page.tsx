@@ -1,0 +1,5 @@
+import { cmsPage } from "@/app/(site)/_page-factory";
+export const dynamic = "force-dynamic";
+const { Page, generateMetadata } = cmsPage("accessibility", { active: "none", sourceKey: "general", heroToggle: false });
+export { generateMetadata };
+export default Page;

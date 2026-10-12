@@ -1,0 +1,45 @@
+# Decisions
+
+Choices made where the design handoff (`docs/handoff/README.md`) left something open, or where the owner's direction replaced the handoff's recommendation. Each entry says what was decided, why, and what it would take to change.
+
+## Platform
+
+1. **Replit instead of Vercel + Supabase.** The owner asked for the app to run in Replit production. The app uses Replit's built-in PostgreSQL (Neon-backed) through Drizzle ORM, Replit Object Storage for uploads, and an Autoscale deployment (`.replit`). Nothing is Replit-specific in the code: `DATABASE_URL`, `BASE_URL` and `REPLIT_OBJECT_STORAGE_BUCKET` are the only environment touch points, and uploads fall back to `./.data/uploads` when Object Storage is absent, so the same code runs on any Node host with Postgres.
+2. **Own auth instead of Supabase Auth.** Invite-only magic links (`/login`), database-backed sessions, a signed `gid_session` cookie, and four roles (owner, editor, sales, social) plus an `isSuperAdmin` flag. Permission checks happen in server code (`src/lib/auth/session.ts`: `can()`, `requireArea()`, `requireOwner()`), which replaces the handoff's Row Level Security. Every admin page and server action calls `requireArea`, and every public endpoint is rate limited.
+3. **SendGrid instead of Resend for email, Twilio for SMS** (owner's direction). Every outgoing message is written to the `outbox` table first and then delivered; without API keys the message stays in the outbox with status `logged` so the whole funnel is testable before credentials exist. Admin → Client ops → Outbox shows every message and lets you re-send.
+4. **Scheduled work runs through `/api/cron/<job>` or `npm run cron -- <job>`.** Replit has no built-in cron for web deployments, so a Scheduled Deployment (or any external scheduler) calls the endpoint with `CRON_SECRET`. Jobs: reminders, rss, etsy, social, drips, webhooks, outbox, hubspot, all. Admin → Client ops → Scheduled jobs runs any job on demand and shows the run log.
+
+## Call Flow Tracker (future architecture)
+
+5. **Built now, switched on later.** The CFT integration points exist and are inert until secrets are set: an inbound signed webhook (`/api/webhooks/cft`, `X-CallFlow-Signature`), the Connected Apps SSO child contract (`/api/sso/launch`, `/api/master/users`, `/api/master/users/[id]`, `/api/master/sessions/revoke`, `/api/dashboard-metrics`), a `users.cft_user_id` link, a configurable CFT role → GID role map (`site_settings.cft_role_map`), and outbound HMAC-signed webhooks (`X-GID-Signature`) that CFT can subscribe to. See `ARCHITECTURE.md`.
+
+## Content and media
+
+6. **Block-based CMS with draft → preview → publish.** `pages` hold `page_blocks` whose `content` is live and `draft_content` is the working copy. `?preview=1` shows drafts only to signed-in team members. The block editor is a generic form generated from the block's JSON (text, long text, images with upload, lists, tuple rows, nested objects), which keeps every block type editable without one bespoke editor per block.
+7. **Media slots.** Every photo the designs use is a named slot (`media://int.kitchen-windows`). A slot resolves to the uploaded file, then a self-hosted copy in `public/media/`, then the brand asset or stock URL, then a labelled placeholder. Replacing a slot in the media library updates every page that uses it.
+8. **Magnific imagery.** 38 photos were generated with Magnific (Seedream 5 Pro) for the stock placeholder slots; their creation ids live in `src/lib/seed-data/media.ts` and `scripts/magnific-creations.json`. The build container could not reach Magnific's CDN, so the files are fetched with `npm run media:fetch` from the Replit workspace (or uploaded through the media library). Until then those slots show the prototype's stock URLs or a placeholder. "Generate with Magnific" in the media library uses the Freepik text-to-image API with `MAGNIFIC_API_KEY`.
+9. **Custom pages render at `/p/<key>`.** Core pages keep their designed routes; pages created in the CMS get a route automatically without code changes.
+10. **Etsy listings are read from the public listing page** (Open Graph metadata) because the shop has no API key yet. "Refresh from Etsy" and the `etsy` cron job keep title, price, photo and review count current. `ETSY_API_KEY` is reserved for a later switch to the official API.
+11. **Posts accept HTML in the body.** A full WYSIWYG editor was out of scope; the body field takes HTML or plain text and RSS imports keep linking out to the source.
+
+## Funnel and pipeline
+
+12. **Availability is Eastern time.** All booking math (`etDate`, slot generation, reminders) uses `America/New_York`, matching the business. The seed also writes demo timestamps in Eastern time so "Today" reads correctly in the admin.
+13. **Demo projects are earlier engagements, not conversions.** The seed links a project to a lead only when the lead is "Won" (Rosa Delgado), so the Leads board shows the same mix of stages as the prototype while the Project Pipeline still has five projects.
+14. **Admins can delete and modify everything** (owner's requirement). Every admin section has edit and delete for every record type, guarded by a confirmation. Deletes cascade (a lead takes its activity and bookings; a project takes invoices, milestones, documents and approvals). The only guard rails: the last active owner can't be deleted, you can't deactivate yourself, Jamaica can't be removed as the launch country, and core pages can be unpublished but not deleted.
+15. **Stage automation runs on every stage change** (drag and drop, drawer edit, or conversion): request deposit, send invoice, client approval, schedule install, request review. Failures are logged to the project activity instead of blocking the move.
+
+## Phase 3 and 4
+
+16. **Social publishing uses first-party APIs** (Meta Graph for Facebook and Instagram, LinkedIn, Pinterest, YouTube) with OAuth handled in `/api/social/start|callback/[network]` and tokens stored encrypted (AES-256-GCM, `SESSION_SECRET`-derived key). Without app credentials the UI still works: posts schedule, the calendar fills, and publishing marks the post failed with the reason.
+17. **E-sign is built in** (typed name + timestamp + IP, PDF copy) with an optional Dropbox Sign adapter when `DROPBOX_SIGN_API_KEY` is set. Signed proposals emit `proposal.signed` and log to the lead and project.
+18. **Stripe is optional.** With keys, "Send" creates a hosted Stripe invoice and the webhook marks it paid; without keys, invoices email as plain notices and are marked paid by hand.
+19. **Client portal links are long random tokens** (`/portal/<token>`), issued on conversion (welcome email) or from the project drawer, revocable at any time. Clients see milestones, documents and invoices marked visible, and respond to approvals there.
+20. **HubSpot sync is one-way** (leads → contacts, projects → deals) and no-ops until `HUBSPOT_ACCESS_TOKEN` exists.
+
+## Open items from the handoff (placeholders the admin can edit)
+
+- Model Home tier pricing and a developer testimonial → `services` row `model-home` (Content → Services).
+- Business street address → Site settings → Contact & footer (currently "Street address / City, State ZIP").
+- Official reversed logo → `public/assets/logo-white-on-dark.png` (media slot `brand.logo-white`).
+- Blog RSS URLs, Etsy shop URL, social credentials, newsletter ESP → RSS feeds, `ETSY_SHOP_URL`, Replit Secrets, and the built-in outbox respectively.
