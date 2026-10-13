@@ -2,6 +2,12 @@
 
 Keep the finished Next.js app's existing structure, stack, and features. The user requested setup exactly as imported, not a rewrite, restructuring, or feature additions.
 
+## Publishing
+
+The publishing build explicitly includes development dependencies (`npm ci --include=dev && npm run build`) because production-mode npm otherwise omits TypeScript, Tailwind, and other required build tools. Keep `NODE_ENV=production` for the production build and server.
+
+Do not run migration or seed scripts in the publishing build. This project uses Replit-managed PostgreSQL; publishing manages production schema changes and the initial data copy. Development migrations remain in the existing development setup workflow.
+
 ## After task merges
 
 Replit runs `scripts/post-merge.sh` to install the locked dependencies and run the existing database setup with `--if-empty`, then restarts the configured workflow. The script does not reset existing data or run a production build alongside the development server.
