@@ -14,3 +14,14 @@ origin remapping does not prove that canonical-origin configuration works.
 must handle verification responses and their redirects explicitly: intercepting
 only the initial navigation does not reliably intercept its redirected requests.
 Report remapped local verification separately from an unmodified end-to-end pass.
+
+The managed HTTPS preview was observed changing application cookies from
+SameSite=Lax to SameSite=None; Secure. Do not weaken the application's cookie
+policy just to make a preview assertion pass.
+
+**Why:** A direct same-server response retained Lax while the proxied browser
+received None/Secure; the difference was outside application session creation.
+
+**How to apply:** Assert preview attributes only for the exact managed preview
+origin and verify direct server attributes separately. Do not infer production
+cookie behavior from a development preview.

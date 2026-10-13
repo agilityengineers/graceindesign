@@ -1,74 +1,80 @@
 # Admin authentication verification
 
-Verified on 2026-10-13 without changing application authentication or features.
+Verified on 2026-10-13 through the actual HTTPS Replit preview.
 
-## Result
+## Configuration and result
 
-**Local authentication works; the configured BASE_URL does not target this fork's preview.**
-The overall auth smoke command therefore exits **1**, not a false success.
-The secret value was not read or printed. Only the origin of the generated
-development sign-in link was compared with the test server's origin.
-No request carrying a token was sent to the other origin.
+**PASS: sign-in links target the current preview and the complete browser flow
+passes without origin remapping.**
 
-The local run passed:
+The environment configuration check confirmed that `BASE_URL` exists as a secret
+for development and production; its value was neither retrieved nor printed.
+The previous verification established that the inherited setting targeted another
+origin. No secret was changed: development now selects the runtime-managed
+`REPLIT_DEV_DOMAIN` before inherited canonical settings. Production continues to
+prefer `BASE_URL`; local development without a managed preview also honors it.
+This works for both main-workspace and fork previews without baking in either URL.
+Production itself was not modified, contacted, or verified.
 
-- Signed-out `/admin` redirects to login.
-- Unknown addresses receive the generic confirmation without a development link.
-- The actual login form issues a hashed, unused, expiring magic-link token.
-- Development email is recorded with `logged` status and the console provider;
-  no real email is sent.
-- Consuming the link renders `/admin` and marks the token used.
-- A database session records the magic-link source; the local cookie is HTTP-only,
-  SameSite=Lax, root-scoped, and persistent (Secure is false in development).
-- Reload and navigation to `/admin/leads` preserve authentication.
-- Signed-in `/login` redirects to admin.
-- GET sign-out through the UI clears the cookie and revokes the session.
-- Restoring a revoked cookie cannot restore access.
-- Used, invalid, and expired links are rejected without creating a session.
-- A requested internal destination (`/admin/leads`) is honored.
-- POST sign-out returns 303 to login, clears the cookie, and revokes the session.
-- Admin access is gated again after sign-out; no browser runtime errors occurred.
+`tests/base-url.test.ts` covers preview isolation, production precedence, and
+local/domain fallbacks. All three tests pass. Type checking and linting the changed
+application files pass. An initial type check raced Next's regeneration of its
+generated route types; it passed after startup settled.
 
-The test account, its sessions, tokens, and development email records were removed.
-The app's ordinary login rate-limit counters are not reset by the test.
+## Browser checks
 
-## Boundaries and reproduction
+`tests/auth-smoke.mjs` passed through the real proxied preview:
 
-`tests/auth-smoke.mjs` uses the actual Next.js login form, verification route,
-session cookie/database state, protected UI, and both sign-out methods.
-It creates a unique temporary owner at a reserved `.invalid` address, not a real
-team member. It refuses to run when SendGrid is configured or NODE_ENV is production.
-Use only against a development database/server.
+- Signed-out admin is gated; unknown addresses get a generic confirmation.
+- The actual login form creates a hashed, unused, expiring token.
+- The generated link targets this preview; mismatches fail before following it.
+- Development email is recorded as logged, never sent.
+- Link consumption renders admin, consumes the token, and records a session.
+- Reload and protected navigation retain authentication.
+- Signed-in login redirects to admin; requested internal destinations work.
+- Both GET and POST sign-out clear the cookie and revoke the session.
+- Revoked cookies and used, invalid, or expired links cannot restore access.
+- No browser runtime errors occurred.
 
-The development outbox prints email bodies, and Next.js request logging can include
-token URLs. **Suppress server stdout and stderr before running** (for example,
-`npm run dev > /dev/null 2>&1`). Do not enable browser tracing or network logging.
-The test itself reports named assertions, never raw errors, URLs, cookies, or tokens.
+The temporary owner uses a unique reserved `.invalid` address. Its account,
+sessions, tokens, and outbox records were removed afterward.
 
-The completed local run used:
+## Cookie investigation
+
+The strict original SameSite=Lax browser assertion failed because the managed
+HTTPS preview delivers the cookie as **SameSite=None; Secure**. HTTP-only,
+root scope, and persistent expiry are preserved.
+
+A separate diagnostic consumed a fresh link directly against this same server's
+loopback port, with redirects disabled. Its raw Set-Cookie response confirmed
+**SameSite=Lax**, HTTP-only, root scope, persistent expiry, and no Secure flag in
+development. This demonstrates the attribute change happens between the server
+and the preview browser, not in application session creation.
+
+The test now asserts None plus Secure only for the exact managed HTTPS preview
+origin, and Lax for direct/local runs. It also checks the direct server response.
+The application cookie policy remains unchanged. The loopback diagnostic is
+separate from the completed preview browser flow, not origin remapping.
+
+## Safe reproduction
+
+Use only a development database/server without SendGrid configured. Suppress
+server stdout/stderr before testing because development email and request logs
+can contain credentials. Do not enable tracing or network logging.
 
 ```sh
-AUTH_SMOKE_BASE=http://127.0.0.1:5000 AUTH_SERVER_LOGS_SUPPRESSED=1 node tests/auth-smoke.mjs
+# Temporarily use this workflow command:
+npm run db:setup -- --if-empty && npm run dev > /dev/null 2>&1
+
+# In a separate shell, with the workflow running:
+AUTH_SERVER_LOGS_SUPPRESSED=1 node tests/auth-smoke.mjs
+npx tsx --test tests/base-url.test.ts
 ```
 
-Without AUTH_SMOKE_BASE the test uses the public Replit development domain.
-The proxied attempt reached the signed-in admin but did not pass the strict cookie
-attribute assertion; the completed cookie/session checks above were on the local
-server, not a claim that all proxy behavior passed.
+Leave `AUTH_SMOKE_BASE` unset to use the actual managed preview. No token is sent
+to another deployment or real email. Diagnostics print only assertion names and
+cookie attributes, never raw headers or credentials. Restore the ordinary workflow
+command afterward. Permanent credential-log protection is separate work.
 
-When the generated origin differs, the test records a failure and uses browser
-interception to send verification requests only to the test server, translating
-redirect destinations back to that server. This permits local authentication
-diagnosis, **not** confirmation that the configured BASE_URL works end-to-end.
-Follow-up should confirm the intended development origin and rerun without needing
-this remapping. A task fork can inherit configuration intended for another preview.
-
-The login page was also visually checked. Authenticated UI was exercised by the
-browser test (no screenshots containing links or credentials were retained).
-The existing broad smoke test was not run: it creates consultation/newsletter data
-outside this task. The existing screenshot helper was not used because it inserts
-a token directly and would skip the actual magic-link request.
-
-The workflow was temporarily run without database setup and with output suppressed;
-its original command was restored afterward. The separate startup task owns the
-seed/startup fix.
+The login page was visually checked; authenticated UI was exercised by the browser
+test. The broader smoke test was not run because it creates unrelated business data.

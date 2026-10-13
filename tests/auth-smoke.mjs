@@ -12,6 +12,7 @@ const check = (name, ok) => {
   console.log(`PASS ${name}`);
 };
 const base = process.env.AUTH_SMOKE_BASE || `https://${process.env.REPLIT_DEV_DOMAIN}`;
+const isManagedPreview = base === `https://${process.env.REPLIT_DEV_DOMAIN}`;
 const email = `auth-smoke-${randomUUID()}@example.invalid`;
 let pool, browser, userId;
 let stage = "safety preconditions";
@@ -30,6 +31,14 @@ try {
     args: ["--no-sandbox"],
   });
   const ctx = await browser.newContext();
+  // Fail closed even if a later link or redirect unexpectedly changes origin.
+  await ctx.route("**/*", async route => {
+    if (new URL(route.request().url()).origin !== new URL(base).origin) {
+      await route.abort();
+      return;
+    }
+    await route.continue();
+  });
   const page = await ctx.newPage();
   const errors = [];
   page.on("pageerror", () => errors.push(true));
@@ -62,25 +71,7 @@ try {
   const localOrigin = ["localhost", "127.0.0.1"].includes(linkUrl.hostname) && linkUrl.port === "5000";
   console.log(`CHECK generated link uses preview origin: ${sameOrigin ? "yes" : "no"}`);
   console.log(`CHECK generated link uses local development server: ${localOrigin ? "yes" : "no"}`);
-  if (!sameOrigin) {
-    console.log("FAIL BASE_URL origin differs from this preview; remaining checks use browser-only origin remapping");
-    process.exitCode = 1;
-    // Never send a token to another deployment. This intercept happens before networking.
-    // Preserve the path/query, but keep requests and cookies on this preview.
-    await ctx.route(`${linkUrl.origin}/**`, async route => {
-      const target = new URL(route.request().url());
-      const response = await ctx.request.get(new URL(target.pathname + target.search, base).href, { maxRedirects: 0 });
-      const location = response.headers().location;
-      if (location) {
-        const redirect = new URL(location, base);
-        await route.fulfill({ status: 303, headers: {
-          location: new URL(redirect.pathname + redirect.search, base).href,
-        } });
-      } else {
-        await route.fulfill({ response });
-      }
-    });
-  }
+  check("generated link uses preview origin without remapping", sameOrigin);
   const hash = createHash("sha256").update(new URL(href).searchParams.get("token")).digest("hex");
   let tokenRows = await pool.query("select used_at, expires_at from magic_link_tokens where token_hash=$1 and email=$2", [hash, email]);
   check("request stores an unused expiring token hash", tokenRows.rowCount === 1
@@ -99,8 +90,10 @@ try {
     httpOnly: cookie.httpOnly, sameSite: cookie.sameSite, rootPath: cookie.path === "/",
     persistent: cookie.expires > Date.now() / 1000, secure: cookie.secure,
   } : { present: false }));
-  check("session cookie is HTTP-only, SameSite=Lax, root-scoped and persistent",
-    cookie?.httpOnly && cookie.sameSite === "Lax" && cookie.path === "/"
+  check("session cookie has expected direct or managed-preview attributes",
+    cookie?.httpOnly && (isManagedPreview
+      ? cookie.sameSite === "None" && cookie.secure
+      : cookie.sameSite === "Lax") && cookie.path === "/"
     && cookie.expires > Date.now() / 1000);
   check("session is recorded as magic-link login", (await pool.query(
     "select 1 from sessions where user_id=$1 and source='magic_link' and revoked_at is null and expires_at > now()", [userId])).rowCount === 1);
@@ -151,6 +144,24 @@ try {
   check("all test sessions are revoked", (await pool.query(
     "select 1 from sessions where user_id=$1 and revoked_at is null", [userId])).rowCount === 0);
   check("no browser runtime errors", errors.length === 0);
+  if (isManagedPreview) {
+    stage = "direct server retains SameSite=Lax before preview proxy";
+    link = await requestLink();
+    const diagnosticLink = new URL(await link.getAttribute("href"));
+    check("diagnostic link still targets this preview", diagnosticLink.origin === new URL(base).origin);
+    // The fixed loopback address is this same running app, never another deployment.
+    // No redirects followed, no browser cookies injected, and no auth flow remapped.
+    const direct = await fetch(`http://127.0.0.1:5000${diagnosticLink.pathname}${diagnosticLink.search}`, {
+      redirect: "manual",
+    });
+    const sessionHeader = direct.headers.getSetCookie().find(value => value.startsWith("gid_session="));
+    check(stage, direct.status === 307 && !!sessionHeader
+      && /;\s*SameSite=lax/i.test(sessionHeader)
+      && /;\s*HttpOnly/i.test(sessionHeader)
+      && /;\s*Path=\//i.test(sessionHeader)
+      && /;\s*Expires=/i.test(sessionHeader)
+      && !/;\s*Secure/i.test(sessionHeader));
+  }
 } catch {
   // Browser/database errors can contain token URLs or connection details.
   console.error(`FAIL ${stage} (sensitive diagnostics withheld)`);

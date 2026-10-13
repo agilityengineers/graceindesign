@@ -1,18 +1,11 @@
 /** Centralized environment access with safe defaults for development. */
+import { resolveBaseUrl } from "./base-url";
 const isProd = process.env.NODE_ENV === "production";
-
-function baseUrl() {
-  if (process.env.BASE_URL) return process.env.BASE_URL.replace(/\/$/, "");
-  const replitDomains = process.env.REPLIT_DOMAINS?.split(",")[0];
-  if (replitDomains) return `https://${replitDomains}`;
-  if (process.env.REPLIT_DEV_DOMAIN) return `https://${process.env.REPLIT_DEV_DOMAIN}`;
-  return "http://localhost:5000";
-}
 
 export const env = {
   isProd,
   isReplit: Boolean(process.env.REPL_ID || process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS),
-  baseUrl: baseUrl(),
+  baseUrl: resolveBaseUrl(process.env),
   sessionSecret: process.env.SESSION_SECRET || "dev-only-session-secret-change-me-dev-only-session-secret",
   databaseUrl: process.env.DATABASE_URL || "postgresql://gid:gid@127.0.0.1:5432/graceindesign",
   sendgridApiKey: process.env.SENDGRID_API_KEY || "",
