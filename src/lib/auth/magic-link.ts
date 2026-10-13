@@ -25,9 +25,13 @@ export async function issueMagicLink(emailRaw: string, redirectTo = "/admin") {
 
 export async function consumeMagicLink(token: string) {
   const hash = sha256Hex(token);
-  const row = await db.query.magicLinkTokens.findFirst({ where: and(eq(magicLinkTokens.tokenHash, hash), isNull(magicLinkTokens.usedAt), gt(magicLinkTokens.expiresAt, new Date())) });
+  const now = new Date();
+  // PostgreSQL rechecks this predicate after waiting for a concurrent update:
+  // only the request that claims the unused token may create a session.
+  const [row] = await db.update(magicLinkTokens).set({ usedAt: now })
+    .where(and(eq(magicLinkTokens.tokenHash, hash), isNull(magicLinkTokens.usedAt), gt(magicLinkTokens.expiresAt, now)))
+    .returning();
   if (!row) return null;
-  await db.update(magicLinkTokens).set({ usedAt: new Date() }).where(eq(magicLinkTokens.id, row.id));
   const user = await db.query.users.findFirst({ where: and(eq(users.email, row.email), eq(users.isActive, true)) });
   if (!user) return null;
   return { user, redirectTo: row.redirectTo || "/admin" };

@@ -34,6 +34,10 @@ Run `npm run test:log-redaction` for synthetic logging regression tests. Run the
 
 `npm run test:auth-logging` starts its own development server on port 5000 and captures logs in memory while testing login, the dev-link UI, email persistence, verification, and invalid-link errors. Stop the normal workflow first, run against a development database without SendGrid configured, then restart the workflow. It removes its temporary account and auth records and never follows credentials to a different origin.
 
+## Concurrent sign-in regression
+
+`npm run test:magic-link-concurrency` starts its own development server on port 5000; stop the normal workflow first and restart it afterward. Run only against the development database. It holds a row lock until eight real verification requests contend for the same token, then checks that exactly one session is created. Replay, expired/used tokens, inactive users, and missing users must fail. Test accounts and auth records are removed, redirects are not followed, and credential-bearing diagnostics are never printed.
+
 ## Workflow argument forwarding
 
 The `db:setup` script ends with `npm run db:seed --` so the workflow's `--if-empty` argument reaches `scripts/seed.ts`. Populated databases skip seeding and continue to app startup without resetting existing data.
