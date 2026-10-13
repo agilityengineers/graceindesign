@@ -1,0 +1,1 @@
+- [Authentication test isolation](auth-test-isolation.md) — origin mismatches in forks must not send test credentials to another deployment; remapped checks are not end-to-end passes.
