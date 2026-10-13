@@ -15,7 +15,7 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
     "db:reset": "tsx scripts/reset.ts",
-    "db:setup": "npm run db:migrate && npm run db:seed",
+    "db:setup": "npm run db:migrate && npm run db:seed --",
     "cron": "tsx scripts/cron.ts",
     "media:fetch": "tsx scripts/fetch-media.ts",
     "test": "playwright test",

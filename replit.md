@@ -11,6 +11,6 @@ Keep the finished Next.js app's existing structure, stack, and features. The use
   `npm run db:setup -- --if-empty && npm run dev`
 - Next.js serves on port 5000. The homepage `/` and `/login` were visually checked and returned HTTP 200.
 
-## Imported workflow caveat
+## Workflow argument forwarding
 
-During setup, npm expanded `db:setup -- --if-empty` into `npm run db:migrate && npm run db:seed --if-empty`, then invoked `tsx scripts/seed.ts` without the flag. The first seed succeeded against the empty database, but the seed script refuses to run against populated data without `--if-empty`. This may prevent subsequent workflow starts. The existing workflow and scripts were deliberately left unchanged per the user's setup-only instruction.
+The `db:setup` script ends with `npm run db:seed --` so the workflow's `--if-empty` argument reaches `scripts/seed.ts`. Populated databases skip seeding and continue to app startup without resetting existing data.
