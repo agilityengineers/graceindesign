@@ -6,6 +6,7 @@
 import { db, outbox } from "@/lib/db";
 import { env } from "@/lib/env";
 import { eq } from "drizzle-orm";
+import { formatEmailLog, redactAuthUrls } from "./log-redaction.mjs";
 
 export type Attachment = { filename: string; contentType: string; contentBase64: string };
 
@@ -31,7 +32,7 @@ export async function deliverOutbox(id: number) {
   try {
     if (row.channel === "email") {
       if (!env.sendgridApiKey) {
-        console.log(`[outbox:email → ${row.toAddr}] ${row.subject}\n${row.bodyText?.slice(0, 600)}`);
+        console.log(formatEmailLog(row));
         await db.update(outbox).set({ status: "logged", provider: "console", attempts: row.attempts + 1 }).where(eq(outbox.id, id));
         return { ...row, status: "logged" as const };
       }
@@ -45,7 +46,7 @@ export async function deliverOutbox(id: number) {
       return { ...row, status: "sent" as const };
     }
     if (!env.twilio.sid || !env.twilio.token || !env.twilio.from) {
-      console.log(`[outbox:sms → ${row.toAddr}] ${row.bodyText}`);
+      console.log(redactAuthUrls(`[outbox:sms → ${row.toAddr}] ${row.bodyText}`));
       await db.update(outbox).set({ status: "logged", provider: "console", attempts: row.attempts + 1 }).where(eq(outbox.id, id));
       return { ...row, status: "logged" as const };
     }
@@ -55,8 +56,9 @@ export async function deliverOutbox(id: number) {
     await db.update(outbox).set({ status: "sent", provider: "twilio", providerId: msg.sid, sentAt: new Date(), attempts: row.attempts + 1 }).where(eq(outbox.id, id));
     return { ...row, status: "sent" as const };
   } catch (e: any) {
-    console.error("outbox delivery failed", e?.message || e);
-    await db.update(outbox).set({ status: "failed", error: String(e?.message || e).slice(0, 1000), attempts: row.attempts + 1 }).where(eq(outbox.id, id));
+    const error = redactAuthUrls(String(e?.message || e));
+    console.error("outbox delivery failed", error);
+    await db.update(outbox).set({ status: "failed", error: error.slice(0, 1000), attempts: row.attempts + 1 }).where(eq(outbox.id, id));
     return { ...row, status: "failed" as const };
   }
 }

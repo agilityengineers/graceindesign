@@ -1,6 +1,6 @@
 // Dev-only real-browser auth check. No application auth is mocked or bypassed.
-// Run ONLY with server stdout/stderr suppressed: development email logs contain tokens.
-// AUTH_SERVER_LOGS_SUPPRESSED=1 node tests/auth-smoke.mjs
+// Run with npm run dev/start (the redacting Next.js launcher), never bare next.
+// AUTH_SERVER_LOGS_REDACTED=1 node tests/auth-smoke.mjs
 // Requires DATABASE_URL, REPLIT_DEV_DOMAIN (or AUTH_SMOKE_BASE), and Chromium.
 // Never enables tracing, request logging, screenshots, or raw error output.
 import { chromium } from "playwright";
@@ -17,7 +17,7 @@ const email = `auth-smoke-${randomUUID()}@example.invalid`;
 let pool, browser, userId;
 let stage = "safety preconditions";
 try {
-  check(stage, process.env.AUTH_SERVER_LOGS_SUPPRESSED === "1"
+  check(stage, process.env.AUTH_SERVER_LOGS_REDACTED === "1"
     && !process.env.SENDGRID_API_KEY && process.env.NODE_ENV !== "production"
     && !!process.env.DATABASE_URL && !!process.env.BASE_URL
     && (process.env.AUTH_SMOKE_BASE || process.env.REPLIT_DEV_DOMAIN));
