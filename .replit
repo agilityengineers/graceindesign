@@ -42,3 +42,7 @@ NEXT_TELEMETRY_DISABLED = "1"
 
 [userenv.production]
 NODE_ENV = "production"
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 180000

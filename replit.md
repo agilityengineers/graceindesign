@@ -2,6 +2,10 @@
 
 Keep the finished Next.js app's existing structure, stack, and features. The user requested setup exactly as imported, not a rewrite, restructuring, or feature additions.
 
+## After task merges
+
+Replit runs `scripts/post-merge.sh` to install the locked dependencies and run the existing database setup with `--if-empty`, then restarts the configured workflow. The script does not reset existing data or run a production build alongside the development server.
+
 ## Running on Replit
 
 - Dependencies are installed from the existing npm package definitions.
