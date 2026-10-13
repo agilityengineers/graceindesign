@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss" source("../");
 
 /* ---------------------------------------------------------------------------
    Grace In Design — design tokens (from design/README.md "Design Tokens")

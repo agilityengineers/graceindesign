@@ -1,1 +1,2 @@
 - [Authentication test isolation](auth-test-isolation.md) — origin mismatches in forks must not send test credentials to another deployment; remapped checks are not end-to-end passes.
+- [Preview rebuild loops](preview-rebuild-loops.md) — broad Tailwind scanning can trigger continuous reloads; dependency reinstalls require a fresh server process.
