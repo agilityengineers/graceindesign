@@ -7,7 +7,7 @@ const keys = ["token", "dev", "dev-link", "devlink"].map(key =>
   [...key].map(char => `(?:${char}|%(?:25)*${char.charCodeAt(0).toString(16)})`).join(""),
 ).join("|");
 const authQuery = new RegExp(
-  `((?:&amp;|[?&]|%(?:25)*3f|%(?:25)*26)(?:${keys})(?:=|%(?:25)*3d))[^&\\s"'<>\`\\\\\\x1b]*`,
+  `((?:&amp;|[?#&]|%(?:25)*3f|%(?:25)*23|%(?:25)*26)(?:${keys})(?:=|%(?:25)*3d))[^&\\s"'<>\`\\\\\\x1b]*`,
   "gi",
 );
 

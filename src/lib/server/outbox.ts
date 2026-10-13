@@ -40,6 +40,10 @@ export async function deliverOutbox(id: number) {
       sg.setApiKey(env.sendgridApiKey);
       const [res] = await sg.send({
         to: row.toAddr, from: env.emailFrom, subject: row.subject || "(no subject)", text: row.bodyText || "", html: row.bodyHtml || undefined,
+        // Provider redirect wrappers can move fragment credentials into logged URLs.
+        ...(/\/auth\/verify#token=/.test(row.bodyText || "") ? {
+          trackingSettings: { clickTracking: { enable: false, enableText: false } },
+        } : {}),
         attachments: row.attachments?.map((a) => ({ filename: a.filename, type: a.contentType, content: a.contentBase64 || "", disposition: "attachment" })),
       });
       await db.update(outbox).set({ status: "sent", provider: "sendgrid", providerId: res.headers?.["x-message-id"] as string | undefined, sentAt: new Date(), attempts: row.attempts + 1 }).where(eq(outbox.id, id));

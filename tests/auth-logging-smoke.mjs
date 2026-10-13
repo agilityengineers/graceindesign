@@ -48,7 +48,7 @@ try {
   const sentPage = await sentResponse.text();
   const dev = sentPage.match(/href="([^"]+)"[^>]*>open sign-in link/)?.[1]?.replaceAll("&amp;", "&");
   check("private response preserves the development link", !!dev && /no-store/.test(sentResponse.headers.get("cache-control")));
-  const token = new URL(dev).searchParams.get("token");
+  const token = new URLSearchParams(new URL(dev).hash.slice(1)).get("token");
   check("development link includes an issued credential", !!token);
   check("lookup cookie does not contain the sign-in credential", !cookie.includes(token));
   const anonymousPage = await (await fetch(`${base}/login?sent=1`)).text();
@@ -62,20 +62,26 @@ try {
     mail?.body_text.includes(dev) && mail.status === "logged");
   stage = "verification and invalid-link handling";
   const url = new URL(dev);
-  const verified = await fetch(new URL(url.pathname + url.search, base), { redirect: "manual" });
+  const verified = await fetch(new URL(url.pathname, base), {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }), redirect: "manual",
+  });
   check("local verification issues a session",
-    verified.status === 307 && !!verified.headers.get("set-cookie")?.includes("gid_session="));
-  const invalid = await fetch(`${base}/auth/verify?token=synthetic-invalid`, { redirect: "manual" });
+    verified.status === 200 && !!verified.headers.get("set-cookie")?.includes("gid_session="));
+  const invalid = await fetch(`${base}/auth/verify`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: "synthetic-invalid" }), redirect: "manual",
+  });
   check("invalid token retains its error redirect",
-    new URL(invalid.headers.get("location"), base).searchParams.get("err") === "invalid");
+    new URL((await invalid.json()).location, base).searchParams.get("err") === "invalid");
   stage = "captured server diagnostics";
-  for (let i = 0; i < 40 && !output.includes("GET /auth/verify?token=[REDACTED]"); i++) await pause(100);
+  for (let i = 0; i < 40 && !output.includes("POST /auth/verify"); i++) await pause(100);
   check("issued credentials absent from all captured stdout and stderr",
     !output.includes(token) && !output.includes(encodeURIComponent(dev)));
   check("email diagnostics omit sign-in content", output.includes("sign-in email content redacted"));
   check("login and verify logs retain paths and redact query values",
     /GET \/login\?sent=1 200/.test(output)
-    && /GET \/auth\/verify\?token=\[REDACTED\] 307/.test(output));
+    && /POST \/auth\/verify 200/.test(output));
   check("startup and timing diagnostics remain visible", output.includes("Ready") && /\d+ms/.test(output));
 } catch {
   console.error(`FAIL ${stage} (sensitive diagnostics withheld)`);

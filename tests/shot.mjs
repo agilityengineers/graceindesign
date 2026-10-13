@@ -28,7 +28,8 @@ if (login) {
   const hash = crypto.createHash("sha256").update(token).digest("hex");
   await pool.query(`insert into magic_link_tokens (email, token_hash, redirect_to, expires_at) values ($1,$2,'/admin', now() + interval '10 minutes')`, [login.toLowerCase(), hash]);
   await pool.end();
-  await page.goto(`${base}/auth/verify?token=${encodeURIComponent(token)}`, { waitUntil: "networkidle", timeout: 120000 });
+  await page.goto(`${base}/auth/verify#token=${encodeURIComponent(token)}`, { waitUntil: "networkidle", timeout: 120000 });
+  await page.waitForURL(url => url.pathname === "/admin", { timeout: 120000 });
   console.log("logged in as", login, "→", page.url());
 }
 

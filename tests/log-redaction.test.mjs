@@ -27,6 +27,8 @@ test("repeated, encoded, HTML and nested auth parameters are redacted", () => {
   for (const url of [
     `${verify}&token=${token}&next=/admin`,
     `/auth/verify?%74oken=${token}`,
+    `/auth/verify#token=${token}`,
+    encodeURIComponent(`/auth/verify#token=${token}`),
     `/login?dev-link=${token}`,
     `/login?devLink=${token}`,
     `/login?sent=1&amp;dev=${token}`,

@@ -7,4 +7,4 @@ Keep development link display state ephemeral and development-only; a server res
 
 **Why:** This is a convenience for local no-email development, not a production delivery mechanism. Process-local bounded storage avoids persisting another raw sign-in credential or needing schema changes for a development-only feature.
 
-**How to apply:** Never move its lookup handle into a URL. This protects the login confirmation URL only, not the existing verification URL, stored email bodies, or logs configured to capture cookies/bodies.
+**How to apply:** Never move its lookup handle into a URL. Evaluate each credential transport separately; URL protections do not protect stored email bodies or logs configured to capture cookies/bodies.

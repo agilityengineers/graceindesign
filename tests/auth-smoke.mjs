@@ -78,8 +78,9 @@ try {
   console.log(`CHECK generated link uses preview origin: ${sameOrigin ? "yes" : "no"}`);
   console.log(`CHECK generated link uses local development server: ${localOrigin ? "yes" : "no"}`);
   check("generated link uses preview origin without remapping", sameOrigin);
-  const hash = createHash("sha256").update(new URL(href).searchParams.get("token")).digest("hex");
-  const credential = linkUrl.searchParams.get("token");
+  const credential = new URLSearchParams(linkUrl.hash.slice(1)).get("token");
+  check("credential is in fragment only", !!credential && !linkUrl.search);
+  const hash = createHash("sha256").update(credential).digest("hex");
   const devCookie = (await ctx.cookies()).find(c => c.name === "gid_dev_link");
   check("development lookup cookie is private and scoped",
     devCookie?.httpOnly && devCookie.path === "/login"
@@ -104,6 +105,12 @@ try {
   await page.waitForURL(u => u.pathname === "/admin");
   await page.getByRole("link", { name: "Sign out", exact: true }).waitFor();
   check(stage, pathIs("/admin"));
+  const verificationHistory = await ctx.newCDPSession(page);
+  check("verification replaces credential-bearing browser history",
+    (await verificationHistory.send("Page.getNavigationHistory")).entries.every(entry => !entry.url.includes(credential)));
+  await verificationHistory.detach();
+  check("verification outgoing URLs and referrers are credential-free",
+    loginTraffic.every(entry => !entry.url.includes(credential) && !entry.referrer.includes(credential)));
   const cookie = (await ctx.cookies()).find(c => c.name === "gid_session");
   stage = "session cookie attributes";
   console.log("CHECK cookie attributes", JSON.stringify(cookie ? {
@@ -138,9 +145,11 @@ try {
   await ctx.clearCookies();
   stage = "used magic link is rejected";
   await goto(href);
+  await page.waitForURL(u => u.pathname === "/login");
   check(stage, pathIs("/login") && new URL(page.url()).searchParams.get("err") === "invalid" && await noSession());
   stage = "invalid token is rejected";
-  await goto(new URL("/auth/verify?token=invalid-test-value", linkUrl.origin).href);
+  await goto(new URL("/auth/verify#token=invalid-test-value", linkUrl.origin).href);
+  await page.waitForURL(u => u.pathname === "/login");
   check(stage, pathIs("/login") && new URL(page.url()).searchParams.get("err") === "invalid" && await noSession());
 
   stage = "expired magic link is rejected";
@@ -148,6 +157,7 @@ try {
   href = await link.getAttribute("href");
   await pool.query("update magic_link_tokens set expires_at=now()-interval '1 minute' where email=$1 and used_at is null", [email]);
   await goto(href);
+  await page.waitForURL(u => u.pathname === "/login");
   check(stage, pathIs("/login") && new URL(page.url()).searchParams.get("err") === "invalid" && await noSession());
   stage = "requested internal destination works";
   link = await requestLink(email, "/admin/leads");
@@ -171,11 +181,14 @@ try {
     check("diagnostic link still targets this preview", diagnosticLink.origin === new URL(base).origin);
     // The fixed loopback address is this same running app, never another deployment.
     // No redirects followed, no browser cookies injected, and no auth flow remapped.
-    const direct = await fetch(`http://127.0.0.1:5000${diagnosticLink.pathname}${diagnosticLink.search}`, {
+    const direct = await fetch(`http://127.0.0.1:5000${diagnosticLink.pathname}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: new URLSearchParams(diagnosticLink.hash.slice(1)).get("token") }),
       redirect: "manual",
     });
     const sessionHeader = direct.headers.getSetCookie().find(value => value.startsWith("gid_session="));
-    check(stage, direct.status === 307 && !!sessionHeader
+    check(stage, direct.status === 200 && !!sessionHeader
       && /;\s*SameSite=lax/i.test(sessionHeader)
       && /;\s*HttpOnly/i.test(sessionHeader)
       && /;\s*Path=\//i.test(sessionHeader)

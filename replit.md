@@ -24,7 +24,9 @@ Replit runs `scripts/post-merge.sh` to install the locked dependencies and run t
 
 ## Safe authentication diagnostics
 
-The development login confirmation redirects only to `/login?sent=1`. Its link is kept in bounded, process-local storage for five minutes and retrieved using a scoped HttpOnly cookie, never a URL lookup handle. Reloads work during that window; restarting the server or eviction requires requesting another link. Production and configured email delivery never expose this UI. Login responses are private/no-store. This protects the login URL in history, referrers, and URL access logs; clicking the actual `/auth/verify?token=…` link still uses the existing credential-bearing verification URL. Do not log Cookie headers or response bodies.
+The development login confirmation redirects only to `/login?sent=1`. Its link is kept in bounded, process-local storage for five minutes and retrieved using a scoped HttpOnly cookie, never a URL lookup handle. Reloads work during that window; restarting the server or eviction requires requesting another link. Production and configured email delivery never expose this UI. Login responses are private/no-store.
+
+Verification links use `/auth/verify#token=…`. A standalone, no-store page removes the fragment from the current history entry before exchanging it in a JSON POST body; no token is sent in HTTP request URLs or referrers. JavaScript is required. Old query-string links are not consumed; request a fresh link. Existing email copies, browser extensions, history synchronization before script execution, and JavaScript-disabled browsers are outside this guarantee. Do not log Cookie headers, request/response bodies, or full emailed links. Email-provider click tracking must not wrap sign-in links in credential-bearing redirect URLs.
 
 Run `npm run test:dev-link-store` for expiry and isolation tests. The auth browser smoke also checks login history, outgoing request URLs, and referrers without printing credentials.
 
