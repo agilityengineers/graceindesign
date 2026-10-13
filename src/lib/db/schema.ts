@@ -77,6 +77,28 @@ export const ssoJtis = pgTable("sso_jtis", {
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
 });
 
+/**
+ * Auto sign-in links into Call Flow Tracker. A link is texted/Slacked to Grace with a new lead; when
+ * she taps it, this app mints a short-lived CFT master-dashboard SSO token for her and redirects, so
+ * she lands in CFT already signed in. Only the hash is stored; the raw token lives in the message.
+ */
+export const cftLaunchLinks = pgTable("cft_launch_links", {
+  id: serial("id").primaryKey(),
+  tokenHash: text("token_hash").notNull().unique(),
+  // The GID team member the link signs in as (their email must match their CFT login).
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  target: text("target"), // CFT path hint, e.g. /calls or /messages
+  purpose: text("purpose"), // lead | cc_submission | subscriber | cft_call | manual
+  relatedType: text("related_type"),
+  relatedId: integer("related_id"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  useCount: integer("use_count").notNull().default(0),
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({ expIdx: index("cft_launch_links_exp_idx").on(t.expiresAt) }));
+
 export const auditLog = pgTable("audit_log", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
@@ -698,6 +720,10 @@ export const outbox = pgTable("outbox", {
   id: serial("id").primaryKey(),
   channel: text("channel").notNull(), // email | sms
   toAddr: text("to_addr").notNull(),
+  // Email: the verified SendGrid sender ("Grace In Design <consultation@graceindesign.net>") and optional
+  // Reply-To. SMS: the number the text goes out from (Call Flow Tracker tracking number or Twilio number).
+  fromAddr: text("from_addr"),
+  replyTo: text("reply_to"),
   subject: text("subject"),
   bodyText: text("body_text"),
   bodyHtml: text("body_html"),

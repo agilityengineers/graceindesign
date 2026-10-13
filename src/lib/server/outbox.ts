@@ -1,18 +1,49 @@
 /**
  * Email + SMS delivery. Every message is written to the `outbox` table, then sent via
- * SendGrid / Twilio when credentials exist. Without credentials the message is kept with
- * status "logged" so the flow is fully testable and the admin can see what would go out.
+ * SendGrid (email) or Call Flow Tracker → Twilio / direct Twilio (SMS) when credentials exist.
+ * Without credentials the message is kept with status "logged" so the flow is fully testable and
+ * the admin can see what would go out.
+ *
+ * Email leaves from one of four verified SendGrid senders (see src/lib/email-senders.ts):
+ * noreply@ for things nobody needs to answer, support@ for general questions, consultation@ for
+ * anything sales-related, newsletter@ for newsletter mail. Callers pick with `from`.
+ *
+ * SMS goes through Call Flow Tracker first (its Twilio account + Grace's tracking number, so
+ * replies land in CFT's inbox), then this app's own Twilio keys, then the log.
  */
 import { db, outbox } from "@/lib/db";
 import { env } from "@/lib/env";
 import { eq } from "drizzle-orm";
+import { isEmailSender, type EmailSender } from "@/lib/email-senders";
 import { formatEmailLog, redactAuthUrls } from "./log-redaction.mjs";
+import { normalizePhone } from "./outbox-phone";
+import { cftSmsConfigured, sendSmsViaCft } from "./cft-master";
+
+export { normalizePhone };
 
 export type Attachment = { filename: string; contentType: string; contentBase64: string };
 
-export async function sendEmail(opts: { to: string; subject: string; text: string; html?: string; attachments?: Attachment[]; relatedType?: string; relatedId?: number }) {
+export type SendEmailOptions = {
+  to: string; subject: string; text: string; html?: string; attachments?: Attachment[]; relatedType?: string; relatedId?: number;
+  /** Which verified sender to use (default: support). A full "Name <addr>" string is also accepted. */
+  from?: EmailSender | string;
+  /** Optional Reply-To (e.g. consultation@ on a noreply@ announcement). */
+  replyTo?: string;
+};
+
+/** "Grace In Design <consultation@graceindesign.net>" for a sender key, or the literal string given. */
+export function resolveFrom(from: EmailSender | string | undefined | null): { formatted: string; email: string } {
+  if (!from) return { formatted: env.senders.support.formatted, email: env.senders.support.email };
+  if (isEmailSender(from)) return { formatted: env.senders[from].formatted, email: env.senders[from].email };
+  const m = from.match(/<([^<>]+)>/);
+  return { formatted: from, email: (m ? m[1] : from).trim().toLowerCase() };
+}
+
+export async function sendEmail(opts: SendEmailOptions) {
+  const from = resolveFrom(opts.from);
   const [row] = await db.insert(outbox).values({
-    channel: "email", toAddr: opts.to, subject: opts.subject, bodyText: opts.text, bodyHtml: opts.html ?? textToHtml(opts.text),
+    channel: "email", toAddr: opts.to, fromAddr: from.formatted, replyTo: opts.replyTo || null, subject: opts.subject, bodyText: opts.text,
+    bodyHtml: opts.html ?? textToHtml(opts.text, from.email),
     attachments: opts.attachments?.map((a) => ({ filename: a.filename, contentType: a.contentType, contentBase64: a.contentBase64 })),
     relatedType: opts.relatedType, relatedId: opts.relatedId, status: "queued",
   }).returning();
@@ -26,30 +57,46 @@ export async function sendSms(opts: { to: string; body: string; relatedType?: st
   return deliverOutbox(row.id);
 }
 
+/** Which SMS route is live, for the admin and for docs: cft | twilio | logged. */
+export function smsRoute(): "cft" | "twilio" | "logged" {
+  if (cftSmsConfigured()) return "cft";
+  if (env.twilio.sid && env.twilio.token && env.twilio.from) return "twilio";
+  return "logged";
+}
+
 export async function deliverOutbox(id: number) {
   const row = await db.query.outbox.findFirst({ where: eq(outbox.id, id) });
   if (!row) return null;
   try {
     if (row.channel === "email") {
+      const from = row.fromAddr || env.senders.support.formatted;
       if (!env.sendgridApiKey) {
         console.log(formatEmailLog(row));
-        await db.update(outbox).set({ status: "logged", provider: "console", attempts: row.attempts + 1 }).where(eq(outbox.id, id));
+        await db.update(outbox).set({ status: "logged", provider: "console", fromAddr: from, attempts: row.attempts + 1 }).where(eq(outbox.id, id));
         return { ...row, status: "logged" as const };
       }
       const sg = (await import("@sendgrid/mail")).default;
       sg.setApiKey(env.sendgridApiKey);
       const [res] = await sg.send({
-        to: row.toAddr, from: env.emailFrom, subject: row.subject || "(no subject)", text: row.bodyText || "", html: row.bodyHtml || undefined,
+        to: row.toAddr, from, subject: row.subject || "(no subject)", text: row.bodyText || "", html: row.bodyHtml || undefined,
+        ...(row.replyTo ? { replyTo: row.replyTo } : {}),
         // Provider redirect wrappers can move fragment credentials into logged URLs.
         ...(/\/auth\/verify#token=/.test(row.bodyText || "") ? {
           trackingSettings: { clickTracking: { enable: false, enableText: false } },
         } : {}),
         attachments: row.attachments?.map((a) => ({ filename: a.filename, type: a.contentType, content: a.contentBase64 || "", disposition: "attachment" })),
       });
-      await db.update(outbox).set({ status: "sent", provider: "sendgrid", providerId: res.headers?.["x-message-id"] as string | undefined, sentAt: new Date(), attempts: row.attempts + 1 }).where(eq(outbox.id, id));
+      await db.update(outbox).set({ status: "sent", provider: "sendgrid", fromAddr: from, providerId: res.headers?.["x-message-id"] as string | undefined, sentAt: new Date(), attempts: row.attempts + 1 }).where(eq(outbox.id, id));
       return { ...row, status: "sent" as const };
     }
-    if (!env.twilio.sid || !env.twilio.token || !env.twilio.from) {
+    // ---- SMS: Call Flow Tracker → Twilio → logged ----
+    const route = smsRoute();
+    if (route === "cft") {
+      const r = await sendSmsViaCft({ to: row.toAddr, body: row.bodyText || "" });
+      await db.update(outbox).set({ status: "sent", provider: "cft", providerId: r.messageSid || null, fromAddr: r.from, sentAt: new Date(), attempts: row.attempts + 1 }).where(eq(outbox.id, id));
+      return { ...row, status: "sent" as const };
+    }
+    if (route === "logged") {
       console.log(redactAuthUrls(`[outbox:sms → ${row.toAddr}] ${row.bodyText}`));
       await db.update(outbox).set({ status: "logged", provider: "console", attempts: row.attempts + 1 }).where(eq(outbox.id, id));
       return { ...row, status: "logged" as const };
@@ -57,28 +104,18 @@ export async function deliverOutbox(id: number) {
     const twilio = (await import("twilio")).default;
     const client = twilio(env.twilio.sid, env.twilio.token);
     const msg = await client.messages.create({ to: row.toAddr, from: env.twilio.from, body: row.bodyText || "" });
-    await db.update(outbox).set({ status: "sent", provider: "twilio", providerId: msg.sid, sentAt: new Date(), attempts: row.attempts + 1 }).where(eq(outbox.id, id));
+    await db.update(outbox).set({ status: "sent", provider: "twilio", providerId: msg.sid, fromAddr: env.twilio.from, sentAt: new Date(), attempts: row.attempts + 1 }).where(eq(outbox.id, id));
     return { ...row, status: "sent" as const };
   } catch (e: any) {
     const error = redactAuthUrls(String(e?.message || e));
     console.error("outbox delivery failed", error);
     await db.update(outbox).set({ status: "failed", error: error.slice(0, 1000), attempts: row.attempts + 1 }).where(eq(outbox.id, id));
-    return { ...row, status: "failed" as const };
+    return { ...row, status: "failed" as const, error };
   }
 }
 
-export function normalizePhone(input: string | null | undefined): string | null {
-  if (!input) return null;
-  const digits = input.replace(/[^\d+]/g, "");
-  if (digits.startsWith("+")) return digits;
-  const d = digits.replace(/\D/g, "");
-  if (d.length === 10) return `+1${d}`;
-  if (d.length === 11 && d.startsWith("1")) return `+${d}`;
-  return d.length >= 8 ? `+${d}` : null;
-}
-
-export function textToHtml(text: string) {
+export function textToHtml(text: string, footerEmail = env.senders.support.email) {
   const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const paras = esc.split(/\n{2,}/).map((p) => `<p style="margin:0 0 14px;line-height:1.6">${p.replace(/\n/g, "<br>")}</p>`).join("");
-  return `<!doctype html><html><body style="margin:0;background:#f2f4f7;padding:24px;font-family:Montserrat,Helvetica,Arial,sans-serif;color:#1a2238;font-size:15px"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid #e3e6ec"><div style="font-family:Georgia,serif;font-size:22px;margin-bottom:18px"><span style="letter-spacing:.08em">GRACE</span> <span style="background:#6cb6e6;padding:0 6px">IN</span> <span style="letter-spacing:.08em">DESIGN</span></div>${paras}<p style="margin:24px 0 0;font-size:12px;color:#8c95a8">Grace In Design Services, LLC · (770) 691-1600 · support@graceindesign.net</p></div></body></html>`;
+  return `<!doctype html><html><body style="margin:0;background:#f2f4f7;padding:24px;font-family:Montserrat,Helvetica,Arial,sans-serif;color:#1a2238;font-size:15px"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid #e3e6ec"><div style="font-family:Georgia,serif;font-size:22px;margin-bottom:18px"><span style="letter-spacing:.08em">GRACE</span> <span style="background:#6cb6e6;padding:0 6px">IN</span> <span style="letter-spacing:.08em">DESIGN</span></div>${paras}<p style="margin:24px 0 0;font-size:12px;color:#8c95a8">Grace In Design Services, LLC · (770) 691-1600 · ${footerEmail}</p></div></body></html>`;
 }

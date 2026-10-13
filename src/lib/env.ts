@@ -1,6 +1,11 @@
 /** Centralized environment access with safe defaults for development. */
 import { resolveBaseUrl } from "./base-url";
+import { resolveSenders } from "./email-senders";
 const isProd = process.env.NODE_ENV === "production";
+
+const senders = resolveSenders(process.env);
+/** Call Flow Tracker's own master-dashboard app id (shared/masterDashboardConfig.ts in CFT). */
+export const CFT_MASTER_APP_ID_DEFAULT = "608c99a8-0a2b-41d7-8930-f2dc3b0fe964";
 
 export const env = {
   isProd,
@@ -9,8 +14,19 @@ export const env = {
   sessionSecret: process.env.SESSION_SECRET || "dev-only-session-secret-change-me-dev-only-session-secret",
   databaseUrl: process.env.DATABASE_URL || "postgresql://gid:gid@127.0.0.1:5432/graceindesign",
   sendgridApiKey: process.env.SENDGRID_API_KEY || "",
-  emailFrom: process.env.EMAIL_FROM || "Grace In Design <support@graceindesign.net>",
-  adminNotifyEmail: process.env.ADMIN_NOTIFY_EMAIL || "support@graceindesign.net",
+  /** Legacy single sender — now the support@ sender's "Name <addr>" string. */
+  emailFrom: senders.support.formatted,
+  /** The four verified SendGrid senders (see src/lib/email-senders.ts for which is used when). */
+  senders,
+  /** Where non-sales inquiries and internal notices land (support@). */
+  adminNotifyEmail: process.env.ADMIN_NOTIFY_EMAIL || senders.support.email,
+  /** Where consultation / sales form submissions land (consultation@). */
+  salesNotifyEmail: process.env.SALES_NOTIFY_EMAIL || senders.consultation.email,
+  /** Grace's mobile for new-lead texts; the admin setting overrides this. */
+  adminNotifyPhone: process.env.ADMIN_NOTIFY_PHONE || "",
+  slack: {
+    webhookUrl: process.env.SLACK_WEBHOOK_URL || "",
+  },
   twilio: {
     sid: process.env.TWILIO_ACCOUNT_SID || "",
     token: process.env.TWILIO_AUTH_TOKEN || "",
@@ -23,6 +39,16 @@ export const env = {
     ssoSecret: process.env.CFT_SSO_SECRET || "",
     ssoSecretPrevious: process.env.CFT_SSO_SECRET_PREVIOUS || "",
     appId: process.env.CFT_SSO_APP_ID || "5f1d4a8e-8c3b-4b7e-9c2a-7f3a0d6e1b42",
+    // GID → CFT: this app signs people *into* Call Flow Tracker using CFT's master-dashboard SSO
+    // (CFT's MASTER_DASHBOARD_SECRET) and sends team texts through CFT's Twilio connection.
+    masterSecret: process.env.CFT_MASTER_DASHBOARD_SECRET || "",
+    masterAppId: process.env.CFT_MASTER_APP_ID || CFT_MASTER_APP_ID_DEFAULT,
+    /** Tracking number (E.164) in CFT that team texts are sent from. */
+    smsFrom: process.env.CFT_SMS_FROM || "",
+    /** CFT login email of the person whose CFT session sends those texts (defaults to the notification user). */
+    smsSenderEmail: (process.env.CFT_SMS_SENDER_EMAIL || "").trim().toLowerCase(),
+    /** How long an auto sign-in link texted to Grace stays valid (hours). */
+    launchLinkHours: Number(process.env.CFT_LAUNCH_LINK_HOURS || 24) || 24,
   },
   objectStorageBucket: process.env.REPLIT_OBJECT_STORAGE_BUCKET || "",
   magnificApiKey: process.env.MAGNIFIC_API_KEY || "",

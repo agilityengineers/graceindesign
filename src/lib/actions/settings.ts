@@ -7,6 +7,9 @@ import { str, strOrNull, parseNum, bool, tryJson } from "@/lib/utils";
 import { getSetting, setSetting, type SocialLink } from "@/lib/server/settings";
 import { issueMagicLink } from "@/lib/auth/magic-link";
 import { env } from "@/lib/env";
+import { slackConfigured } from "@/lib/server/slack";
+import { cftSmsConfigured } from "@/lib/server/cft-master";
+import { revokeCftLaunchLinks } from "@/lib/server/cft-links";
 
 const BACK = "/admin/content/settings";
 const REVAL = [BACK, "/", "/contact", "/about"];
@@ -62,7 +65,7 @@ export async function updateUser(formData: FormData) {
       if (self) throw new Error("You can't deactivate yourself");
       if (target.isSuperAdmin && !actor.isSuperAdmin) throw new Error("Only a super admin can deactivate a super admin");
       await db.update(users).set({ isActive: op === "activate", updatedAt: new Date() }).where(eq(users.id, id));
-      if (op === "deactivate") await db.update(sessions).set({ revokedAt: new Date() }).where(eq(sessions.userId, id));
+      if (op === "deactivate") { await db.update(sessions).set({ revokedAt: new Date() }).where(eq(sessions.userId, id)); await revokeCftLaunchLinks(id); }
     } else if (op === "delete") {
       if (self) throw new Error("You can't delete yourself");
       if (target.isSuperAdmin && !actor.isSuperAdmin) throw new Error("Only a super admin can delete a super admin");
@@ -91,8 +94,9 @@ export async function integrationLiveStatus(key: string) { return liveStatus(key
 function liveStatus(key: string): string {
   switch (key) {
     case "sendgrid": return env.sendgridApiKey ? "connected" : "not_connected";
-    case "twilio": return env.twilio.sid && env.twilio.token && env.twilio.from ? "connected" : "not_connected";
-    case "cft": return env.cft.webhookSecret || env.cft.ssoSecret ? "connected" : "not_connected";
+    case "twilio": return cftSmsConfigured() || (env.twilio.sid && env.twilio.token && env.twilio.from) ? "connected" : "not_connected";
+    case "cft": return env.cft.webhookSecret || env.cft.ssoSecret || env.cft.masterSecret ? "connected" : "not_connected";
+    case "slack": return slackConfigured() ? "connected" : "not_connected";
     case "etsy": case "rss": return "connected";
     case "magnific": return env.magnificApiKey ? "connected" : "not_connected";
     case "meta": return env.social.meta.id && env.social.meta.secret ? "connected" : "not_connected";

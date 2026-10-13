@@ -8,7 +8,8 @@ import { and, eq, or, desc } from "drizzle-orm";
 import { db, leads, leadActivity, bookings, webhookEvents } from "@/lib/db";
 import { env } from "@/lib/env";
 import { hmacHex, timingSafeEqual, sha256Hex } from "@/lib/server/crypto";
-import { normalizePhone } from "@/lib/server/outbox";
+import { normalizePhone } from "@/lib/server/outbox-phone";
+import { notifyTeam } from "@/lib/server/notify";
 
 export function verifyCftSignature(headers: Headers, raw: string) {
   if (!env.cft.webhookSecret) return false;
@@ -72,9 +73,26 @@ export async function processCftEvent(raw: string): Promise<{ status: string; le
       default: result = "ignored";
     }
     await db.update(webhookEvents).set({ status: result, processedAt: new Date() }).where(eq(webhookEvents.id, evt.id));
+    if (result === "processed" && lead) await announceCftEvent(env_.event, d, lead).catch((e) => console.error("cft slack notice failed", String(e?.message || e)));
     return { status: result, leadId: lead?.id };
   } catch (e: any) {
     await db.update(webhookEvents).set({ status: "failed", error: String(e?.message || e).slice(0, 1000), processedAt: new Date() }).where(eq(webhookEvents.id, evt.id));
     throw e;
   }
+}
+
+/** Tell the team (Slack) what Call Flow Tracker just reported, with a button that signs Grace in to act on it. */
+async function announceCftEvent(event: string, d: Record<string, any>, lead: typeof leads.$inferSelect) {
+  const who = `${lead.name}${lead.phone ? ` · ${lead.phone}` : ""}`;
+  const dur = d.duration ?? d.durationSeconds;
+  const titles: Record<string, string> = {
+    "lead.created": `Call Flow Tracker: new lead — ${lead.name}`,
+    "call.completed": `Call Flow Tracker: call ${d.status || d.disposition || "completed"} — ${lead.name}`,
+    "disposition.changed": `Call Flow Tracker: ${d.disposition || d.leadStatus || "status changed"} — ${lead.name}`,
+    "appointment.booked": `Call Flow Tracker: appointment booked — ${lead.name}`,
+  };
+  const body = event === "call.completed"
+    ? `${who}${dur ? ` · ${Math.round(Number(dur) / 60)} min` : ""}${d.campaignName ? ` · ${d.campaignName}` : ""}${d.summary ? `\n${String(d.summary).slice(0, 600)}` : ""}${d.recordingUrl ? "\nA recording is available in Call Flow Tracker." : ""}`
+    : `${who}${d.campaignName ? ` · ${d.campaignName}` : ""}${d.notes ? `\n${String(d.notes).slice(0, 400)}` : ""}`;
+  await notifyTeam({ kind: "cft_event", title: titles[event] || `Call Flow Tracker: ${event} — ${lead.name}`, body, fields: [["Caller", lead.name], ["Phone", lead.phone || "—"], ["Email", lead.email || "—"], ...(d.campaignName ? [["Campaign", String(d.campaignName)] as [string, string]] : []), ...(dur ? [["Duration", `${Math.round(Number(dur) / 60)} min`] as [string, string]] : []), ...(d.recordingUrl ? [["Recording", "Listen in Call Flow Tracker"] as [string, string]] : [])], adminPath: `/admin/leads?open=${lead.id}`, cftTarget: event === "call.completed" ? "/calls" : "/crm", relatedType: "lead", relatedId: lead.id });
 }

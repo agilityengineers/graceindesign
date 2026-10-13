@@ -17,7 +17,7 @@ export async function issueMagicLink(emailRaw: string, redirectTo = "/admin") {
   await db.insert(magicLinkTokens).values({ email, tokenHash: sha256Hex(token), redirectTo, expiresAt: new Date(Date.now() + TTL_MIN * 60000) });
   const link = `${env.baseUrl}/auth/verify#token=${encodeURIComponent(token)}`;
   await sendEmail({
-    to: email, subject: "Your Grace In Design sign-in link", relatedType: "user", relatedId: user.id,
+    to: email, from: "noreply", subject: "Your Grace In Design sign-in link", relatedType: "user", relatedId: user.id,
     text: `Hi ${user.name.split(" ")[0]},\n\nClick to sign in to the Grace In Design admin:\n${link}\n\nThis link expires in ${TTL_MIN} minutes and can be used once. If you didn't request it, you can ignore this email.`,
   });
   return { ok: true as const, sent: true, devLink: env.isProd || env.sendgridApiKey ? null : link };
