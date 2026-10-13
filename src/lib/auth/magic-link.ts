@@ -20,7 +20,7 @@ export async function issueMagicLink(emailRaw: string, redirectTo = "/admin") {
     to: email, subject: "Your Grace In Design sign-in link", relatedType: "user", relatedId: user.id,
     text: `Hi ${user.name.split(" ")[0]},\n\nClick to sign in to the Grace In Design admin:\n${link}\n\nThis link expires in ${TTL_MIN} minutes and can be used once. If you didn't request it, you can ignore this email.`,
   });
-  return { ok: true as const, sent: true, devLink: env.sendgridApiKey ? null : link };
+  return { ok: true as const, sent: true, devLink: env.isProd || env.sendgridApiKey ? null : link };
 }
 
 export async function consumeMagicLink(token: string) {

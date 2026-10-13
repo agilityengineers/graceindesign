@@ -40,6 +40,10 @@ try {
     await route.continue();
   });
   const page = await ctx.newPage();
+  const loginTraffic = [];
+  page.on("request", request => {
+    loginTraffic.push({ url: request.url(), referrer: request.headers().referer || "" });
+  });
   const errors = [];
   page.on("pageerror", () => errors.push(true));
   page.setDefaultTimeout(60000);
@@ -52,6 +56,8 @@ try {
     await page.locator('input[name="email"]').fill(address);
     await page.getByRole("button", { name: "Email me a sign-in link" }).click();
     await page.waitForURL(u => u.pathname === "/login" && u.searchParams.get("sent") === "1");
+    check("login URL has only a non-sensitive confirmation flag",
+      new URL(page.url()).search === "?sent=1");
     return page.getByRole("link", { name: "open sign-in link" });
   };
   stage = "signed-out admin is gated";
@@ -73,6 +79,20 @@ try {
   console.log(`CHECK generated link uses local development server: ${localOrigin ? "yes" : "no"}`);
   check("generated link uses preview origin without remapping", sameOrigin);
   const hash = createHash("sha256").update(new URL(href).searchParams.get("token")).digest("hex");
+  const credential = linkUrl.searchParams.get("token");
+  const devCookie = (await ctx.cookies()).find(c => c.name === "gid_dev_link");
+  check("development lookup cookie is private and scoped",
+    devCookie?.httpOnly && devCookie.path === "/login"
+    && devCookie.expires <= Date.now() / 1000 + 301);
+  const cdp = await ctx.newCDPSession(page);
+  const history = await cdp.send("Page.getNavigationHistory");
+  check("browser history never receives the sign-in token or lookup handle",
+    history.entries.every(entry => !entry.url.includes(credential) && !entry.url.includes(devCookie.value)));
+  check("upstream request URLs and referrers never receive credentials from login",
+    loginTraffic.every(entry => !entry.url.includes(credential) && !entry.referrer.includes(credential)
+      && !entry.url.includes(devCookie.value) && !entry.referrer.includes(devCookie.value)));
+  check("development link suppresses referrers", await link.getAttribute("referrerpolicy") === "no-referrer");
+  await cdp.detach();
   let tokenRows = await pool.query("select used_at, expires_at from magic_link_tokens where token_hash=$1 and email=$2", [hash, email]);
   check("request stores an unused expiring token hash", tokenRows.rowCount === 1
     && !tokenRows.rows[0].used_at && tokenRows.rows[0].expires_at > new Date());

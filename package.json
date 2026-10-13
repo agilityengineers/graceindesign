@@ -21,6 +21,7 @@
     "test": "playwright test",
     "test:log-redaction": "node --test tests/log-redaction.test.mjs",
     "test:auth-logging": "node tests/auth-logging-smoke.mjs",
+    "test:dev-link-store": "tsx --test tests/dev-link-store.test.ts",
     "verify": "npm run typecheck && npm run lint && npm run build"
   },
   "dependencies": {

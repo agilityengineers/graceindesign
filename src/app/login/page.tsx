@@ -6,25 +6,29 @@ import { rateLimit } from "@/lib/server/rate-limit";
 import { headers } from "next/headers";
 import { env } from "@/lib/env";
 import { ssoConfigured } from "@/lib/auth/cft-sso";
+import { getDevLink, setDevLink } from "@/lib/auth/dev-link";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin sign in" };
 
 async function sendLink(formData: FormData) {
   "use server";
+  await setDevLink(null);
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const next = String(formData.get("next") || "/admin");
   const h = await headers(); const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || "anon";
   if (!(await rateLimit(`login:${ip}`, 10, 900)).ok) redirect(`/login?err=rate&next=${encodeURIComponent(next)}`);
   if (!email) redirect(`/login?err=email`);
   const res = await issueMagicLink(email, next.startsWith("/") ? next : "/admin");
-  redirect(`/login?sent=1${res.devLink ? `&dev=${encodeURIComponent(res.devLink)}` : ""}`);
+  await setDevLink(res.devLink);
+  redirect("/login?sent=1");
 }
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; sent?: string; err?: string; dev?: string }> }) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; sent?: string; err?: string }> }) {
   const sp = await searchParams;
   const u = await getCurrentUser(); if (u) redirect(sp.next || "/admin");
   const next = sp.next || "/admin";
+  const devLink = sp.sent ? await getDevLink() : null;
   return (
     <div style={{ minHeight: "100vh", background: "#1a2238", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ width: 440, maxWidth: "100%", background: "#fff", borderRadius: 20, padding: 40, display: "flex", flexDirection: "column", gap: 18, boxShadow: "0 30px 80px rgba(0,0,0,.35)" }}>
@@ -34,7 +38,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         {sp.sent ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 16, borderRadius: 12, background: "#e6f3fc", fontSize: 14, lineHeight: 1.6 }}>
             <strong>Check your email.</strong> If that address belongs to a team member, a sign-in link is on its way. It expires in 20 minutes.
-            {sp.dev && <span style={{ fontSize: 12, color: "#6b7486" }}>Email isn't configured yet (no SENDGRID_API_KEY), so here's your link: <a href={sp.dev} style={{ color: "#3f9ad9", fontWeight: 600, wordBreak: "break-all" }}>open sign-in link</a></span>}
+            {devLink && <span style={{ fontSize: 12, color: "#6b7486" }}>Email isn't configured yet (no SENDGRID_API_KEY), so here's your link: <a href={devLink} referrerPolicy="no-referrer" style={{ color: "#3f9ad9", fontWeight: 600, wordBreak: "break-all" }}>open sign-in link</a></span>}
           </div>
         ) : (
           <form action={sendLink} style={{ display: "flex", flexDirection: "column", gap: 12 }}>

@@ -37,12 +37,24 @@ try {
   form.set("next", "/admin");
   const result = await fetch(`${base}/login`, { method: "POST", body: form, redirect: "manual" });
   const location = new URL(result.headers.get("location"), base);
-  const dev = location.searchParams.get("dev");
-  check("login returns the intact development link", result.status === 303 && !!dev);
+  check("login redirects without credentials or lookup handles",
+    result.status === 303 && location.pathname + location.search === "/login?sent=1");
+  const cookieHeader = result.headers.getSetCookie().findLast(value => value.startsWith("gid_dev_link="));
+  check("lookup cookie is HttpOnly, scoped and short-lived",
+    !!cookieHeader && /HttpOnly/i.test(cookieHeader) && /Path=\/login/i.test(cookieHeader)
+    && /Max-Age=300/i.test(cookieHeader) && /SameSite=lax/i.test(cookieHeader));
+  const cookie = cookieHeader.split(";")[0];
+  const sentResponse = await fetch(new URL(location.pathname + location.search, base), { headers: { cookie } });
+  const sentPage = await sentResponse.text();
+  const dev = sentPage.match(/href="([^"]+)"[^>]*>open sign-in link/)?.[1]?.replaceAll("&amp;", "&");
+  check("private response preserves the development link", !!dev && /no-store/.test(sentResponse.headers.get("cache-control")));
   const token = new URL(dev).searchParams.get("token");
   check("development link includes an issued credential", !!token);
-  // Keep all traffic local, irrespective of the fork's canonical URL setting.
-  const sentPage = await (await fetch(new URL(location.pathname + location.search, base))).text();
+  check("lookup cookie does not contain the sign-in credential", !cookie.includes(token));
+  const anonymousPage = await (await fetch(`${base}/login?sent=1`)).text();
+  check("copied login URL cannot reveal a link", !anonymousPage.includes("open sign-in link"));
+  const forgedPage = await (await fetch(`${base}/login?sent=1&dev=https://example.invalid/forged`)).text();
+  check("legacy query cannot inject a development link", !forgedPage.includes("open sign-in link"));
   check("development link UI retains a working href",
     sentPage.includes(`href="${dev.replaceAll("&", "&amp;")}"`) && sentPage.includes("open sign-in link"));
   const mail = (await pool.query("select body_text, status from outbox where to_addr=$1", [email])).rows[0];
@@ -62,7 +74,7 @@ try {
     !output.includes(token) && !output.includes(encodeURIComponent(dev)));
   check("email diagnostics omit sign-in content", output.includes("sign-in email content redacted"));
   check("login and verify logs retain paths and redact query values",
-    /GET \/login\?sent=1&dev=\[REDACTED\] 200/.test(output)
+    /GET \/login\?sent=1 200/.test(output)
     && /GET \/auth\/verify\?token=\[REDACTED\] 307/.test(output));
   check("startup and timing diagnostics remain visible", output.includes("Ready") && /\d+ms/.test(output));
 } catch {

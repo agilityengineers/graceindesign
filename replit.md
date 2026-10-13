@@ -18,6 +18,10 @@ Replit runs `scripts/post-merge.sh` to install the locked dependencies and run t
 
 ## Safe authentication diagnostics
 
+The development login confirmation redirects only to `/login?sent=1`. Its link is kept in bounded, process-local storage for five minutes and retrieved using a scoped HttpOnly cookie, never a URL lookup handle. Reloads work during that window; restarting the server or eviction requires requesting another link. Production and configured email delivery never expose this UI. Login responses are private/no-store. This protects the login URL in history, referrers, and URL access logs; clicking the actual `/auth/verify?token=…` link still uses the existing credential-bearing verification URL. Do not log Cookie headers or response bodies.
+
+Run `npm run test:dev-link-store` for expiry and isolation tests. The auth browser smoke also checks login history, outgoing request URLs, and referrers without printing credentials.
+
 Use `npm run dev` / `npm start`, not bare `next`: the launcher redacts auth query values from both Next.js output streams, including worker errors. Request paths, statuses, timings, and ordinary messages remain visible. Sign-in email previews omit their body; actual delivery and the development login-page link are unchanged. This only protects application console output, not browser history, proxy access logs, or stored email bodies.
 
 Run `npm run test:log-redaction` for synthetic logging regression tests. Run the existing browser auth smoke with `AUTH_SERVER_LOGS_REDACTED=1 node tests/auth-smoke.mjs` against that launcher; never enable traces or raw credential diagnostics.
