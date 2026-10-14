@@ -50,7 +50,7 @@ export async function convertLeadToProject(leadId: number, userId: number | null
   if (rules.sendWelcomeEmail && lead.email) {
     const token = randomToken(18);
     await db.insert(portalAccess).values({ projectId: project.id, email: lead.email, token });
-    await sendEmail({ to: lead.email, subject: `Welcome aboard — ${project.name}`, relatedType: "project", relatedId: project.id, text: `Hi ${lead.name.split(" ")[0]},\n\nWe're delighted to be working with you. Your project (${code}) is set up and here's what happens next: we'll confirm scope and schedule, then keep you posted at each milestone.\n\nYour client portal (documents, schedule, approvals): ${env.baseUrl}/portal/${token}\n\nGrace A. Williams\nGrace In Design` });
+    await sendEmail({ to: lead.email, from: "support", subject: `Welcome aboard — ${project.name}`, relatedType: "project", relatedId: project.id, text: `Hi ${lead.name.split(" ")[0]},\n\nWe're delighted to be working with you. Your project (${code}) is set up and here's what happens next: we'll confirm scope and schedule, then keep you posted at each milestone.\n\nYour client portal (documents, schedule, approvals): ${env.baseUrl}/portal/${token}\n\nGrace A. Williams\nGrace In Design` });
   }
   await stopSequencesForLead(lead.id).catch(() => {});
   await emitEvent("project.created", { projectId: project.id, code, leadId: lead.id, name: project.name, contractValue: project.contractValue });
@@ -77,19 +77,19 @@ export async function runStageAutomation(projectId: number, stageId: number, use
     }
     case "client_approval": {
       const [a] = await db.insert(approvals).values({ projectId, title: `Approve: ${stage.name}`, description: "Please review the concept and let us know if we can proceed." }).returning();
-      if (lead?.email) { const pa = await db.query.portalAccess.findFirst({ where: eq(portalAccess.projectId, projectId) }); const link = pa ? `${env.baseUrl}/portal/${pa.token}` : `${env.baseUrl}/contact`; await sendEmail({ to: lead.email, subject: `Your approval is needed — ${project.name}`, relatedType: "project", relatedId: projectId, text: `Hi ${lead.name.split(" ")[0]},\n\nWe've reached “${stage.name}” on ${project.name} and need your approval to continue.\n\nReview and respond here: ${link}\n\nGrace In Design` }); }
+      if (lead?.email) { const pa = await db.query.portalAccess.findFirst({ where: eq(portalAccess.projectId, projectId) }); const link = pa ? `${env.baseUrl}/portal/${pa.token}` : `${env.baseUrl}/contact`; await sendEmail({ to: lead.email, from: "support", subject: `Your approval is needed — ${project.name}`, relatedType: "project", relatedId: projectId, text: `Hi ${lead.name.split(" ")[0]},\n\nWe've reached “${stage.name}” on ${project.name} and need your approval to continue.\n\nReview and respond here: ${link}\n\nGrace In Design` }); }
       await log(`Automation: client approval requested (#${a.id})`);
       return "client_approval";
     }
     case "schedule_install": {
       await db.insert(milestones).values({ projectId, title: "Installation scheduled", dueAt: project.targetDate, sort: 99 });
       const owner = project.ownerId ? await db.query.users.findFirst({ where: eq(users.id, project.ownerId) }) : null;
-      if (owner?.email) await sendEmail({ to: owner.email, subject: `Schedule install — ${project.name}`, text: `${project.name} moved to “${stage.name}”. Please schedule the installation and confirm the date with the client.\n\n${env.baseUrl}/admin/projects?open=${projectId}` });
+      if (owner?.email) await sendEmail({ to: owner.email, from: "noreply", subject: `Schedule install — ${project.name}`, text: `${project.name} moved to “${stage.name}”. Please schedule the installation and confirm the date with the client.\n\n${env.baseUrl}/admin/projects?open=${projectId}` });
       await log("Automation: install milestone added and owner notified");
       return "schedule_install";
     }
     case "request_review": {
-      if (lead?.email) await sendEmail({ to: lead.email, subject: "Thank you from Grace In Design", relatedType: "project", relatedId: projectId, text: `Hi ${lead.name.split(" ")[0]},\n\nThank you for trusting us with ${project.name}. If you have a minute, a short review helps other families and businesses find us:\n\nGoogle: https://g.page/r/graceindesign/review\n\nWith gratitude,\nGrace` });
+      if (lead?.email) await sendEmail({ to: lead.email, from: "support", subject: "Thank you from Grace In Design", relatedType: "project", relatedId: projectId, text: `Hi ${lead.name.split(" ")[0]},\n\nThank you for trusting us with ${project.name}. If you have a minute, a short review helps other families and businesses find us:\n\nGoogle: https://g.page/r/graceindesign/review\n\nWith gratitude,\nGrace` });
       await log("Automation: review request sent");
       return "request_review";
     }

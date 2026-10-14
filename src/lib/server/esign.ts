@@ -21,7 +21,7 @@ export async function sendProposal(id: number, userId?: number | null) {
     } catch { /* fall back to built-in */ }
   }
   await db.update(proposals).set({ status: "sent", sentAt: new Date(), token, recipientEmail: to, recipientName: p.recipientName || lead?.name || null, esignProvider: provider, esignRequestId: requestId, updatedAt: new Date() }).where(eq(proposals.id, id));
-  if (provider === "builtin") await sendEmail({ to, subject: `Your proposal from Grace In Design: ${p.title}`, relatedType: "proposal", relatedId: p.id, text: `Hi ${(p.recipientName || lead?.name || "there").split(" ")[0]},\n\nYour proposal is ready to review and sign online:\n${link}\n\nQuestions? Reply to this email or call (770) 691-1600.\n\nGrace A. Williams\nGrace In Design` });
+  if (provider === "builtin") await sendEmail({ to, from: "consultation", subject: `Your proposal from Grace In Design: ${p.title}`, relatedType: "proposal", relatedId: p.id, text: `Hi ${(p.recipientName || lead?.name || "there").split(" ")[0]},\n\nYour proposal is ready to review and sign online:\n${link}\n\nQuestions? Reply to this email or call (770) 691-1600.\n\nGrace A. Williams\nGrace In Design` });
   if (lead) await db.insert(leadActivity).values({ leadId: lead.id, userId: userId ?? null, type: "proposal", body: `Proposal sent: ${p.title}${p.amount ? ` — $${Number(p.amount).toLocaleString()}` : ""}`, attachmentUrl: link });
   if (lead && lead.stage !== "won") await db.update(leads).set({ stage: "proposal_sent", updatedAt: new Date() }).where(eq(leads.id, lead.id));
   return link;
@@ -33,7 +33,7 @@ export async function signProposal(token: string, signerName: string, ip: string
   if (p.leadId) await db.insert(leadActivity).values({ leadId: p.leadId, type: "proposal", body: `Proposal signed by ${signerName}: ${p.title}` });
   if (p.projectId) await db.insert(projectActivity).values({ projectId: p.projectId, type: "proposal", body: `Proposal signed by ${signerName}: ${p.title}` });
   await emitEvent("proposal.signed", { proposalId: p.id, leadId: p.leadId, projectId: p.projectId, amount: p.amount, signerName });
-  if (p.recipientEmail) await sendEmail({ to: p.recipientEmail, subject: `Signed: ${p.title}`, text: `Thank you, ${signerName}. Your signed proposal is on file. A copy is always available at ${env.baseUrl}/proposal/${token}.\n\nGrace In Design` });
+  if (p.recipientEmail) await sendEmail({ to: p.recipientEmail, from: "noreply", replyTo: env.senders.consultation.email, subject: `Signed: ${p.title}`, text: `Thank you, ${signerName}. Your signed proposal is on file. A copy is always available at ${env.baseUrl}/proposal/${token}.\n\nGrace In Design` });
   return p;
 }
 export { projects };

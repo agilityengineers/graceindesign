@@ -28,7 +28,7 @@ async function respond(formData: FormData) {
   await db.update(approvals).set({ status, respondedAt: new Date(), responseNote: note || null }).where(eq(approvals.id, id));
   await db.insert(projectActivity).values({ projectId: ctx.project.id, type: "approval", body: `Client ${status === "approved" ? "approved" : "requested changes on"} “${a.title}”${note ? `: ${note}` : ""}` });
   const owner = ctx.project.ownerId ? await db.query.users.findFirst({ where: eq(users.id, ctx.project.ownerId) }) : null;
-  await sendEmail({ to: owner?.email || env.adminNotifyEmail, subject: `${status === "approved" ? "Approved" : "Changes requested"}: ${a.title} — ${ctx.project.name}`, text: `${ctx.access.email} responded in the client portal.\n\n${a.title}: ${status}${note ? `\n\nNote: ${note}` : ""}\n\n${env.baseUrl}/admin/projects?open=${ctx.project.id}` });
+  await sendEmail({ to: owner?.email || env.adminNotifyEmail, from: "noreply", replyTo: ctx.access.email, subject: `${status === "approved" ? "Approved" : "Changes requested"}: ${a.title} — ${ctx.project.name}`, text: `${ctx.access.email} responded in the client portal.\n\n${a.title}: ${status}${note ? `\n\nNote: ${note}` : ""}\n\n${env.baseUrl}/admin/projects?open=${ctx.project.id}` });
   await emitEvent("project.stage_changed", { projectId: ctx.project.id, code: ctx.project.code, approval: a.title, status });
   redirect(`/portal/${token}?ok=1#approvals`);
 }

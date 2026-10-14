@@ -10,7 +10,7 @@ Think of the app as one house with three doors: the **public site** visitors wal
 | Styling | Tailwind v4 base + hand-written design tokens in `src/app/globals.css` (navy `#1a2238`, sky `#6cb6e6`, Montserrat + Cormorant Garamond) |
 | Database | PostgreSQL via Drizzle ORM (`src/lib/db/schema.ts`), migrations in `drizzle/` |
 | Storage | Replit Object Storage (`@replit/object-storage`) with local `./.data/uploads` fallback; served through `/api/media/[...key]` |
-| Email / SMS | SendGrid / Twilio through the `outbox` table (`src/lib/server/outbox.ts`) |
+| Email / SMS / Slack | SendGrid (four verified senders, `src/lib/email-senders.ts`), SMS through Call Flow Tracker's Twilio (fallback: direct Twilio), Slack incoming webhook — all through the `outbox` table / `src/lib/server/notify.ts` |
 | PDFs / calendar | `pdf-lib` (checklist, proposals), server-generated `.ics` |
 | Auth | Magic links + DB sessions + signed cookie; roles owner/editor/sales/social, super admin flag |
 | Hosting | Replit Autoscale (`.replit`), port 5000 → 80 |
@@ -53,13 +53,19 @@ tests/                 smoke test and screenshot helper
 | CFT ⇄ user directory | `GET/POST /api/master/users`, `PATCH/DELETE /api/master/users/[id]`, `POST /api/master/sessions/revoke` | signed with `CFT_SSO_SECRET` | Lets CFT provision, update, deactivate and sign out users. |
 | CFT dashboard tile | `GET /api/dashboard-metrics` | signed | Lead, booking, project and revenue counts for the CFT master dashboard. |
 | GID → CFT (or any CRM) | Admin → Client ops → Webhooks | per-subscription `whsec_…` (`X-GID-Signature`) | Events: lead.created/updated/stage_changed, booking.created/cancelled, project.created/stage_changed, invoice.paid, proposal.signed, cc.submission.created/published. Retries with backoff; deliveries visible in the admin. |
+| GID → CFT sign-in | `GET /go/cft/[token]` (texted/Slacked link), `GET /api/cft/launch` (signed-in team member) | `CFT_MASTER_DASHBOARD_SECRET` (= CFT's `MASTER_DASHBOARD_SECRET`), `CFT_MASTER_APP_ID` | This app plays CFT's "master dashboard": `src/lib/cft-launch-token.ts` mints a 2-minute token, CFT's `/sso/launch` signs the person in. Links are stored hashed in `cft_launch_links` (24h, audited, revoked on deactivation). |
+| GID → CFT texts | `src/lib/server/cft-master.ts` → CFT `POST /api/messages/send` | same secret + `CFT_SMS_FROM` | Obtains a CFT session for the sending user (`/sso/launch?return=json`), then sends from Grace's tracking number so the thread lives in CFT → Messages. Outbox provider `cft`. |
 
-Set `CFT_URL` so the login page can link back to CFT, register this app's launch URL (`<BASE_URL>/api/sso/launch`) under CFT → Administration → Connected Apps, and paste the secrets into Replit Secrets. Nothing else changes.
+Set `CFT_URL` so the login page can link back to CFT, register this app's launch URL (`<BASE_URL>/api/sso/launch`) under CFT → Administration → Connected Apps, and paste the secrets into Replit Secrets. The notification side (which inbox, Slack, text, auto sign-in) is in `docs/replit-notifications-setup.md`.
+
+## Team notifications
+
+`src/lib/server/notify.ts` is the switchboard. A consultation request fans out to: email to the sales inbox (`consultation@`, from `noreply@` with Reply-To the visitor), a Slack post (`src/lib/server/slack.ts`, Block Kit with "Open in admin" / "Open Call Flow Tracker" buttons), and a text to Grace that carries a `/go/cft/<token>` auto sign-in link. Caribbean Connection submissions and newsletter sign-ups go to the support inbox + Slack; events CFT reports through `/api/webhooks/cft` go to Slack. Toggles live in Admin → Form builder → Notifications; every channel is best-effort and logged on the lead's activity.
 
 ## Replit runbook
 
 1. **Create the Repl** from this repository (Node 20 + PostgreSQL modules are declared in `.replit`). Replit injects `DATABASE_URL`.
-2. **Secrets** (Tools → Secrets): `SESSION_SECRET` (required), `BASE_URL` (your published domain, e.g. `https://graceindesign.net`), `CRON_SECRET`, then `SENDGRID_API_KEY` + `EMAIL_FROM`, `TWILIO_*`, and later the Phase 3/4 keys listed in `.env.example`.
+2. **Secrets** (Tools → Secrets): `SESSION_SECRET` (required), `BASE_URL` (your published domain, e.g. `https://graceindesign.net`), `CRON_SECRET`, then `SENDGRID_API_KEY`, `SLACK_WEBHOOK_URL`, the Call Flow Tracker set (`CFT_URL`, `CFT_MASTER_DASHBOARD_SECRET`, `CFT_SMS_FROM`, `CFT_WEBHOOK_SECRET`, `CFT_SSO_SECRET`) per `docs/replit-notifications-setup.md`, and later the Phase 3/4 keys listed in `.env.example`.
 3. **Run**: the "Project" workflow runs `npm run db:setup -- --if-empty && npm run dev`. First run creates the schema and seeds the prototype data, including the two owner accounts (`info@graceindesign.net`, `emailme@clarencewilliams.com` as super admin) and the demo team.
 4. **Sign in**: open `/login`, enter an owner email. Until SendGrid is configured the sign-in link is shown on screen; afterwards it is emailed.
 5. **Images**: run `npm run media:fetch` once in the Replit shell (needs `MAGNIFIC_API_KEY`, or `-- --stock` to self-host the prototype stock photos) so generated photos are stored under `public/media/`; or upload replacements through Content → Media library.

@@ -11,6 +11,7 @@ import { buildChecklistPdf } from "@/lib/server/pdf";
 import { emitEvent } from "@/lib/server/webhooks";
 import { normalizePhone } from "@/lib/server/outbox";
 import { enrollLeadInSequences } from "@/lib/server/sequences";
+import { notifyTeam, describeNotice } from "@/lib/server/notify";
 
 export const TZ = "America/New_York";
 
@@ -93,7 +94,7 @@ export async function submitConsultation(input: ConsultSubmission, meta: { ip?: 
   const name = String(a.name || "").trim(); const email = String(a.email || "").trim().toLowerCase(); const phone = String(a.phone || "").trim();
   if (!name || !email || !a.consent) return { ok: false as const, error: "Name, email and consent are required." };
   const path = input.pathId ? await db.query.paths.findFirst({ where: eq(paths.id, input.pathId) }) : null;
-  const { notifications, booking: bookingSettings } = await getSettings(["notifications", "booking"]);
+  const { booking: bookingSettings } = await getSettings(["booking"]);
   const sourceLabel = PAGE_LABELS[input.sourcePage] || "Website";
   const [lead] = await db.insert(leads).values({
     name, email, phone: phone || null, contactPref: str(a.contact_pref), contactTime: str(a.contact_time), sourcePage: input.sourcePage, sourceLabel, pathId: path?.id ?? null,
@@ -126,18 +127,29 @@ export async function submitConsultation(input: ConsultSubmission, meta: { ip?: 
   const attachments: { filename: string; contentType: string; contentBase64: string }[] = [];
   if (booking && bookingSettings.sendIcs) attachments.push({ filename: "grace-in-design-consultation.ics", contentType: "text/calendar", contentBase64: Buffer.from(buildIcs({ uid: `booking-${booking.id}@graceindesign.net`, start: booking.startsAt, end: booking.endsAt, summary: `${consultType} — Grace In Design`, description: `Your ${consultType} with Grace A. Williams. We'll call ${phone || "you"} at the scheduled time.`, organizerEmail: env.adminNotifyEmail, organizerName: "Grace In Design", attendeeEmail: email, attendeeName: name, url: `${env.baseUrl}/contact` })).toString("base64") });
   if (bookingSettings.attachChecklist) attachments.push({ filename: "pre-consult-checklist.pdf", contentType: "application/pdf", contentBase64: (await buildChecklistPdf({ name, pathLabel: path?.label || "Consultation", consultType, when: when || "Time to be confirmed" })).toString("base64") });
-  if (bookingSettings.emailConfirm) await sendEmail({ to: email, subject: booking ? `You're booked: ${consultType} on ${when}` : "We received your request — Grace In Design", relatedType: "lead", relatedId: lead.id, attachments,
+  // Sales conversation → consultation@ so a reply lands in Grace's sales inbox.
+  if (bookingSettings.emailConfirm) await sendEmail({ to: email, from: "consultation", subject: booking ? `You're booked: ${consultType} on ${when}` : "We received your request — Grace In Design", relatedType: "lead", relatedId: lead.id, attachments,
     text: booking ? `Hi ${first},\n\nYou're booked for a ${consultType} with Grace In Design on ${when}. We'll call ${phone || "the number you provided"}.\n\nA calendar invite and our pre-consult checklist are attached. Need to change the time? Reply to this email or call (770) 691-1600.\n\nSee you soon,\nGrace A. Williams\nGrace In Design` : `Hi ${first},\n\nThanks for reaching out to Grace In Design. We reply within one business day.\n\nIn the meantime, our pre-consult checklist is attached so you know what to have handy.\n\nGrace A. Williams\nGrace In Design` });
   if (booking && bookingSettings.smsConfirm && phone && normalizePhone(phone)) await sendSms({ to: phone, body: `Hi ${first}, you're booked for a ${consultType} with Grace In Design on ${when}. Reply STOP to opt out.`, relatedType: "lead", relatedId: lead.id });
   if (booking) await db.update(bookings).set({ icsSentAt: new Date() }).where(eq(bookings.id, booking.id));
 
-  // Admin notification
-  if (notifications.emailAdminOnNewLead) {
-    const summary = Object.entries(a).filter(([k]) => !["consent", "photos"].includes(k)).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : String(v)}`).join("\n");
-    await sendEmail({ to: notifications.adminEmail || env.adminNotifyEmail, subject: `New lead: ${name} (${path?.short || "General"})${booking ? ` — booked ${when}` : ""}`, relatedType: "lead", relatedId: lead.id, text: `New consultation request from ${sourceLabel}.\n\n${summary}\n\nOpen in admin: ${env.baseUrl}/admin/leads?open=${lead.id}` });
-    if (notifications.smsAdminOnNewLead && notifications.adminPhone) await sendSms({ to: notifications.adminPhone, body: `New GID lead: ${name} · ${path?.short || "General"}${booking ? ` · booked ${when}` : ""}` });
-  }
+  // Team notification: email to the sales inbox (consultation@), Slack, and a text to Grace with a
+  // link that signs her into Call Flow Tracker. A sales inquiry, so it never goes to support@.
+  const answerRows = Object.entries(a).filter(([k, v]) => !["consent", "photos", "name", "email", "phone"].includes(k) && v !== "" && v != null).map(([k, v]) => [k.replace(/_/g, " "), Array.isArray(v) ? v.join(", ") : String(v)] as [string, string]);
+  const summary = answerRows.map(([k, v]) => `${k}: ${v}`).join("\n");
+  const notice = await notifyTeam({
+    kind: "lead",
+    title: `New consultation request: ${name} (${path?.short || "General"})${booking ? ` — booked ${when}` : ""}`,
+    body: `New consultation request from ${sourceLabel}.\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || "—"}\n${summary}`,
+    fields: [["Name", name], ["Email", email], ["Phone", phone || "—"], ["Audience", path?.label || "General"], ["Source", sourceLabel], ["Consultation", booking ? `Booked ${when}` : "No time picked yet"], ...answerRows.filter(([k]) => ["timeline", "budget", "contact pref", "contact time", "notes", "address", "company"].includes(k)).map(([k, v]) => [k[0].toUpperCase() + k.slice(1), v] as [string, string])],
+    adminPath: `/admin/leads?open=${lead.id}`,
+    replyTo: email,
+    sms: `New GID lead: ${name} · ${path?.short || "General"}${booking ? ` · booked ${when}` : ""}${phone ? ` · ${phone}` : ""}. Tap to open Call Flow Tracker:`,
+    cftTarget: "/calls",
+    relatedType: "lead", relatedId: lead.id,
+  });
   await db.insert(leadActivity).values({ leadId: lead.id, type: "email", body: "Auto-reply sent to lead" });
+  await db.insert(leadActivity).values({ leadId: lead.id, type: "system", body: describeNotice(notice), meta: { slack: notice.slack, sms: notice.sms, email: notice.email } });
   await emitEvent("lead.created", { lead: publicLead(lead), path: path?.id ?? null, sourcePage: input.sourcePage, booking: booking ? { id: booking.id, startsAt: booking.startsAt, endsAt: booking.endsAt } : null });
   if (booking) await emitEvent("booking.created", { bookingId: booking.id, leadId: lead.id, startsAt: booking.startsAt, endsAt: booking.endsAt, name, email, phone });
   await enrollLeadInSequences(lead.id, "new").catch(() => {});

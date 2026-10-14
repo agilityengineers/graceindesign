@@ -88,11 +88,11 @@ export async function resourceAction(formData: FormData) {
     const note = strOrNull(formData.get("note"));
     if (op === "approve" || op === "restore") {
       await db.update(ccResources).set({ status: "published", publishedAt: r.publishedAt || new Date(), reviewedBy: user.id, reviewNote: note, updatedAt: new Date() }).where(eq(ccResources.id, id));
-      if (op === "approve" && r.submittedByEmail) await sendEmail({ to: r.submittedByEmail, subject: `You're listed: ${r.name} is now in the Caribbean Connection directory`, text: `Good news — “${r.name}” has been published in the Caribbean Connection resource directory.\n\n${env.baseUrl}/caribbean-connection#directory\n\nThank you for helping families across the region.\nGrace In Design` });
+      if (op === "approve" && r.submittedByEmail) await sendEmail({ to: r.submittedByEmail, from: "support", subject: `You're listed: ${r.name} is now in the Caribbean Connection directory`, text: `Good news — “${r.name}” has been published in the Caribbean Connection resource directory.\n\n${env.baseUrl}/caribbean-connection#directory\n\nThank you for helping families across the region.\nGrace In Design` });
       if (op === "approve") await emitEvent("cc.submission.published", { type: "resource", id, name: r.name });
     } else if (op === "reject") {
       await db.update(ccResources).set({ status: "rejected", reviewedBy: user.id, reviewNote: note, updatedAt: new Date() }).where(eq(ccResources.id, id));
-      if (r.submittedByEmail) await sendEmail({ to: r.submittedByEmail, subject: `About your Caribbean Connection submission: ${r.name}`, text: `Thank you for suggesting “${r.name}”. We weren't able to list it this time.${note ? `\n\nReason: ${note}` : ""}\n\nYou're welcome to resubmit with more detail: ${env.baseUrl}/caribbean-connection#directory\n\nGrace In Design` });
+      if (r.submittedByEmail) await sendEmail({ to: r.submittedByEmail, from: "support", subject: `About your Caribbean Connection submission: ${r.name}`, text: `Thank you for suggesting “${r.name}”. We weren't able to list it this time.${note ? `\n\nReason: ${note}` : ""}\n\nYou're welcome to resubmit with more detail: ${env.baseUrl}/caribbean-connection#directory\n\nGrace In Design` });
     } else if (op === "unpublish") await db.update(ccResources).set({ status: "pending", reviewedBy: user.id, reviewNote: note, updatedAt: new Date() }).where(eq(ccResources.id, id));
     else if (op === "delete") await db.delete(ccResources).where(eq(ccResources.id, id));
     else if (op === "update") await db.update(ccResources).set({ name: str(formData.get("name")) || r.name, category: str(formData.get("category")) || r.category, country: str(formData.get("country")) || r.country, area: strOrNull(formData.get("area")), type: strOrNull(formData.get("type")), url: strOrNull(formData.get("url")), description: str(formData.get("description")) || r.description, kind: str(formData.get("kind")) || r.kind, updatedAt: new Date() }).where(eq(ccResources.id, id));
@@ -113,11 +113,11 @@ export async function eventAction(formData: FormData) {
     const note = strOrNull(formData.get("note"));
     if (op === "approve" || op === "restore") {
       await db.update(ccEvents).set({ status: "published", publishedAt: e.publishedAt || new Date(), reviewedBy: user.id, reviewNote: note, updatedAt: new Date() }).where(eq(ccEvents.id, id));
-      if (op === "approve" && e.submittedByEmail) await sendEmail({ to: e.submittedByEmail, subject: `Listed: ${e.title}`, text: `“${e.title}” is now listed on Caribbean Connection → Community events.\n\n${env.baseUrl}/caribbean-connection#events\n\nGrace In Design` });
+      if (op === "approve" && e.submittedByEmail) await sendEmail({ to: e.submittedByEmail, from: "support", subject: `Listed: ${e.title}`, text: `“${e.title}” is now listed on Caribbean Connection → Community events.\n\n${env.baseUrl}/caribbean-connection#events\n\nGrace In Design` });
       if (op === "approve") await emitEvent("cc.submission.published", { type: "event", id, title: e.title });
     } else if (op === "reject") {
       await db.update(ccEvents).set({ status: "rejected", reviewedBy: user.id, reviewNote: note, updatedAt: new Date() }).where(eq(ccEvents.id, id));
-      if (e.submittedByEmail) await sendEmail({ to: e.submittedByEmail, subject: `About your event submission: ${e.title}`, text: `Thank you for submitting “${e.title}”. We weren't able to list it this time.${note ? `\n\nReason: ${note}` : ""}\n\nGrace In Design` });
+      if (e.submittedByEmail) await sendEmail({ to: e.submittedByEmail, from: "support", subject: `About your event submission: ${e.title}`, text: `Thank you for submitting “${e.title}”. We weren't able to list it this time.${note ? `\n\nReason: ${note}` : ""}\n\nGrace In Design` });
     } else if (op === "unlist") await db.update(ccEvents).set({ status: "pending", reviewedBy: user.id, updatedAt: new Date() }).where(eq(ccEvents.id, id));
     else if (op === "delete") await db.delete(ccEvents).where(eq(ccEvents.id, id));
     else if (op === "update") { const date = str(formData.get("date")); await db.update(ccEvents).set({ title: str(formData.get("title")) || e.title, startsAt: date ? new Date(`${date}T12:00:00-05:00`) : e.startsAt, timeLabel: strOrNull(formData.get("timeLabel")), whereLabel: str(formData.get("whereLabel")) || e.whereLabel, format: str(formData.get("format")) || e.format, host: str(formData.get("host")) || e.host, url: strOrNull(formData.get("url")), cost: str(formData.get("cost")) || e.cost, description: str(formData.get("description")) || e.description, country: str(formData.get("country")) || e.country, updatedAt: new Date() }).where(eq(ccEvents.id, id)); }
@@ -157,9 +157,9 @@ export async function composeIssue(formData: FormData) {
     const segment = strOrNull(formData.get("segment"));
     const rows = await db.select({ email: ccSubscribers.email }).from(ccSubscribers).where(and(sql`${ccSubscribers.unsubscribedAt} is null`, segment ? eq(ccSubscribers.segment, segment) : sql`true`));
     if (!rows.length) throw new Error("No active subscribers in that segment");
-    if (bool(formData.get("test"))) { const to = str(formData.get("testEmail")); if (!to) throw new Error("Enter a test address"); await sendEmail({ to, subject: `[TEST] ${subject}`, text: body }); return 1; }
+    if (bool(formData.get("test"))) { const to = str(formData.get("testEmail")); if (!to) throw new Error("Enter a test address"); await sendEmail({ to, from: "newsletter", subject: `[TEST] ${subject}`, text: body }); return 1; }
     let n = 0;
-    for (const r of rows) { await db.insert(outbox).values({ channel: "email", toAddr: r.email, subject, bodyText: `${body}\n\n—\nUnsubscribe: ${env.baseUrl}/unsubscribe?e=${encodeURIComponent(r.email)}&list=cc`, relatedType: "cc_issue", status: "queued" }); n++; }
+    for (const r of rows) { await db.insert(outbox).values({ channel: "email", toAddr: r.email, fromAddr: env.senders.newsletter.formatted, subject, bodyText: `${body}\n\n—\nUnsubscribe: ${env.baseUrl}/unsubscribe?e=${encodeURIComponent(r.email)}&list=cc`, relatedType: "cc_issue", status: "queued" }); n++; }
     return n;
   }, { back: "/admin/caribbean?tab=subscribers", ok: "Issue queued — the outbox job delivers it", entityId: (n) => n, revalidate: ["/admin/caribbean", "/admin/ops"] });
 }

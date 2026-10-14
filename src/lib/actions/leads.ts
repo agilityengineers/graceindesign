@@ -65,7 +65,7 @@ export async function addLeadActivity(formData: FormData) {
     if (!body) throw new Error("Write something first");
     const lead = await db.query.leads.findFirst({ where: eq(leads.id, id) }); if (!lead) throw new Error("Lead not found");
     await db.insert(leadActivity).values({ leadId: id, userId: user.id, type, body });
-    if (type === "email" && formData.get("send") === "1" && lead.email) await sendEmail({ to: lead.email, subject: str(formData.get("subject")) || "A note from Grace In Design", text: body, relatedType: "lead", relatedId: id });
+    if (type === "email" && formData.get("send") === "1" && lead.email) await sendEmail({ to: lead.email, from: "consultation", subject: str(formData.get("subject")) || "A note from Grace In Design", text: body, relatedType: "lead", relatedId: id });
     if (type === "sms" && formData.get("send") === "1" && lead.phone) await sendSms({ to: lead.phone, body, relatedType: "lead", relatedId: id });
     if (lead.stage === "new" && ["call", "email", "sms"].includes(type)) await setStage(id, "contacted", user.id, type === "call" ? "call logged" : `${type} sent`);
     return id;

@@ -31,6 +31,7 @@ Sign in at `/login` with `info@graceindesign.net` or `emailme@clarencewilliams.c
 | `npm run cron -- <job>` | Run a scheduled job (`reminders`, `rss`, `etsy`, `social`, `drips`, `webhooks`, `outbox`, `hubspot`, `all`) |
 | `npm run media:fetch` | Download generated/stock imagery into `public/media/` |
 | `npm run verify` | Typecheck + lint + production build |
+| `npm run test:notifications` | Unit tests for sender routing, Call Flow Tracker tokens and Slack payloads |
 | `node tests/smoke.mjs` | Funnel and route smoke test against a running server (writes a test lead) |
 | `npm run test:launch-content` | Read-only crawl of the public pages: no prototype/admin text, unique titles and descriptions, robots, sitemap, favicon, noindex, redirects |
 | `node tests/shot.mjs --login <owner email> /route …` | Full-page screenshots (dev helper) |
@@ -41,4 +42,4 @@ Public site: `src/app/(site)`. Admin: `src/app/admin`. APIs (funnel, cron, Call 
 
 ## Environment
 
-Everything configurable is listed in `.env.example`. Only `DATABASE_URL`, `SESSION_SECRET` and `BASE_URL` are needed to run; email, SMS, Call Flow Tracker, social networks, Stripe, e-sign and HubSpot switch on when their secrets are added, and the admin's Integrations panel shows which are live.
+Everything configurable is listed in `.env.example`. Only `DATABASE_URL`, `SESSION_SECRET` and `BASE_URL` are needed to run; email, SMS, Slack, Call Flow Tracker, social networks, Stripe, e-sign and HubSpot switch on when their secrets are added, and the admin's Integrations panel shows which are live. The notification wiring (which SendGrid address sends what, Slack, texts and auto sign-in through Call Flow Tracker) is in `docs/replit-notifications-setup.md`.
