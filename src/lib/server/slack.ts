@@ -54,10 +54,10 @@ export async function notifySlack(m: SlackMessage): Promise<{ sent: boolean; err
     const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
     const res = await fetch(env.slack.webhookUrl, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload), signal: ctrl.signal });
     clearTimeout(t);
-    if (!res.ok) { const body = await res.text().catch(() => ""); console.error("slack webhook failed", res.status, body.slice(0, 200)); return { sent: false, error: `HTTP ${res.status} ${body.slice(0, 120)}` }; }
+    if (!res.ok) { console.error("slack webhook failed", res.status); return { sent: false, error: `HTTP ${res.status}` }; }
     return { sent: true };
   } catch (e: any) {
-    console.error("slack webhook error", String(e?.message || e));
-    return { sent: false, error: String(e?.message || e) };
+    console.error("slack webhook error");
+    return { sent: false, error: "Slack delivery failed" };
   }
 }

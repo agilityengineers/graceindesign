@@ -19,6 +19,8 @@ import { isEmailSender, type EmailSender } from "@/lib/email-senders";
 import { formatEmailLog, redactAuthUrls } from "./log-redaction.mjs";
 import { normalizePhone } from "./outbox-phone";
 import { cftSmsConfigured, sendSmsViaCft } from "./cft-master";
+import { emailTrackingSettings } from "./email-tracking";
+import { COMMUNICATION_LOGO_HTML, COMMUNICATION_LOGO_CID, communicationLogoAttachment } from "./communication-brand";
 
 export { normalizePhone };
 
@@ -55,10 +57,11 @@ export async function sendEmail(opts: SendEmailOptions) {
   return deliverOutbox(row.id);
 }
 
-export async function sendSms(opts: { to: string; body: string; relatedType?: string; relatedId?: number }) {
+export async function sendSms(opts: { to: string; body: string; relatedType?: string; relatedId?: number; authExpiresAt?: Date }) {
   const to = normalizePhone(opts.to);
   if (!to) return null;
-  const [row] = await db.insert(outbox).values({ channel: "sms", toAddr: to, bodyText: opts.body, relatedType: opts.relatedType, relatedId: opts.relatedId, status: "queued" }).returning();
+  const authExpiresAt = opts.authExpiresAt || (/\/go\/cft[\/#]/i.test(opts.body) ? new Date(Date.now() + 20 * 60_000) : undefined);
+  const [row] = await db.insert(outbox).values({ channel: "sms", toAddr: to, bodyText: opts.body, authExpiresAt, relatedType: opts.relatedType, relatedId: opts.relatedId, status: "queued" }).returning();
   return deliverOutbox(row.id);
 }
 
@@ -110,11 +113,12 @@ export async function deliverOutbox(id: number) {
       const [res] = await sg.send({
         to: row.toAddr, from, subject: row.subject || "(no subject)", text: row.bodyText || "", html: row.bodyHtml || undefined,
         ...(row.replyTo ? { replyTo: row.replyTo } : {}),
-        // Provider redirect wrappers can move fragment credentials into logged URLs.
-        ...(auth ? {
-          trackingSettings: { clickTracking: { enable: false, enableText: false } },
-        } : {}),
-        attachments: row.attachments?.map((a) => ({ filename: a.filename, type: a.contentType, content: a.contentBase64 || "", disposition: "attachment" })),
+        // Apply to every email, including HTML-only links and queued retries.
+        trackingSettings: emailTrackingSettings(),
+        attachments: [
+          ...(row.bodyHtml?.includes(`cid:${COMMUNICATION_LOGO_CID}`) ? [await communicationLogoAttachment()] : []),
+          ...(row.attachments?.map((a) => ({ filename: a.filename, type: a.contentType, content: a.contentBase64 || "", disposition: "attachment" })) || []),
+        ],
       });
       await db.update(outbox).set({ status: "sent", provider: "sendgrid", fromAddr: from, providerId: res.headers?.["x-message-id"] as string | undefined, sentAt: new Date(), attempts: row.attempts + 1, ...(auth ? clearedAuthContent : {}) }).where(eq(outbox.id, id));
       return { ...safeRow, status: "sent" as const };
@@ -123,19 +127,19 @@ export async function deliverOutbox(id: number) {
     const route = smsRoute();
     if (route === "cft") {
       const r = await sendSmsViaCft({ to: row.toAddr, body: row.bodyText || "" });
-      await db.update(outbox).set({ status: "sent", provider: "cft", providerId: r.messageSid || null, fromAddr: r.from, sentAt: new Date(), attempts: row.attempts + 1 }).where(eq(outbox.id, id));
-      return { ...row, status: "sent" as const };
+      await db.update(outbox).set({ status: "sent", provider: "cft", providerId: r.messageSid || null, fromAddr: r.from, sentAt: new Date(), attempts: row.attempts + 1, ...(auth ? clearedAuthContent : {}) }).where(eq(outbox.id, id));
+      return { ...safeRow, status: "sent" as const };
     }
     if (route === "logged") {
       console.log(redactAuthUrls(`[outbox:sms → ${row.toAddr}] ${row.bodyText}`));
-      await db.update(outbox).set({ status: "logged", provider: "console", attempts: row.attempts + 1 }).where(eq(outbox.id, id));
-      return { ...row, status: "logged" as const };
+      await db.update(outbox).set({ status: "logged", provider: "console", attempts: row.attempts + 1, ...(auth ? clearedAuthContent : {}) }).where(eq(outbox.id, id));
+      return { ...safeRow, status: "logged" as const };
     }
     const twilio = (await import("twilio")).default;
     const client = twilio(env.twilio.sid, env.twilio.token);
     const msg = await client.messages.create({ to: row.toAddr, from: env.twilio.from, body: row.bodyText || "" });
-    await db.update(outbox).set({ status: "sent", provider: "twilio", providerId: msg.sid, fromAddr: env.twilio.from, sentAt: new Date(), attempts: row.attempts + 1 }).where(eq(outbox.id, id));
-    return { ...row, status: "sent" as const };
+    await db.update(outbox).set({ status: "sent", provider: "twilio", providerId: msg.sid, fromAddr: env.twilio.from, sentAt: new Date(), attempts: row.attempts + 1, ...(auth ? clearedAuthContent : {}) }).where(eq(outbox.id, id));
+    return { ...safeRow, status: "sent" as const };
   } catch (e: any) {
     const error = auth ? "Sign-in email delivery failed" : redactAuthUrls(String(e?.message || e));
     console.error("outbox delivery failed", error);
@@ -149,5 +153,5 @@ export async function deliverOutbox(id: number) {
 export function textToHtml(text: string, footerEmail = env.senders.support.email) {
   const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const paras = esc.split(/\n{2,}/).map((p) => `<p style="margin:0 0 14px;line-height:1.6">${p.replace(/\n/g, "<br>")}</p>`).join("");
-  return `<!doctype html><html><body style="margin:0;background:#f2f4f7;padding:24px;font-family:Montserrat,Helvetica,Arial,sans-serif;color:#1a2238;font-size:15px"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid #e3e6ec"><div style="font-family:Georgia,serif;font-size:22px;margin-bottom:18px"><span style="letter-spacing:.08em">GRACE</span> <span style="background:#6cb6e6;padding:0 6px">IN</span> <span style="letter-spacing:.08em">DESIGN</span></div>${paras}<p style="margin:24px 0 0;font-size:12px;color:#8c95a8">Grace In Design Services, LLC · (770) 691-1600 · ${footerEmail}</p></div></body></html>`;
+  return `<!doctype html><html><body style="margin:0;background:#f2f4f7;padding:24px;font-family:Montserrat,Helvetica,Arial,sans-serif;color:#1a2238;font-size:15px"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid #e3e6ec">${COMMUNICATION_LOGO_HTML}${paras}<p style="margin:24px 0 0;font-size:12px;color:#8c95a8">Grace In Design Services, LLC · (770) 691-1600 · ${footerEmail}</p></div></body></html>`;
 }

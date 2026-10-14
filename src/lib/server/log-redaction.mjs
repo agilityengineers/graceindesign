@@ -12,7 +12,7 @@ const authQuery = new RegExp(
 );
 
 export function redactAuthUrls(text) {
-  return String(text).replace(authQuery, "$1[REDACTED]");
+  return String(text).replace(/((?:\/|%(?:25)*2f)go(?:\/|%(?:25)*2f)cft(?:\/|%(?:25)*2f))[^?\s"'<>`\\&#]+/gi, "$1[REDACTED]").replace(authQuery, "$1[REDACTED]");
 }
 
 export function formatEmailLog(row) {

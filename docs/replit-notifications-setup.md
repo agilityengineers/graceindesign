@@ -104,9 +104,9 @@ too, texts are logged only.
 ## 4. The auto sign-in link
 
 Every text (and, if enabled, every Slack post) carries a link like
-`https://graceindesign.net/go/cft/<token>`. When Grace taps it:
+`<configured-site-origin>/go/cft#token=<credential>`. When Grace taps it:
 
-1. This app checks the link (valid for `CFT_LAUNCH_LINK_HOURS`, default 24h; revoked if her account
+1. The browser removes the fragment from history and exchanges it in a same-origin JSON POST. This app atomically consumes the link (valid for 20 minutes and one use; revoked if her account
    is deactivated; every tap is audited).
 2. It mints a fresh two-minute CFT SSO token for her and redirects to `<CFT_URL>/sso/launch?token=…`.
 3. CFT signs her in (matching her by email on the first tap and remembering her afterwards) and lands

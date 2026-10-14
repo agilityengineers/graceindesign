@@ -2,13 +2,13 @@
  * Deliberately standalone: scrub the fragment before any async work or resources.
  * Never interpolate request data or credentials into this document.
  */
-export function verificationPage(nonce: string) {
+export function verificationPage(nonce: string, endpoint: "/auth/verify" | "/go/cft" = "/auth/verify") {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><script nonce="${nonce}">
 (() => {
   let fragment = window.location.hash;
   const hadQuery = !!window.location.search;
   try {
-    window.history.replaceState(null, "", "/auth/verify");
+    window.history.replaceState(null, "", "${endpoint}");
   } catch {
     window.location.replace("/login?err=invalid");
     return;
@@ -19,7 +19,7 @@ export function verificationPage(nonce: string) {
     window.location.replace("/login?err=invalid");
     return;
   }
-  const exchange = fetch("/auth/verify", {
+  const exchange = fetch("${endpoint}", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token }),

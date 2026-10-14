@@ -1,13 +1,12 @@
 // server-only (also used by scripts/cron.ts)
 /**
- * Auto sign-in links into Call Flow Tracker ("/go/cft/<token>").
+ * Single-use auto sign-in links into Call Flow Tracker ("/go/cft#token=…").
  *
- * Think of one as a hotel key card: it opens one door (Grace's CFT account), it stops working after
- * a set time, and the front desk (this app) can cancel it. The card itself holds no secret that
- * CFT would accept — on each tap this app checks the card, then mints a fresh two-minute CFT token
- * and hands her through. That keeps the long-lived thing in the text message revocable here.
+ * A 20-minute, single-use credential is exchanged through a browser POST.
+ * After an atomic claim, this app hands off a short-lived token under CFT's
+ * existing SSO contract. Never return the message credential in notification results.
  */
-import { and, eq, lt } from "drizzle-orm";
+import { and, eq, lt, gt, isNull } from "drizzle-orm";
 import { db, cftLaunchLinks, users } from "@/lib/db";
 import { env } from "@/lib/env";
 import { randomToken, sha256Hex } from "@/lib/server/crypto";
@@ -20,7 +19,6 @@ export type LaunchLinkOptions = {
   target?: string | null;
   purpose?: "lead" | "cc_submission" | "subscriber" | "cft_call" | "manual";
   relatedType?: string; relatedId?: number;
-  hours?: number;
 };
 
 /** Mint a link. Returns null when CFT isn't configured at all (no CFT_URL). */
@@ -28,18 +26,19 @@ export async function createCftLaunchLink(opts: LaunchLinkOptions = {}): Promise
   if (!env.cft.url) return null;
   const person = opts.person === undefined ? await resolveNotificationUser() : opts.person;
   if (!person) return null;
-  const token = randomToken(24);
-  const expiresAt = new Date(Date.now() + (opts.hours || env.cft.launchLinkHours) * 3600_000);
+  const token = randomToken(32);
+  const expiresAt = new Date(Date.now() + 20 * 60_000);
   await db.insert(cftLaunchLinks).values({ tokenHash: sha256Hex(token), userId: person.id ?? null, email: person.email.trim().toLowerCase(), target: opts.target || null, purpose: opts.purpose || "manual", relatedType: opts.relatedType, relatedId: opts.relatedId, expiresAt });
   if (Math.random() < 0.05) await db.delete(cftLaunchLinks).where(lt(cftLaunchLinks.expiresAt, new Date(Date.now() - 7 * 86400_000))).catch(() => {});
-  return { url: `${env.baseUrl}/go/cft/${token}`, expiresAt };
+  return { url: `${env.baseUrl}/go/cft#token=${token}`, expiresAt };
 }
 
 export type ConsumeResult = { ok: true; redirectTo: string; person: CftPerson; target: string | null; sso: boolean } | { ok: false; reason: "invalid" | "expired" | "revoked" | "inactive" | "unconfigured" };
 
-/** Validate a tapped link and build the CFT entry URL (a fresh SSO token each time). */
+/** Atomically consume a tapped link and return a short-lived CFT SSO destination. */
 export async function consumeCftLaunchLink(token: string): Promise<ConsumeResult> {
-  if (!token || token.length > 200) return { ok: false, reason: "invalid" };
+  // Old path-bearing tokens had 32 characters; never redeem them again.
+  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return { ok: false, reason: "invalid" };
   const row = await db.query.cftLaunchLinks.findFirst({ where: eq(cftLaunchLinks.tokenHash, sha256Hex(token)) });
   if (!row) return { ok: false, reason: "invalid" };
   if (row.revokedAt) return { ok: false, reason: "revoked" };
@@ -52,7 +51,11 @@ export async function consumeCftLaunchLink(token: string): Promise<ConsumeResult
   }
   const redirectTo = buildCftEntryUrl(person);
   if (!redirectTo) return { ok: false, reason: "unconfigured" };
-  await db.update(cftLaunchLinks).set({ useCount: row.useCount + 1, lastUsedAt: new Date() }).where(eq(cftLaunchLinks.id, row.id));
+  const now = new Date();
+  const claimed = await db.update(cftLaunchLinks).set({ useCount: 1, lastUsedAt: now, revokedAt: now })
+    .where(and(eq(cftLaunchLinks.id, row.id), isNull(cftLaunchLinks.revokedAt), gt(cftLaunchLinks.expiresAt, now)))
+    .returning({ id: cftLaunchLinks.id });
+  if (!claimed.length) return { ok: false, reason: "revoked" };
   return { ok: true, redirectTo, person, target: row.target, sso: cftMasterConfigured() };
 }
 

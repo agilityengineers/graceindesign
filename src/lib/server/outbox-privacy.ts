@@ -5,6 +5,9 @@ export const clearedAuthContent = { bodyText: null, bodyHtml: null, attachments:
 
 /** Use before retries and admin reads; also removes historical terminal bodies. */
 export async function purgeAuthOutboxBodies() {
+  // Legacy path-token messages cannot be redeemed; remove their saved copies.
+  await db.update(outbox).set({ ...clearedAuthContent, error: null, authExpiresAt: new Date(0) })
+    .where(sql`${outbox.bodyText} like '%/go/cft/%' or ${outbox.bodyHtml} like '%/go/cft/%'`);
   await db.update(outbox).set(clearedAuthContent).where(and(
     isNotNull(outbox.authExpiresAt),
     or(sql`${outbox.authExpiresAt} <= now()`, sql`${outbox.attempts} >= 3`,

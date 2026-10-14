@@ -1,3 +1,10 @@
+// Legacy CFT credentials must also be removed from raw and encoded URL paths.
+test("redacts legacy CFT token paths", () => {
+  const secret = "legacy-cft-credential";
+  for (const value of [`https://example.invalid/go/cft/${secret}`, `https%3A%2F%2Fexample.invalid%2Fgo%2Fcft%2F${secret}`]) {
+    assert.ok(!redactAuthUrls(value).includes(secret));
+  }
+});
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { once } from "node:events";

@@ -47,8 +47,6 @@ export const env = {
     smsFrom: process.env.CFT_SMS_FROM || "",
     /** CFT login email of the person whose CFT session sends those texts (defaults to the notification user). */
     smsSenderEmail: (process.env.CFT_SMS_SENDER_EMAIL || "").trim().toLowerCase(),
-    /** How long an auto sign-in link texted to Grace stays valid (hours). */
-    launchLinkHours: Number(process.env.CFT_LAUNCH_LINK_HOURS || 24) || 24,
   },
   objectStorageBucket: process.env.REPLIT_OBJECT_STORAGE_BUCKET || "",
   magnificApiKey: process.env.MAGNIFIC_API_KEY || "",

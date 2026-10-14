@@ -11,6 +11,7 @@ import { sendEmail, sendSms } from "@/lib/server/outbox";
 import { notifySlack, slackConfigured, type SlackButton } from "@/lib/server/slack";
 import { createCftLaunchLink } from "@/lib/server/cft-links";
 import { normalizePhone } from "@/lib/server/outbox-phone";
+import { redactAuthUrls } from "./log-redaction.mjs";
 
 export type TeamNoticeKind = "lead" | "cc_submission" | "subscriber" | "cft_event";
 
@@ -37,6 +38,7 @@ export type TeamNoticeResult = { email: boolean; slack: boolean; sms: boolean; c
 
 export async function notifyTeam(n: TeamNotice): Promise<TeamNoticeResult> {
   const out: TeamNoticeResult = { email: false, slack: false, sms: false, cftLink: null, errors: [] };
+  let linkExpiresAt: Date | undefined;
   const s = await getSetting("notifications");
   const adminUrl = n.adminPath ? `${env.baseUrl}${n.adminPath}` : `${env.baseUrl}/admin`;
   // Sign-ups and CFT events are Slack-only: an email per newsletter subscriber would just be inbox noise.
@@ -51,6 +53,7 @@ export async function notifyTeam(n: TeamNotice): Promise<TeamNoticeResult> {
     try {
       const link = await createCftLaunchLink({ target: n.cftTarget || null, purpose: n.kind === "lead" ? "lead" : n.kind === "cc_submission" ? "cc_submission" : n.kind === "subscriber" ? "subscriber" : "cft_call", relatedType: n.relatedType, relatedId: n.relatedId });
       out.cftLink = link?.url ?? null;
+      linkExpiresAt = link?.expiresAt;
     } catch (e: any) { out.errors.push(`cft link: ${String(e?.message || e)}`); }
   }
 
@@ -75,11 +78,14 @@ export async function notifyTeam(n: TeamNotice): Promise<TeamNoticeResult> {
     const link = out.cftLink || adminUrl;
     const text = `${n.sms}\n${link}`.slice(0, 600);
     try {
-      const r = await sendSms({ to: phone, body: text, relatedType: n.relatedType, relatedId: n.relatedId });
+      const r = await sendSms({ to: phone, body: text, authExpiresAt: linkExpiresAt, relatedType: n.relatedType, relatedId: n.relatedId });
       out.sms = r?.status === "sent" || r?.status === "logged";
       if (r?.status === "failed") out.errors.push(`sms: ${(r as { error?: string }).error || "failed"}`);
     } catch (e: any) { out.errors.push(`sms: ${String(e?.message || e)}`); }
   }
+  // Notification callers must not retain bearer links in action responses or logs.
+  out.cftLink = null;
+  out.errors = out.errors.map(redactAuthUrls);
   return out;
 }
 

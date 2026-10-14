@@ -1,8 +1,10 @@
 /** Pre-consult checklist PDF (pdf-lib, pure JS). */
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { readCommunicationLogo } from "./communication-brand";
 
 export async function buildChecklistPdf(opts: { name: string; pathLabel: string; consultType: string; when: string; items?: string[] }) {
   const pdf = await PDFDocument.create();
+  const logo = await pdf.embedPng(await readCommunicationLogo());
   const page = pdf.addPage([612, 792]);
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -10,7 +12,8 @@ export async function buildChecklistPdf(opts: { name: string; pathLabel: string;
   const navy = rgb(0.102, 0.133, 0.22), sky = rgb(0.424, 0.714, 0.902), body = rgb(0.294, 0.333, 0.412);
   let y = 740;
   page.drawRectangle({ x: 0, y: 720, width: 612, height: 72, color: navy });
-  page.drawText("GRACE IN DESIGN", { x: 48, y: 748, size: 14, font: bold, color: rgb(1, 1, 1) });
+  page.drawRectangle({ x: 44, y: 745, width: 224, height: 43, color: rgb(1, 1, 1) });
+  page.drawImage(logo, { x: 48, y: 748, width: 216, height: 216 * logo.height / logo.width });
   page.drawText("Pre-consultation checklist", { x: 48, y: 730, size: 10, font, color: sky });
   y = 680;
   page.drawText(`Prepared for ${opts.name}`, { x: 48, y, size: 22, font: serif, color: navy }); y -= 26;
@@ -52,12 +55,13 @@ function wrap(text: string, max: number) {
 /** Proposal PDF (used for the signed copy download and third-party e-sign envelopes). */
 export async function buildProposalPdf(opts: { title: string; body: string; amount?: string | null; recipientName?: string | null; status: string; signedAt?: Date | null; signerName?: string | null; signerIp?: string | null; code?: string }) {
   const pdf = await PDFDocument.create();
+  const logo = await pdf.embedPng(await readCommunicationLogo());
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const serif = await pdf.embedFont(StandardFonts.TimesRoman);
   const navy = rgb(0.102, 0.133, 0.22), sky = rgb(0.424, 0.714, 0.902), body = rgb(0.294, 0.333, 0.412);
   let page = pdf.addPage([612, 792]); let y = 740;
-  const header = () => { page.drawRectangle({ x: 0, y: 720, width: 612, height: 72, color: navy }); page.drawText("GRACE IN DESIGN", { x: 48, y: 748, size: 14, font: bold, color: rgb(1, 1, 1) }); page.drawText("Proposal", { x: 48, y: 730, size: 10, font, color: sky }); y = 680; };
+  const header = () => { page.drawRectangle({ x: 0, y: 720, width: 612, height: 72, color: navy }); page.drawRectangle({ x: 44, y: 745, width: 224, height: 43, color: rgb(1, 1, 1) }); page.drawImage(logo, { x: 48, y: 748, width: 216, height: 216 * logo.height / logo.width }); page.drawText("Proposal", { x: 48, y: 730, size: 10, font, color: sky }); y = 680; };
   const newPage = () => { page = pdf.addPage([612, 792]); header(); };
   const line = (text: string, size = 11, f = font, color = body) => { if (y < 70) newPage(); page.drawText(text, { x: 48, y, size, font: f, color }); y -= size + 5; };
   header();
