@@ -106,6 +106,13 @@ p { margin: 0; }
   .g2, .g3, .g4, .g5 { grid-template-columns: minmax(0, 1fr); }
   .g2-stack-sm { grid-template-columns: minmax(0, 1fr) !important; }
 }
+/* Homepage service cards: 4 + 3 on desktop (inline spans), two-up on tablet, stacked on phones. */
+@media (max-width: 1024px) {
+  .svc-grid > article { grid-column: span 6 !important; }
+}
+@media (max-width: 720px) {
+  .svc-grid > article { grid-column: span 12 !important; }
+}
 
 /* Typography helpers */
 .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--link); }

@@ -10,7 +10,7 @@ import { db, formFields } from "@/lib/db";
 import { and, asc, eq } from "drizzle-orm";
 import type { Service } from "@/lib/db";
 
-type Svc = Service & { scenes: { name: string; word: string; line: string; img: string }[]; beforeAfter: { before: string; after: string; title: string } | null };
+type Svc = Service & { scenes: { name: string; word: string; line: string; img: string; imgAlt?: string }[]; beforeAfter: { before: string; after: string; title: string; beforeAlt?: string; afterAlt?: string } | null; imgAlt?: string; img2Alt?: string };
 type Sibling = { id: number; slug: string; title: string; parentId: number | null; navGroup: string };
 
 export default async function ServiceLanding({ s, all, heroStyle }: { s: Svc; all: Sibling[]; heroStyle: "classic" | "cinematic" }) {
@@ -18,7 +18,7 @@ export default async function ServiceLanding({ s, all, heroStyle }: { s: Svc; al
   const extras = s.pathId ? await db.select().from(formFields).where(and(eq(formFields.scope, "path"), eq(formFields.pathId, s.pathId), eq(formFields.visible, true))).orderBy(asc(formFields.sort)) : [];
   const isPartners = slug === "aip-partners";
   const others: { title: string; href: string }[] = isPartners
-    ? [{ title: "AIP Products", href: "/healthy-home-resources/aip-products" }, { title: "WELLness Resources", href: "/healthy-home-resources/wellness" }, { title: "Home Health Series", href: "/healthy-home-resources/home-health-series" }, { title: "Aging-In-Place & Home Assessments", href: "/services/aging-in-place" }]
+    ? [{ title: "AIP Products", href: "/healthy-home-resources/aip-products" }, { title: "WELLness Resources", href: "/healthy-home-resources/wellness" }, { title: "Home Health Series", href: "/healthy-home-resources/home-health-series" }, { title: "Aging In Place & Home Assessments", href: "/services/aging-in-place" }]
     : all.filter((x) => x.slug !== slug && x.navGroup === "services" && !x.parentId).map((x) => ({ title: x.title, href: serviceHref(x.slug) }));
   const rel: Record<string, string[]> = { residential: ["design-refresh", "model-home"], "design-refresh": ["residential", "model-home"], "aging-in-place": ["virtual-assessment"], "virtual-assessment": ["aging-in-place", "aip-partners"], "model-home": ["residential", "design-refresh"] };
   for (const r of (rel[slug] || []).slice().reverse()) { const x = all.find((y) => y.slug === r); if (x) others.unshift({ title: x.title, href: serviceHref(x.slug, x.parentId ? all.find((p) => p.id === x.parentId)?.slug : null) }); }
@@ -32,7 +32,7 @@ export default async function ServiceLanding({ s, all, heroStyle }: { s: Svc; al
         <CineHero kicker={s.kicker} kickerHref="/services" lead={s.cineLead || ""} tail={s.cineTail || ""} scenes={s.scenes} scenesLabel={s.scenesLabel || "What we design"} cta={s.cta} ctaSource={sourceKey} secondary={hasBA ? "See a before & after" : undefined} secondaryHref="#before-after" secondaryPlay slideSeconds={s.slideSeconds} />
         <Marquee words={marqueeWords} />
       </>
-    ) : <ServiceClassicHero kicker={s.kicker} kickerHref="/services" title={s.hero} sub={s.sub} cta={s.cta} source={sourceKey} img={s.img} />}
+    ) : <ServiceClassicHero kicker={s.kicker} kickerHref="/services" title={s.hero} sub={s.sub} cta={s.cta} source={sourceKey} img={s.img} imgAlt={s.imgAlt} />}
 
     <section className="gx section g2 g2-stack-md" style={{ gap: 80, alignItems: "start" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}><span className="eyebrow">Sound familiar?</span><h2 className="h2">{s.problem}</h2></div>
@@ -42,11 +42,11 @@ export default async function ServiceLanding({ s, all, heroStyle }: { s: Svc; al
       </div>
     </section>
 
-    {hasBA && <BeforeAfter before={s.beforeAfter!.before} after={s.beforeAfter!.after} title={s.beforeAfter!.title} />}
+    {hasBA && <BeforeAfter before={s.beforeAfter!.before} after={s.beforeAfter!.after} title={s.beforeAfter!.title} beforeAlt={s.beforeAfter!.beforeAlt} afterAlt={s.beforeAfter!.afterAlt} />}
 
     {s.features.length > 0 && (
       <section className="gx g2 g2-stack-md" style={{ paddingBottom: 104, gap: 64, alignItems: "center" }}>
-        <div style={{ position: "relative", height: 520, borderRadius: 18, overflow: "hidden" }}><img src={s.img2} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div>
+        <div style={{ position: "relative", height: 520, borderRadius: 18, overflow: "hidden" }}><img src={s.img2} alt={s.img2Alt || ""} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div>
         <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
           <h2 className="h2" style={{ fontSize: 42 }}>What we help with</h2>
           <div className="g2 g2-stack-sm" style={{ gap: 16 }}>{s.features.map(([t, d]) => <div key={t} style={{ display: "flex", flexDirection: "column", gap: 8, padding: 22, borderRadius: 14, border: "1px solid #e9ecf1" }}><span style={{ fontSize: 15, fontWeight: 600 }}>{t}</span><span style={{ fontSize: 13.5, lineHeight: 1.6, color: "#6b7486" }}>{d}</span></div>)}</div>
@@ -70,7 +70,7 @@ export default async function ServiceLanding({ s, all, heroStyle }: { s: Svc; al
           <div style={{ display: "flex", flexDirection: "column", gap: 18, paddingTop: 24 }}>
             <span className="eyebrow">Our approach</span>
             <div className="g5" style={{ gap: 0, border: "1px solid #e9ecf1", borderRadius: 16, overflow: "hidden" }}>{s.steps.map((st, k) => <div key={st} style={{ display: "flex", flexDirection: "column", gap: 8, padding: "24px 22px", borderLeft: "1px solid #e9ecf1", background: k % 2 ? "#fbfcfd" : "#fff" }}><span className="display" style={{ fontSize: 30, color: "#6cb6e6", lineHeight: 1 }}>{String(k + 1).padStart(2, "0")}</span><span style={{ fontSize: 16, fontWeight: 600 }}>{st}</span></div>)}</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "20px 24px", borderRadius: 14, background: "#f7f8fa", border: "1px dashed #c6cbd6" }}><span style={{ width: 44, height: 44, flex: "none", borderRadius: "50%", background: "#e6f3fc" }} /><div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 14, lineHeight: 1.5, color: "#4b5569", fontStyle: "italic" }}>"{s.testimonialQuote}"</span><span style={{ fontSize: 12, color: "#8c95a8" }}>{s.testimonialWho}</span></div></div>
+            {s.testimonialQuote && <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "20px 24px", borderRadius: 14, background: "#f7f8fa", border: "1px solid #e9ecf1" }}><span style={{ width: 44, height: 44, flex: "none", borderRadius: "50%", background: "#e6f3fc" }} /><div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 14, lineHeight: 1.5, color: "#4b5569", fontStyle: "italic" }}>"{s.testimonialQuote}"</span><span style={{ fontSize: 12, color: "#8c95a8" }}>{s.testimonialWho}</span></div></div>}
           </div>)}
       </section>)}
 
@@ -91,8 +91,7 @@ export default async function ServiceLanding({ s, all, heroStyle }: { s: Svc; al
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         <span className="eyebrow">Take the first step</span><h2 className="h2">Tell us about your project</h2>
         <p style={{ fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>A few details is all we need. We'll follow up within one business day with next steps — no obligation.</p>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, alignSelf: "flex-start", marginTop: 8, padding: "8px 14px", borderRadius: 999, background: "#fff", fontSize: 12, color: "#6b7486" }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#6cb6e6" }} />Lead source: <strong style={{ color: "#1a2238", fontWeight: 600 }}>{s.title} page</strong></div>
-        <span style={{ fontSize: 12, color: "#6b7486", lineHeight: 1.6 }}>Questions marked <span className="extra-dot" style={{ fontWeight: 600 }}>●</span> are audience-specific extras configured in the admin form builder.</span>
+        {extras.length > 0 && <span style={{ fontSize: 12, color: "#6b7486", lineHeight: 1.6 }}>Questions marked <span className="extra-dot" style={{ fontWeight: 600 }}>●</span> are specific to this service.</span>}
       </div>
       <ServiceLeadForm slug={slug} title={s.title} cta={s.cta} pathId={s.pathId} extras={extras.map((f) => ({ key: f.key, label: f.label, type: f.type, options: f.options, placeholder: f.placeholder, required: f.required }))} />
     </section>

@@ -13,10 +13,10 @@ export default function SiteNav({ label, active, sourceKey, phone, email, servic
   const [dd, setDd] = useState<"svc" | "hbd" | null>(null);
   const cls = (k: NavActive) => `nav-link${active === k ? " is-active" : ""}`;
   const hhr = [
-    ["AIP Products", "Aging-in-place essentials from our shop", "/healthy-home-resources/aip-products"],
+    ["AIP Products", "Aging In Place essentials from our shop", "/healthy-home-resources/aip-products"],
     ["WELLness Resources", "Guides for healthier living spaces", "/healthy-home-resources/wellness"],
     ["Home Health Series", "Articles & videos on home wellness", "/healthy-home-resources/home-health-series"],
-    ["AIP Partners", "Join our aging-in-place network", "/healthy-home-resources/aip-partners"],
+    ["AIP Partners", "Join our Aging In Place network", "/healthy-home-resources/aip-partners"],
   ];
   return (
     <div style={{ position: "relative", zIndex: 50 }}>
