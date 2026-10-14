@@ -1,0 +1,200 @@
+graceindesign@0.1.0 content:launch
+> tsx scripts/launch-content.ts --dry-run --ops
+
+Launch content patch (dry run — nothing will be written) + demo operations cleanup
+(node:1909) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[dry-run] settings.contact: remove placeholder address lines
+[dry-run] settings.footer: Aging In Place casing
+[dry-run] settings.seo: Aging In Place casing
+[dry-run] services.general: empathy
+[dry-run] services.model-home: sub, authority, testimonialQuote, testimonialWho
+[dry-run] services.aging-in-place: title, kicker, authority, plan, features
+[dry-run] services.aip-partners: sub
+[dry-run] services.commercial: scenes
+[dry-run] services.project-management: cineTail, hero, sub, authority, failure, plan, features, success, scenes
+[dry-run] services.virtual-assessment: kicker
+[dry-run] pages.home: seoDescription, seoTitle
+[dry-run] page_blocks.home/hero: content text
+[dry-run] page_blocks.home/services_grid: content text
+[dry-run] pages.about: seoDescription
+[dry-run] page_blocks.about/about_hero: content text
+[dry-run] page_blocks.about/about_intro: content text
+[dry-run] pages.services: seoDescription
+[dry-run] page_blocks.services/cine_hero: content text
+[dry-run] pages.hhr: seoDescription
+[dry-run] page_blocks.hhr/hhr_cards: content text
+[dry-run] pages.aip-products: seoDescription
+[dry-run] page_blocks.aip-products/page_header: content text
+[dry-run] pages.wellness: seoDescription
+[dry-run] pages.home-health: seoDescription
+[dry-run] pages.news: seoDescription
+[dry-run] page_blocks.news/page_header: content text
+[dry-run] pages.contact: seoDescription
+[dry-run] pages.privacy: seoDescription
+[dry-run] pages.terms: seoDescription
+[dry-run] pages.accessibility: seoDescription
+[dry-run] products: delete 7 invented listing(s): Bathroom Safety Planner: Grab Bars, Lighting & Flooring | WELLness Room-by-Room Workbook | Lifetime Home Essentials Starter Kit | Accessible Kitchen Planning Guide | Family Conversation Kit: Planning to Stay Home | Lighting for Aging Eyes — Room-by-Room Plan | Entryway Safety Kit: Lever Handles & Sensor Lighting
+[dry-run] products.1: hide "GID Home Readiness Assessment — Aging-in-Place Checklist (PDF)" until the Etsy price/listing is confirmed in the admin (price $24.00 → unset, invented review count cleared)
+[dry-run] cc_events: delete 8 invented event(s): Healthy Homes for Our Elders — Community Fair [published] | Caring from Abroad: a workshop for diaspora families [published] | Hurricane-Season Wrap-Up & Winter Readiness [published] | Bathroom Safety Clinic — Atlanta Jamaican Association [published] | Home Health Series Live: Light, air and calm in a Caribbean home [published] | Fall-Prevention Workshop for Seniors [pending] | Caring for Parents Abroad — Q&A [pending] | Timeshare Presentation & Lunch [rejected]
+[dry-run] posts: delete 6 invented regional headline(s) attributed to real publishers: NCSC expands senior citizen registration drive to rural parishes | Health ministry launches falls-prevention campaign for over-65s | PAHO: Caribbean population over 60 to double by 2050 | Diaspora remittances increasingly funding home repairs for elderly relatives | ODPEM urges households with seniors to update hurricane plans | Community health aides programme adds home-visit training
+[dry-run] posts.twelve-small-changes-safer-home: prototype placeholder → draft; status, body, category
+[dry-run] posts.kitchen-that-adds-value: prototype placeholder → draft; status, origin, sourceName, rssSourceId, guid, body
+[dry-run] posts.light-air-calm: prototype placeholder → draft; status, origin, sourceName, rssSourceId, guid, body
+[dry-run] posts.reception-areas: prototype placeholder → draft; status, body
+[dry-run] posts.one-weekend-new-room: prototype placeholder → draft; status, body
+[dry-run] posts.one-person-owns-the-plan: prototype placeholder → draft; status, body
+[dry-run] posts.stay-home-conversation: prototype placeholder → draft; status, body, category
+[dry-run] posts.model-homes-sell-faster: prototype placeholder → draft; body
+[dry-run] posts.long-distance-home-check: prototype placeholder → draft; status, body
+[dry-run] posts.cool-bright-safe-jamaican-home: prototype placeholder → draft; status, body, title
+[dry-run] posts.hurricane-ready-home-checklist: prototype placeholder → draft; status, body
+[dry-run] rss_sources.Grace In Design Blog: clear faked sync status (never actually synced)
+[dry-run] rss_sources.Healthy Home Resources — Substack: clear faked sync status (never actually synced)
+[dry-run] rss_sources.Jamaica Gleaner — Health & Seniors: clear faked sync status (never actually synced)
+[dry-run] rss_sources.Jamaica Observer — Health: clear faked sync status (never actually synced)
+[dry-run] rss_sources.JIS — Social Security: clear faked sync status (never actually synced)
+[dry-run] rss_sources.PAHO Caribbean: clear faked sync status (never actually synced)
+[dry-run] rss_sources.Caribbean National Weekly: clear faked sync status (never actually synced)
+[dry-run] media.int.kitchen-windows: alt text "Bright modern residential kitchen with large windows, white cabinets, oak floors, marble island, morning light"
+[dry-run] media.int.small-bath: alt text "Small bright bathroom with a window, white tile, modern fixtures"
+[dry-run] media.int.contemporary-living: alt text "Contemporary living room with sofa, art and plants"
+[dry-run] media.aip.shower-grab-bar: alt text "Beautiful accessible walk-in shower with stylish grab bar, slip-resistant tile, bench, spa-like"
+[dry-run] media.com.open-office: alt text "Corner of an open-plan office with modern interior design, natural light, accessible layout"
+[dry-run] testimonials: delete 3 invented quote(s) (The Ellison family, Developer (placeholder), D. & P. Shah)
+[dry-run] team_members.Grace A. Williams: credentialList
+[dry-run] paths.aging-in-place: label casing
+[dry-run] email_sequences.2: name casing
+[dry-run] email_sequence_steps.4: casing
+[dry-run] users.marcus@graceindesign.net: deactivate sample team account
+[dry-run] users.dana@graceindesign.net: deactivate sample team account
+REVIEW REQUIRED: retaining 8 seed-associated leads; deletion could cascade to real bookings and activity.
+REVIEW REQUIRED: retaining 7 seed-associated projects; deletion could cascade to real invoices, documents and approvals.
+REVIEW REQUIRED: retaining 2 seed-associated proposals pending review for real signatures.
+REVIEW REQUIRED: retaining 6 seed-associated portal links pending review for real client use.
+[dry-run] social_accounts: delete 5 sample account(s) shown as connected without credentials (facebook, instagram, linkedin, pinterest, youtube)
+[dry-run] social_posts: delete 4 unchanged seed post(s)
+[dry-run] cc_subscribers: delete 418 sample subscriber(s) so newsletter sends never hit invented addresses
+[dry-run] cc_resources: delete 4 sample directory submission(s): St. Ann Senior Care Network | Mobility Plus Installations | Caribbean Alzheimer's Support Group (Diaspora) | QuickCash Loans for Seniors
+
+68 change(s) would be applied.
+~/workspace$ ^C
+~/workspace$ DATABASE_URL="${PROD_DB_URL:?Please enter the production URL again}" npm run content:launch -- --ops
+
+> graceindesign@0.1.0 content:launch
+> tsx scripts/launch-content.ts --ops
+
+Launch content patch (applying) + demo operations cleanup
+(node:2154) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+settings.contact: remove placeholder address lines
+settings.footer: Aging In Place casing
+settings.seo: Aging In Place casing
+services.general: empathy
+services.model-home: sub, authority, testimonialQuote, testimonialWho
+services.aging-in-place: title, kicker, authority, plan, features
+services.aip-partners: sub
+services.commercial: scenes
+services.project-management: cineTail, hero, sub, authority, failure, plan, features, success, scenes
+services.virtual-assessment: kicker
+pages.home: seoDescription, seoTitle
+page_blocks.home/hero: content text
+page_blocks.home/services_grid: content text
+pages.about: seoDescription
+page_blocks.about/about_hero: content text
+page_blocks.about/about_intro: content text
+pages.services: seoDescription
+page_blocks.services/cine_hero: content text
+pages.hhr: seoDescription
+page_blocks.hhr/hhr_cards: content text
+pages.aip-products: seoDescription
+page_blocks.aip-products/page_header: content text
+pages.wellness: seoDescription
+pages.home-health: seoDescription
+pages.news: seoDescription
+page_blocks.news/page_header: content text
+pages.contact: seoDescription
+pages.privacy: seoDescription
+pages.terms: seoDescription
+pages.accessibility: seoDescription
+products: delete 7 invented listing(s): Bathroom Safety Planner: Grab Bars, Lighting & Flooring | WELLness Room-by-Room Workbook | Lifetime Home Essentials Starter Kit | Accessible Kitchen Planning Guide | Family Conversation Kit: Planning to Stay Home | Lighting for Aging Eyes — Room-by-Room Plan | Entryway Safety Kit: Lever Handles & Sensor Lighting
+products.1: hide "GID Home Readiness Assessment — Aging-in-Place Checklist (PDF)" until the Etsy price/listing is confirmed in the admin (price $24.00 → unset, invented review count cleared)
+cc_events: delete 8 invented event(s): Healthy Homes for Our Elders — Community Fair [published] | Caring from Abroad: a workshop for diaspora families [published] | Hurricane-Season Wrap-Up & Winter Readiness [published] | Bathroom Safety Clinic — Atlanta Jamaican Association [published] | Home Health Series Live: Light, air and calm in a Caribbean home [published] | Fall-Prevention Workshop for Seniors [pending] | Caring for Parents Abroad — Q&A [pending] | Timeshare Presentation & Lunch [rejected]
+posts: delete 6 invented regional headline(s) attributed to real publishers: NCSC expands senior citizen registration drive to rural parishes | Health ministry launches falls-prevention campaign for over-65s | PAHO: Caribbean population over 60 to double by 2050 | Diaspora remittances increasingly funding home repairs for elderly relatives | ODPEM urges households with seniors to update hurricane plans | Community health aides programme adds home-visit training
+posts.twelve-small-changes-safer-home: prototype placeholder → draft; status, body, category
+posts.kitchen-that-adds-value: prototype placeholder → draft; status, origin, sourceName, rssSourceId, guid, body
+posts.light-air-calm: prototype placeholder → draft; status, origin, sourceName, rssSourceId, guid, body
+posts.reception-areas: prototype placeholder → draft; status, body
+posts.one-weekend-new-room: prototype placeholder → draft; status, body
+posts.one-person-owns-the-plan: prototype placeholder → draft; status, body
+posts.stay-home-conversation: prototype placeholder → draft; status, body, category
+posts.model-homes-sell-faster: prototype placeholder → draft; body
+posts.long-distance-home-check: prototype placeholder → draft; status, body
+posts.cool-bright-safe-jamaican-home: prototype placeholder → draft; status, body, title
+posts.hurricane-ready-home-checklist: prototype placeholder → draft; status, body
+rss_sources.Grace In Design Blog: clear faked sync status (never actually synced)
+rss_sources.Healthy Home Resources — Substack: clear faked sync status (never actually synced)
+rss_sources.Jamaica Gleaner — Health & Seniors: clear faked sync status (never actually synced)
+rss_sources.Jamaica Observer — Health: clear faked sync status (never actually synced)
+rss_sources.JIS — Social Security: clear faked sync status (never actually synced)
+rss_sources.PAHO Caribbean: clear faked sync status (never actually synced)
+rss_sources.Caribbean National Weekly: clear faked sync status (never actually synced)
+media.int.kitchen-windows: alt text "Bright modern residential kitchen with large windows, white cabinets, oak floors, marble island, morning light"
+media.int.small-bath: alt text "Small bright bathroom with a window, white tile, modern fixtures"
+media.int.contemporary-living: alt text "Contemporary living room with sofa, art and plants"
+media.aip.shower-grab-bar: alt text "Beautiful accessible walk-in shower with stylish grab bar, slip-resistant tile, bench, spa-like"
+media.com.open-office: alt text "Corner of an open-plan office with modern interior design, natural light, accessible layout"
+testimonials: delete 3 invented quote(s) (The Ellison family, Developer (placeholder), D. & P. Shah)
+team_members.Grace A. Williams: credentialList
+paths.aging-in-place: label casing
+email_sequences.2: name casing
+email_sequence_steps.4: casing
+users.marcus@graceindesign.net: deactivate sample team account
+users.dana@graceindesign.net: deactivate sample team account
+REVIEW REQUIRED: retaining 8 seed-associated leads; deletion could cascade to real bookings and activity.
+REVIEW REQUIRED: retaining 7 seed-associated projects; deletion could cascade to real invoices, documents and approvals.
+REVIEW REQUIRED: retaining 2 seed-associated proposals pending review for real signatures.
+REVIEW REQUIRED: retaining 6 seed-associated portal links pending review for real client use.
+social_accounts: delete 5 sample account(s) shown as connected without credentials (facebook, instagram, linkedin, pinterest, youtube)
+social_posts: delete 4 unchanged seed post(s)
+cc_subscribers: delete 418 sample subscriber(s) so newsletter sends never hit invented addresses
+cc_resources: delete 4 sample directory submission(s): St. Ann Senior Care Network | Mobility Plus Installations | Caribbean Alzheimer's Support Group (Diaspora) | QuickCash Loans for Seniors
+
+68 change(s) applied.
+~/workspace$ DATABASE_URL="${PROD_DB_URL:?Please enter the production URL again}" npm run content:launch -- --dry-run --ops
+
+> graceindesign@0.1.0 content:launch
+> tsx scripts/launch-content.ts --dry-run --ops
+
+Launch content patch (dry run — nothing will be written) + demo operations cleanup
+(node:2228) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+REVIEW REQUIRED: retaining 8 seed-associated leads; deletion could cascade to real bookings and activity.
+REVIEW REQUIRED: retaining 7 seed-associated projects; deletion could cascade to real invoices, documents and approvals.
+REVIEW REQUIRED: retaining 2 seed-associated proposals pending review for real signatures.
+REVIEW REQUIRED: retaining 6 seed-associated portal links pending review for real client use.
+
+0 change(s) would be applied. No automatic changes remain; review any REVIEW REQUIRED messages separately.
+~/workspace$ unset PROD_DB_URL
+~/workspace$ 
