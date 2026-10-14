@@ -55,6 +55,9 @@ domain attachment.
 **How to apply:** Do not switch production links to an unattached domain.
 Preserve intentional third-party destinations rather than replacing every URL
 with the application origin.
+The owner explicitly chose the Replit-hosted production address for publishing
+until the custom domain is connected; use the verified deployment address
+rather than assuming the custom domain is ready.
 
 Preserve automatic Call Flow Tracker sign-in rather than replacing notification
 links with a manual-login requirement.
