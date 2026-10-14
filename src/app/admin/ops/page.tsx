@@ -11,6 +11,7 @@ import { Card, Stat, StatusPill } from "@/components/admin/ui";
 import Toast from "@/components/admin/Toast";
 import ConfirmButton from "@/components/admin/Confirm";
 import Sortable from "@/components/admin/Sortable";
+import { smsRoute } from "@/lib/server/outbox";
 import { saveSequence, sequenceAction, saveSequenceStep, deleteSequenceStep, reorderSteps, enrollmentAction, enrollMatchingLeads, saveSmsTemplate, smsTemplateAction, saveProposal, proposalAction, saveWebhook, webhookAction, deliveryAction, emitTestEvent, outboxAction, purgeOutbox, runCronJob, hubspotSyncNow } from "@/lib/actions/ops";
 import { invoiceAction, approvalAction } from "@/lib/actions/projects";
 import { money, fmtDateTime, relativeDay } from "@/lib/utils";
@@ -97,7 +98,7 @@ export default async function OpsPage({ searchParams }: { searchParams: Promise<
         const rows = await db.select().from(smsTemplates).orderBy(asc(smsTemplates.category), asc(smsTemplates.id));
         return (
           <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.7fr) minmax(0, 1fr)", gap: 20, alignItems: "start" }} className="g2">
-            <Card title="SMS templates" sub={env.twilio.sid ? "Sent through Twilio" : "Twilio not configured — texts are logged to the outbox"}>
+            <Card title="SMS templates" sub={smsRoute() === "cft" ? `Sent through Call Flow Tracker from ${env.cft.smsFrom}` : smsRoute() === "twilio" ? "Sent through Twilio" : "Call Flow Tracker / Twilio not configured — texts are logged to the outbox"}>
               {rows.map((t) => (
                 <div key={t.id} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "10px 0", borderBottom: "1px solid #f2f4f7" }}>
                   <form action={saveSmsTemplate} style={{ display: "grid", gridTemplateColumns: "1fr 130px auto", gap: 8 }}>
@@ -246,11 +247,11 @@ export default async function OpsPage({ searchParams }: { searchParams: Promise<
       {tab === "outbox" && await (async () => {
         const rows = await readOutboxPreviews();
         return (
-          <Card title="Email & SMS outbox" sub={`${env.sendgridApiKey ? "SendGrid" : "Email: logged only (no SENDGRID_API_KEY)"} · ${env.twilio.sid ? "Twilio" : "SMS: logged only (no Twilio keys)"} · every message the app sends lands here first`} action={<form action={purgeOutbox}><ConfirmButton message="Delete outbox records older than 30 days?" className="btn btn-ghost btn-xs" style={{ borderRadius: 8 }}>Purge &gt; 30 days</ConfirmButton></form>}>
+          <Card title="Email & SMS outbox" sub={`${env.sendgridApiKey ? "SendGrid (noreply@ · support@ · consultation@ · newsletter@)" : "Email: logged only (no SENDGRID_API_KEY)"} · ${smsRoute() === "cft" ? "SMS via Call Flow Tracker" : smsRoute() === "twilio" ? "SMS via Twilio" : "SMS: logged only"} · every message the app sends lands here first`} action={<form action={purgeOutbox}><ConfirmButton message="Delete outbox records older than 30 days?" className="btn btn-ghost btn-xs" style={{ borderRadius: 8 }}>Purge &gt; 30 days</ConfirmButton></form>}>
             {rows.map((m) => (
               <details key={m.id} style={{ borderBottom: "1px solid #f2f4f7", padding: "6px 0" }}>
                 <summary style={{ display: "grid", gridTemplateColumns: "60px minmax(0, 1.2fr) minmax(0, 2fr) 80px 90px auto", gap: 10, fontSize: 12, alignItems: "center", cursor: "pointer", listStyle: "none" }}>
-                  <span className="tag">{m.channel}</span><span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.toAddr}</span><span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.subject || m.bodyText?.slice(0, 80)}</span><StatusPill status={m.status} /><span style={{ color: "#8c95a8" }}>{relativeDay(m.createdAt)}</span>
+                  <span className="tag" title={m.fromAddr || ""}>{m.channel}{m.fromAddr ? ` · ${m.fromAddr.replace(/^.*<|>.*$/g, "").split("@")[0]}` : ""}</span><span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={m.fromAddr ? `from ${m.fromAddr}` : undefined}>{m.toAddr}</span><span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.subject || m.bodyText?.slice(0, 80)}</span><StatusPill status={m.status} /><span style={{ color: "#8c95a8" }}>{relativeDay(m.createdAt)}</span>
                   <span style={{ display: "flex", gap: 8 }}>{m.status !== "sent" && (!m.authExpiresAt || (m.status !== "logged" && m.attempts < 3 && m.authExpiresAt > new Date())) && <form action={outboxAction}><input type="hidden" name="outboxId" value={m.id} /><input type="hidden" name="op" value="retry" /><button type="submit" className="link-btn">Re-send</button></form>}<form action={outboxAction}><input type="hidden" name="outboxId" value={m.id} /><input type="hidden" name="op" value="delete" /><ConfirmButton message="Delete this message record?">×</ConfirmButton></form></span>
                 </summary>
                 <pre style={{ whiteSpace: "pre-wrap", fontSize: 12, color: "#4b5569", background: "#f7f9fc", padding: 10, borderRadius: 8, marginTop: 6 }}>{m.error ? `ERROR: ${m.error}\n\n` : ""}{m.bodyText}</pre>

@@ -8,6 +8,7 @@ import Toast from "@/components/admin/Toast";
 import LeadsView from "@/components/admin/LeadsView";
 import LeadDrawer from "@/components/admin/LeadDrawer";
 import { money } from "@/lib/utils";
+import { env } from "@/lib/env";
 
 export const metadata = { title: "Leads" };
 export const dynamic = "force-dynamic";
@@ -72,6 +73,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
           paths={pathRows}
           project={proj[0] || null}
           canDelete={user.role === "owner" || user.isSuperAdmin}
+          cftUrl={env.cft.url ? `/api/cft/launch?target=${encodeURIComponent(lead.externalSource === "cft" ? "/crm" : "/calls")}` : null}
         />
       );
     }

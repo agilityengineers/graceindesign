@@ -17,7 +17,7 @@ export async function purgeAuthOutboxBodies() {
 export async function readOutboxPreviews() {
   await purgeAuthOutboxBodies();
   return db.select({
-    id: outbox.id, channel: outbox.channel, toAddr: outbox.toAddr,
+    id: outbox.id, channel: outbox.channel, toAddr: outbox.toAddr, fromAddr: outbox.fromAddr,
     subject: outbox.subject, status: outbox.status, createdAt: outbox.createdAt,
     authExpiresAt: outbox.authExpiresAt, attempts: outbox.attempts,
     bodyText: sql<string | null>`case when ${outbox.authExpiresAt} is not null then '[Sign-in content hidden]' else ${outbox.bodyText} end`,

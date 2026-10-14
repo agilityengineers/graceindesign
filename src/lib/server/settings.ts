@@ -4,7 +4,27 @@ import { eq } from "drizzle-orm";
 export type ContactSettings = { phone: string; email: string; hours: string; address: string; addressLine2: string; utilityLabel: string; consultationsNote: string };
 export type SocialLink = { name: string; url: string; enabled: boolean };
 export type BookingSettings = { durationMin: number; bufferMin: number; minNoticeHours: number; emailConfirm: boolean; smsConfirm: boolean; sendIcs: boolean; attachChecklist: boolean; reminder24h: boolean; horizonDays: number; tz: string };
-export type NotificationSettings = { emailAdminOnNewLead: boolean; adminEmail: string; smsAdminOnNewLead: boolean; adminPhone: string };
+export type NotificationSettings = {
+  /** Email the team on a new consultation request. */
+  emailAdminOnNewLead: boolean;
+  /** Inbox for sales-related submissions (consultation@). */
+  salesEmail: string;
+  /** Inbox for everything else: directory/event submissions, portal responses (support@). */
+  adminEmail: string;
+  /** Text Grace on a new consultation request (through Call Flow Tracker when configured). */
+  smsAdminOnNewLead: boolean;
+  adminPhone: string;
+  /** Slack (incoming webhook) on a new consultation request. */
+  slackOnNewLead: boolean;
+  /** Slack on the other public forms: directory/event submissions, newsletter and checklist sign-ups. */
+  slackOnOtherForms: boolean;
+  /** Slack when Call Flow Tracker reports a call, lead or appointment. */
+  slackOnCftEvents: boolean;
+  /** Put the auto sign-in link into Call Flow Tracker in Slack messages too (keep that channel private). */
+  cftLinkInSlack: boolean;
+  /** Team member the texts and auto sign-in links are for. Must match their Call Flow Tracker login email. */
+  cftUserEmail: string;
+};
 export type ConversionRules = { createProjectOnSigned: boolean; moveLeadToWon: boolean; copyAnswers: boolean; requestDepositInvoice: boolean; sendWelcomeEmail: boolean };
 export type RssSettings = { refreshHours: number; homepageItems: number; useFeedImage: boolean; fallbackImage: boolean };
 export type SocialSettings = { showInstagramFeed: boolean; feedCount: number; autoShare: { facebook: boolean; linkedin: boolean; instagram: boolean; pinterest: boolean } };
@@ -22,7 +42,7 @@ export const SETTINGS_DEFAULTS = {
     { name: "YouTube", url: "https://youtube.com/@graceindesign", enabled: true },
   ] as SocialLink[],
   booking: { durationMin: 15, bufferMin: 15, minNoticeHours: 24, emailConfirm: true, smsConfirm: true, sendIcs: true, attachChecklist: true, reminder24h: true, horizonDays: 21, tz: "America/New_York" } as BookingSettings,
-  notifications: { emailAdminOnNewLead: true, adminEmail: "support@graceindesign.net", smsAdminOnNewLead: false, adminPhone: "" } as NotificationSettings,
+  notifications: { emailAdminOnNewLead: true, salesEmail: "consultation@graceindesign.net", adminEmail: "support@graceindesign.net", smsAdminOnNewLead: true, adminPhone: "", slackOnNewLead: true, slackOnOtherForms: true, slackOnCftEvents: true, cftLinkInSlack: true, cftUserEmail: "info@graceindesign.net" } as NotificationSettings,
   conversion_rules: { createProjectOnSigned: true, moveLeadToWon: true, copyAnswers: true, requestDepositInvoice: false, sendWelcomeEmail: true } as ConversionRules,
   rss: { refreshHours: 1, homepageItems: 3, useFeedImage: true, fallbackImage: true } as RssSettings,
   social: { showInstagramFeed: true, feedCount: 6, autoShare: { facebook: true, linkedin: true, instagram: false, pinterest: true } } as SocialSettings,

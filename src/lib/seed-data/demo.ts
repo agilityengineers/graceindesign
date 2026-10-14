@@ -155,8 +155,9 @@ export const TEAM = {
 
 export const INTEGRATIONS = [
   ["sendgrid", "Email (SendGrid)", "Lead + booking notifications, magic links", 1],
-  ["twilio", "SMS (Twilio)", "Booking confirmations and reminders", 1],
-  ["cft", "Call Flow Tracker", "Call events → leads, SSO sign-in, outbound events", 1],
+  ["twilio", "SMS (Twilio via Call Flow Tracker)", "Booking confirmations, reminders, texts to Grace", 1],
+  ["cft", "Call Flow Tracker", "Call events → leads, sign-in both ways, texts from Grace's number", 1],
+  ["slack", "Slack", "New requests and calls posted to a channel", 1],
   ["etsy", "Etsy", "Product listings", 2],
   ["rss", "RSS", "News imports", 2],
   ["magnific", "Magnific", "Generate imagery into the media library", 2],

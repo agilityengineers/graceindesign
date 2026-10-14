@@ -39,7 +39,7 @@ export async function runDueSequenceSteps() {
     const step = steps[e.currentStep];
     if (!lead || !step || ["won", "lost"].includes(lead.stage)) { await db.update(sequenceEnrollments).set({ status: lead && step ? "stopped" : "completed" }).where(eq(sequenceEnrollments.id, e.id)); continue; }
     if (step.channel === "sms" && lead.phone) await sendSms({ to: lead.phone, body: renderTemplate(step.body, lead), relatedType: "lead", relatedId: lead.id });
-    else if (lead.email) await sendEmail({ to: lead.email, subject: renderTemplate(step.subject || "A note from Grace In Design", lead), text: renderTemplate(step.body, lead), relatedType: "lead", relatedId: lead.id });
+    else if (lead.email) await sendEmail({ to: lead.email, from: "consultation", subject: renderTemplate(step.subject || "A note from Grace In Design", lead), text: renderTemplate(step.body, lead), relatedType: "lead", relatedId: lead.id });
     await db.insert(leadActivity).values({ leadId: lead.id, type: step.channel === "sms" ? "sms" : "email", body: `Sequence step sent: ${step.subject || step.body.slice(0, 60)}` });
     sent++;
     const next = steps[e.currentStep + 1];

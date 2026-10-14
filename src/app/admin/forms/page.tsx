@@ -10,6 +10,10 @@ import Toast from "@/components/admin/Toast";
 import ConfirmButton from "@/components/admin/Confirm";
 import Sortable from "@/components/admin/Sortable";
 import { addFormField, updateFormField, formFieldAction, reorderFormFields, saveFormSettings, savePath, deletePath } from "@/lib/actions/forms";
+import { env } from "@/lib/env";
+import { smsRoute } from "@/lib/server/outbox";
+import { slackConfigured } from "@/lib/server/slack";
+import { cftMasterConfigured } from "@/lib/server/cft-master";
 
 export const metadata = { title: "Form builder" };
 export const dynamic = "force-dynamic";
@@ -114,13 +118,26 @@ export default async function FormsPage({ searchParams }: { searchParams: Promis
               <Link href={livePage ? (livePage === "hhr" ? "/healthy-home-resources" : livePage === "virtual-assessment" ? "/services/aging-in-place/virtual" : livePage === "design-refresh" || livePage === "model-home" ? `/services/residential/${livePage}` : `/services/${livePage}`) : "/contact"} className="link-btn" style={{ fontSize: 12 }}>Open live page →</Link>
             </Card>
           )}
-          <Card title="Notifications & form mode">
+          <Card title="Notifications & form mode" sub="Who hears about a new request, and how">
             <form action={saveFormSettings} style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 13 }}>
-              <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>Email admin on new lead<input type="checkbox" name="emailAdminOnNewLead" defaultChecked={settings.notifications.emailAdminOnNewLead} /></label>
-              <label className="label label-caps">Admin email<input name="adminEmail" type="email" defaultValue={settings.notifications.adminEmail} className="admin-input admin-input-sm" /></label>
-              <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>SMS admin on new lead<input type="checkbox" name="smsAdminOnNewLead" defaultChecked={settings.notifications.smsAdminOnNewLead} /></label>
-              <label className="label label-caps">Admin mobile<input name="adminPhone" defaultValue={settings.notifications.adminPhone} placeholder="+1 770 …" className="admin-input admin-input-sm" /></label>
-              <label className="label label-caps">Public form layout<select name="mode" defaultValue={settings.consult_form.mode} className="admin-input admin-input-sm"><option value="wizard">Multi-step wizard</option><option value="single">Single page</option></select></label>
+              <span className="label-caps">Email</span>
+              <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>Email the team on a new consultation request<input type="checkbox" name="emailAdminOnNewLead" defaultChecked={settings.notifications.emailAdminOnNewLead} /></label>
+              <label className="label label-caps">Sales inbox (consultation requests)<input name="salesEmail" type="email" defaultValue={settings.notifications.salesEmail} className="admin-input admin-input-sm" /></label>
+              <label className="label label-caps">Support inbox (directory, events, everything else)<input name="adminEmail" type="email" defaultValue={settings.notifications.adminEmail} className="admin-input admin-input-sm" /></label>
+              <span style={{ fontSize: 11, color: "#8c95a8", lineHeight: 1.5 }}>Mail goes out from the verified senders: {env.senders.noreply.email} (no reply needed), {env.senders.support.email} (general), {env.senders.consultation.email} (sales), {env.senders.newsletter.email} (newsletter).</span>
+              <span className="label-caps" style={{ marginTop: 6 }}>Text message</span>
+              <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>Text Grace on a new consultation request<input type="checkbox" name="smsAdminOnNewLead" defaultChecked={settings.notifications.smsAdminOnNewLead} /></label>
+              <label className="label label-caps">Grace's mobile<input name="adminPhone" defaultValue={settings.notifications.adminPhone || env.adminNotifyPhone} placeholder="+1 770 …" className="admin-input admin-input-sm" /></label>
+              <span style={{ fontSize: 11, color: "#8c95a8", lineHeight: 1.5 }}>{(() => { const r = smsRoute(); return r === "cft" ? `Sent through Call Flow Tracker from ${env.cft.smsFrom}; the text carries a link that signs her into Call Flow Tracker.` : r === "twilio" ? "Sent through this app's own Twilio number (set CFT_SMS_FROM to send through Call Flow Tracker instead)." : "Texts are logged to the outbox until Call Flow Tracker (CFT_URL, CFT_MASTER_DASHBOARD_SECRET, CFT_SMS_FROM) or Twilio keys are configured."; })()}</span>
+              <span className="label-caps" style={{ marginTop: 6 }}>Slack {slackConfigured() ? "" : "(SLACK_WEBHOOK_URL not set — posts are logged only)"}</span>
+              <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>Post new consultation requests<input type="checkbox" name="slackOnNewLead" defaultChecked={settings.notifications.slackOnNewLead} /></label>
+              <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>Post directory / event submissions and newsletter sign-ups<input type="checkbox" name="slackOnOtherForms" defaultChecked={settings.notifications.slackOnOtherForms} /></label>
+              <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>Post calls and leads reported by Call Flow Tracker<input type="checkbox" name="slackOnCftEvents" defaultChecked={settings.notifications.slackOnCftEvents} /></label>
+              <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>Include the auto sign-in link to Call Flow Tracker (private channel only)<input type="checkbox" name="cftLinkInSlack" defaultChecked={settings.notifications.cftLinkInSlack} /></label>
+              <span className="label-caps" style={{ marginTop: 6 }}>Call Flow Tracker</span>
+              <label className="label label-caps">Team member the texts and sign-in links are for (their CFT login email)<input name="cftUserEmail" type="email" defaultValue={settings.notifications.cftUserEmail} className="admin-input admin-input-sm" /></label>
+              <span style={{ fontSize: 11, color: "#8c95a8", lineHeight: 1.5 }}>{cftMasterConfigured() ? `Auto sign-in is live (${env.cft.url}); links expire after ${env.cft.launchLinkHours}h.` : env.cft.url ? "CFT_MASTER_DASHBOARD_SECRET is not set, so links open Call Flow Tracker's login page instead of signing in automatically." : "CFT_URL is not set — links open this admin instead."}</span>
+              <label className="label label-caps" style={{ marginTop: 6 }}>Public form layout<select name="mode" defaultValue={settings.consult_form.mode} className="admin-input admin-input-sm"><option value="wizard">Multi-step wizard</option><option value="single">Single page</option></select></label>
               <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>Let visitors switch layouts<input type="checkbox" name="allowVisitorToggle" defaultChecked={settings.consult_form.allowVisitorToggle} /></label>
               <button type="submit" className="btn btn-navy btn-xs" style={{ alignSelf: "flex-start", borderRadius: 8 }}>Save</button>
             </form>

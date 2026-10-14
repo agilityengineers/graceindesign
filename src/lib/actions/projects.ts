@@ -163,7 +163,7 @@ export async function requestApproval(formData: FormData) {
     const [a] = await db.insert(approvals).values({ projectId, title, description: strOrNull(formData.get("description")) }).returning();
     const project = await db.query.projects.findFirst({ where: eq(projects.id, projectId) });
     const lead = project?.leadId ? await db.query.leads.findFirst({ where: eq(leads.id, project.leadId) }) : null;
-    if (lead?.email && project) { const pa = await db.query.portalAccess.findFirst({ where: eq(portalAccess.projectId, projectId) }); const link = pa ? `${env.baseUrl}/portal/${pa.token}` : `${env.baseUrl}/contact`; await sendEmail({ to: lead.email, subject: `Your approval is needed — ${project.name}`, relatedType: "project", relatedId: projectId, text: `Hi ${lead.name.split(" ")[0]},\n\n${title}\n${a.description || ""}\n\nReview and respond here: ${link}\n\nGrace In Design` }); }
+    if (lead?.email && project) { const pa = await db.query.portalAccess.findFirst({ where: eq(portalAccess.projectId, projectId) }); const link = pa ? `${env.baseUrl}/portal/${pa.token}` : `${env.baseUrl}/contact`; await sendEmail({ to: lead.email, from: "support", subject: `Your approval is needed — ${project.name}`, relatedType: "project", relatedId: projectId, text: `Hi ${lead.name.split(" ")[0]},\n\n${title}\n${a.description || ""}\n\nReview and respond here: ${link}\n\nGrace In Design` }); }
     await db.insert(projectActivity).values({ projectId, userId: user.id, type: "approval", body: `Approval requested: ${title}` });
     return a;
   }, { back: backTo(formData, `/admin/projects?open=${projectId}`), ok: "Approval requested", entityId: (a) => a.id, revalidate: ["/admin/projects", "/admin/ops"] });
@@ -188,7 +188,7 @@ export async function portalAction(formData: FormData) {
     await db.delete(portalAccess).where(eq(portalAccess.projectId, projectId));
     const token = randomToken(18);
     await db.insert(portalAccess).values({ projectId, email, token });
-    if (op === "send") await sendEmail({ to: email, subject: `Your client portal — ${project.name}`, relatedType: "project", relatedId: projectId, text: `Hi ${(lead?.name || "there").split(" ")[0]},\n\nHere is your private link to the ${project.name} client portal (documents, schedule, invoices and approvals):\n${env.baseUrl}/portal/${token}\n\nKeep this link private — anyone with it can view your project.\n\nGrace In Design` });
+    if (op === "send") await sendEmail({ to: email, from: "support", subject: `Your client portal — ${project.name}`, relatedType: "project", relatedId: projectId, text: `Hi ${(lead?.name || "there").split(" ")[0]},\n\nHere is your private link to the ${project.name} client portal (documents, schedule, invoices and approvals):\n${env.baseUrl}/portal/${token}\n\nKeep this link private — anyone with it can view your project.\n\nGrace In Design` });
     await db.insert(projectActivity).values({ projectId, userId: user.id, type: "portal", body: op === "send" ? `Portal link sent to ${email}` : "Portal link regenerated" });
     return projectId;
   }, { back: backTo(formData, `/admin/projects?open=${projectId}`), ok: op === "revoke" ? "Portal access revoked" : op === "send" ? "Portal link sent" : "Portal link regenerated", entityId: () => projectId, revalidate: ["/admin/projects"] });
