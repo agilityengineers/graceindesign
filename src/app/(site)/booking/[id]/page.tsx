@@ -5,6 +5,7 @@ import { db, bookings, leads, paths } from "@/lib/db";
 import { fmtWhen } from "@/lib/server/consult";
 import { Check } from "@/components/ui/Icons";
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Your consultation", robots: { index: false, follow: false } };
 export default async function BookingPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ e?: string }> }) {
   const { id } = await params; const { e } = await searchParams;
   const b = await db.query.bookings.findFirst({ where: eq(bookings.id, Number(id)) }); if (!b) notFound();

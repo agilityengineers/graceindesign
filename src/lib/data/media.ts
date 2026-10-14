@@ -13,19 +13,30 @@ function localFileFor(slot: string): string | null {
 }
 
 export type MediaMap = Map<string, string>;
+// Alt text per slot (media.alt, edited in Content → Media library), keyed by the URL map it belongs to.
+const ALTS = new WeakMap<MediaMap, Map<string, string>>();
 
 /** slot → best available URL (uploaded object → local fetched file → brand asset / remote placeholder). */
 export const getMediaMap = cache(async (): Promise<MediaMap> => {
-  const rows = await db.select({ slot: media.slot, url: media.url, storageKey: media.storageKey, remoteUrl: media.remoteUrl, source: media.source }).from(media);
+  const rows = await db.select({ slot: media.slot, url: media.url, storageKey: media.storageKey, remoteUrl: media.remoteUrl, source: media.source, alt: media.alt, subject: media.subject }).from(media);
   const map: MediaMap = new Map();
+  const alts = new Map<string, string>();
   for (const r of rows) {
     if (!r.slot) continue;
     const local = localFileFor(r.slot);
     const url = r.storageKey ? `/api/media/${r.storageKey}` : local ?? (r.url && !r.url.startsWith("http") ? r.url : null) ?? r.url ?? r.remoteUrl ?? "";
     map.set(r.slot, url || placeholderUrl(r.slot));
+    const alt = (r.alt || r.subject || "").trim(); if (alt) alts.set(r.slot, alt);
   }
+  ALTS.set(map, alts);
   return map;
 });
+
+/** Alt text for a `media://` reference, if the media record has one. */
+export function altFor(map: MediaMap, ref: string | null | undefined): string | undefined {
+  if (!ref || !ref.startsWith("media://")) return undefined;
+  return ALTS.get(map)?.get(ref.slice(8));
+}
 
 export function placeholderUrl(label: string) { return `/api/placeholder?label=${encodeURIComponent(label)}`; }
 
@@ -39,6 +50,15 @@ export function resolveImg(map: MediaMap, ref: string | null | undefined): strin
 export function resolveDeep<T>(map: MediaMap, value: T): T {
   if (typeof value === "string") return (value.startsWith("media://") ? resolveImg(map, value) : value) as T;
   if (Array.isArray(value)) return value.map((v) => resolveDeep(map, v)) as T;
-  if (value && typeof value === "object") { const out: Record<string, unknown> = {}; for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[k] = resolveDeep(map, v); return out as T; }
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    const src = value as Record<string, unknown>;
+    for (const [k, v] of Object.entries(src)) {
+      out[k] = resolveDeep(map, v);
+      // `img: "media://x"` also yields `imgAlt` so components can render the media library's alt text.
+      if (typeof v === "string" && v.startsWith("media://")) { const alt = altFor(map, v); if (alt && !(`${k}Alt` in src)) out[`${k}Alt`] = alt; }
+    }
+    return out as T;
+  }
   return value;
 }

@@ -1,4 +1,6 @@
 import type { NextConfig } from "next";
+// Old graceindesign.net paths → new routes (permanent 301s). Add entries from the old site's sitemap before cutover.
+import redirects from "./src/lib/redirects.json";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -16,6 +18,9 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "25mb" },
   },
   serverExternalPackages: ["pg", "@replit/object-storage", "pdf-lib", "twilio", "@sendgrid/mail", "stripe"],
+  async redirects() {
+    return (redirects as { source: string; destination: string }[]).map((r) => ({ ...r, permanent: true }));
+  },
   async headers() {
     return [
       {

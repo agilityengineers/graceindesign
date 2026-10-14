@@ -3,6 +3,10 @@
  *   npm run db:seed               # seeds; refuses if data already exists
  *   npm run db:seed -- --if-empty # no-op when data exists (used by Replit workflows)
  *   npm run db:seed -- --force    # wipe all tables and reseed
+ *   npm run db:seed -- --demo     # also plant demo operations data (team accounts, leads, projects, proposals, subscribers)
+ *
+ * Without --demo the seed contains only site content and configuration: no invented leads, projects, events,
+ * products, posts (drafts only), testimonials or newsletter subscribers. Use --demo for a sales/demo workspace only.
  */
 import "dotenv/config";
 import { sql, eq, is, getTableName } from "drizzle-orm";
@@ -21,6 +25,7 @@ import { slugify } from "../src/lib/utils";
 const args = process.argv.slice(2);
 const FORCE = args.includes("--force");
 const IF_EMPTY = args.includes("--if-empty");
+const DEMO = args.includes("--demo");
 // Demo timestamps are expressed in Eastern time so "today" in the admin matches the day the seed ran.
 const TZ = "America/New_York";
 const etParts = (d: Date) => { const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: TZ, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).formatToParts(d).map((x) => [x.type, x.value])); return { y: +p.year, m: +p.month, d: +p.day, h: +p.hour, mi: +p.minute }; };
@@ -43,6 +48,7 @@ async function main() {
   console.log("Users …");
   const userIds: Record<string, number> = {};
   for (const u of D.DEMO_USERS) {
+    if (!DEMO && u.role !== "owner") continue; // demo team accounts only with --demo
     const isOwner = env.seedOwnerEmails.includes(u.email) || u.role === "owner";
     const [row] = await db.insert(S.users).values({ email: u.email, name: u.name, role: isOwner ? "owner" : (u.role as S.UserRole), isSuperAdmin: u.email === env.seedSuperAdminEmail, title: u.title, avatarUrl: u.avatar, invitedAt: new Date() }).returning();
     userIds[u.email] = row.id;
@@ -78,8 +84,10 @@ async function main() {
 
   // --- Media -----------------------------------------------------------
   console.log("Media …");
+  // Alt text starts as the slot's subject minus image-generation directions; edit it in Content → Media library.
+  const cleanAlt = (s: string) => s.replace(/,\s*(no people|no text|editorial interior photography)\s*$/i, "").trim();
   for (const ms of MEDIA_SLOTS) {
-    await db.insert(S.media).values({ name: ms.brand ? ms.brand.split("/").pop()! : `${ms.slot}.jpg`, url: ms.brand ?? ms.remote ?? "", remoteUrl: ms.remote, storageKey: null, alt: ms.subject, slot: ms.slot, subject: ms.subject, aspect: ms.aspect, usedOn: ms.usedOn, source: ms.brand ? "brand" : "remote", magnificCreationId: ms.magnificId });
+    await db.insert(S.media).values({ name: ms.brand ? ms.brand.split("/").pop()! : `${ms.slot}.jpg`, url: ms.brand ?? ms.remote ?? "", remoteUrl: ms.remote, storageKey: null, alt: cleanAlt(ms.subject), slot: ms.slot, subject: ms.subject, aspect: ms.aspect, usedOn: ms.usedOn, source: ms.brand ? "brand" : "remote", magnificCreationId: ms.magnificId });
   }
 
   // --- Services --------------------------------------------------------
@@ -87,7 +95,7 @@ async function main() {
   const serviceIdBySlug: Record<string, number> = {};
   const serviceIdByTitle: Record<string, number> = {};
   for (const s of SERVICES) {
-    const [row] = await db.insert(S.services).values({ slug: s.slug, title: s.title, kicker: s.kicker, sort: s.sort, navGroup: s.navGroup ?? "services", heroStyle: s.heroStyle ?? "cinematic", cineLead: s.cineLead, cineTail: s.cineTail, scenesLabel: s.scenesLabel, scenes: s.scenes.map(([name, word, line, img]) => ({ name, word, line, img })), hero: s.hero, sub: s.sub, problem: s.problem, empathy: s.empathy, authority: s.authority, plan: s.plan, success: s.success, failure: s.failure, features: s.features, tiers: s.tiers ?? null, steps: s.steps ?? null, img: s.img, img2: s.img2, cta: s.cta, beforeAfter: s.beforeAfter ? { before: s.beforeAfter[0], after: s.beforeAfter[1], title: s.beforeAfter[2] } : null, pathId: PATHS.some((p) => p.id === s.slug) ? s.slug : null, tiersTitle: s.slug === "virtual-assessment" ? "Choose how you'd like to be assessed" : s.tiers ? "Choose the level that fits your community" : null, tiersSub: s.slug === "virtual-assessment" ? "Flat-fee options, quoted at booking. Fees credit toward an in-home assessment or design project." : s.tiers ? "Pricing is quoted per model based on floor plan, tier and schedule. Tell us about the community and we'll follow up with a proposal." : null, testimonialQuote: s.slug === "model-home" ? "Developer testimonial goes here — two sentences about absorption, buyer response or the install experience." : null, testimonialWho: s.slug === "model-home" ? "Name, Title · Developer (placeholder)" : null }).returning();
+    const [row] = await db.insert(S.services).values({ slug: s.slug, title: s.title, kicker: s.kicker, sort: s.sort, navGroup: s.navGroup ?? "services", heroStyle: s.heroStyle ?? "cinematic", cineLead: s.cineLead, cineTail: s.cineTail, scenesLabel: s.scenesLabel, scenes: s.scenes.map(([name, word, line, img]) => ({ name, word, line, img })), hero: s.hero, sub: s.sub, problem: s.problem, empathy: s.empathy, authority: s.authority, plan: s.plan, success: s.success, failure: s.failure, features: s.features, tiers: s.tiers ?? null, steps: s.steps ?? null, img: s.img, img2: s.img2, cta: s.cta, beforeAfter: s.beforeAfter ? { before: s.beforeAfter[0], after: s.beforeAfter[1], title: s.beforeAfter[2] } : null, pathId: PATHS.some((p) => p.id === s.slug) ? s.slug : null, tiersTitle: s.slug === "virtual-assessment" ? "Choose how you'd like to be assessed" : s.tiers ? "Choose the level that fits your community" : null, tiersSub: s.slug === "virtual-assessment" ? "Flat-fee options, quoted at booking. Fees credit toward an in-home assessment or design project." : s.tiers ? "Pricing is quoted per model based on floor plan, tier and schedule. Tell us about the community and we'll follow up with a proposal." : null, testimonialQuote: null, testimonialWho: null }).returning();
     serviceIdBySlug[s.slug] = row.id; serviceIdByTitle[s.title] = row.id;
   }
   for (const s of SERVICES) if (s.parent) await db.update(S.services).set({ parentId: serviceIdBySlug[s.parent] }).where(eq(S.services.id, serviceIdBySlug[s.slug]));
@@ -103,11 +111,11 @@ async function main() {
   console.log("Content …");
   await db.insert(S.teamMembers).values({ name: D.TEAM.name, title: D.TEAM.title, credentials: D.TEAM.credentials, quote: D.TEAM.quote, bio: D.TEAM.bio, bio2: D.TEAM.bio2, education: [...D.TEAM.education], credentialList: [...D.TEAM.credentialList], photoUrl: D.TEAM.photo, sort: 0 });
   for (const [i, [quote, who, where, slug]] of D.TESTIMONIALS.entries()) await db.insert(S.testimonials).values({ quote, who, whereLabel: where, serviceSlug: slug, sort: i });
-  for (const [i, [title, category, price, reviews, featured, image, tag, type]] of D.PRODUCTS.entries()) await db.insert(S.products).values({ etsyUrl: D.ETSY_LISTING, title, category, price, reviews, featured, imageUrl: image, tag, type, sort: i });
+  for (const [i, [title, category, price, reviews, featured, image, tag, type]] of D.PRODUCTS.entries()) await db.insert(S.products).values({ etsyUrl: D.ETSY_LISTING, title, category, price, reviews, featured, imageUrl: image, tag, type, sort: i, isActive: false }); // hidden until the price/listing is confirmed in the admin
   const rssIdByName: Record<string, number> = {};
-  for (const [name, url, scope, country] of D.RSS_SOURCES) { const [r] = await db.insert(S.rssSources).values({ name, url, scope, country, lastSyncedAt: daysAgo(0, new Date().getHours() - 1), itemCount: scope === "news" ? 2 : 1 }).returning(); rssIdByName[name] = r.id; }
+  for (const [name, url, scope, country] of D.RSS_SOURCES) { const [r] = await db.insert(S.rssSources).values({ name, url, scope, country, lastSyncedAt: null, itemCount: 0 }).returning(); rssIdByName[name] = r.id; }
   for (const [slug, title, category, excerpt, image, origin, status, ago, scope, featured, sourceName] of D.POSTS) {
-    await db.insert(S.posts).values({ slug, title, category, excerpt, imageUrl: image, origin, scope, status, featured, publishedAt: status === "published" ? daysAgo(ago) : null, sourceName: sourceName ?? null, rssSourceId: sourceName ? rssIdByName[sourceName] : null, authorId: grace, body: `<p>${excerpt}</p><p>This article is a placeholder seeded from the prototype. Edit it under Content → News & Insights.</p>`, guid: origin === "rss" ? `seed-${slug}` : null });
+    await db.insert(S.posts).values({ slug, title, category, excerpt, imageUrl: image, origin, scope, status, featured, publishedAt: status === "published" ? daysAgo(ago) : null, sourceName: sourceName ?? null, rssSourceId: sourceName ? rssIdByName[sourceName] : null, authorId: grace, body: `<p>${excerpt}</p>`, guid: origin === "rss" ? `seed-${slug}` : null });
   }
   for (const [title, source, ago, image] of D.CC_REGIONAL_NEWS) {
     await db.insert(S.posts).values({ slug: slugify(title), title, category: "Regional news", excerpt: null, imageUrl: image, origin: "rss", scope: "caribbean", status: "published", publishedAt: daysAgo(ago), sourceName: source, sourceUrl: "#", rssSourceId: Object.entries(rssIdByName).find(([n]) => n.startsWith(source.split(" —")[0]))?.[1] ?? null, guid: `seed-cc-${slugify(title)}` });
@@ -118,16 +126,17 @@ async function main() {
   for (const [i, [name, status]] of D.CC_COUNTRIES.entries()) await db.insert(S.ccCountries).values({ name, status, sort: i });
   for (const [i, r] of D.CC_RESOURCES.entries()) {
     const [status, name, category, country, area, type, kind, byName, byEmail, description, ago] = r;
+    if (!DEMO && status !== "published") continue; // sample pending/rejected submissions only with --demo
     await db.insert(S.ccResources).values({ name, category, country, area, type, kind, status, submittedByName: byName, submittedByEmail: byEmail, description, reviewedBy: status === "pending" ? null : grace, publishedAt: status === "published" ? daysAgo(ago) : null, createdAt: daysAgo(ago), sort: i, reviewNote: status === "rejected" ? "Commercial lender, not a support resource." : null });
   }
   for (const [status, title, where, format, host, by, inDays, timeLabel, description, country] of D.CC_EVENTS) {
     await db.insert(S.ccEvents).values({ title, startsAt: daysAgo(-inDays, 10), timeLabel, whereLabel: where, format, host, description, country, status, submittedByName: by, submittedByEmail: by === "GID" ? null : `${slugify(by)}@example.com`, reviewedBy: status === "pending" ? null : grace, publishedAt: status === "published" ? daysAgo(20) : null, reviewNote: status === "rejected" ? "Sales presentation, not a community resource." : null });
   }
-  for (const [email, segment, location, ago] of D.CC_SUBSCRIBERS) await db.insert(S.ccSubscribers).values({ email, segment, location, country: location.includes("Jamaica") ? "Jamaica" : "Diaspora", consentedAt: daysAgo(ago), createdAt: daysAgo(ago) });
-  // Subscriber counts in the prototype (418) — pad with anonymized demo rows so segments match the admin mock.
-  const segs: [string, number][] = [["Living in Jamaica", 163], ["In the diaspora, supporting family back home", 189], ["A caregiver or care professional", 47], ["A community organization or agency", 14]];
-  for (const [segment, n] of segs) for (let i = 0; i < n; i++) await db.insert(S.ccSubscribers).values({ email: `subscriber${slugify(segment).slice(0, 8)}${i}@example.com`, segment, location: segment.includes("Jamaica") || segment.includes("caregiver") ? "Jamaica" : "Atlanta, USA", country: segment.includes("Jamaica") ? "Jamaica" : "Diaspora", consentedAt: daysAgo(Math.floor(Math.random() * 120)) });
+  if (DEMO) for (const [email, segment, location, ago] of D.CC_SUBSCRIBERS) await db.insert(S.ccSubscribers).values({ email, segment, location, country: location.includes("Jamaica") ? "Jamaica" : "Diaspora", consentedAt: daysAgo(ago), createdAt: daysAgo(ago) });
 
+  if (!DEMO) { console.log("Seed complete (content only; add --demo for sample leads, projects and social data)."); await pool.end(); return; }
+
+  // --- Demo operations data (only with --demo) ---------------------------
   // --- Leads, activity, bookings ---------------------------------------
   console.log("Leads …");
   const leadIdByName: Record<string, number> = {};

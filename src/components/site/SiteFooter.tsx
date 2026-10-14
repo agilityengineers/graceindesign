@@ -36,7 +36,7 @@ export default function SiteFooter({ contact, footer, social, isAdmin, etsyUrl }
           <span className="eyebrow eyebrow-sky" style={{ letterSpacing: ".16em" }}>Contact</span>
           <a href={`mailto:${contact.email}`} style={{ color: "#fff", fontSize: 14 }}>{contact.email}</a>
           <a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`} style={{ color: "#fff", fontSize: 14 }}>{contact.phone}</a>
-          <span style={{ color: "#c6cbd6", fontSize: 14, lineHeight: 1.6 }}>{contact.address}<br />{contact.addressLine2}</span>
+          {(contact.address || contact.addressLine2) && <span style={{ color: "#c6cbd6", fontSize: 14, lineHeight: 1.6 }}>{contact.address}{contact.address && contact.addressLine2 && <br />}{contact.addressLine2}</span>}
           <span style={{ color: "#c6cbd6", fontSize: 13, lineHeight: 1.6 }}>{contact.hours}<br />{contact.consultationsNote}</span>
         </div>
       </div>
@@ -46,8 +46,7 @@ export default function SiteFooter({ contact, footer, social, isAdmin, etsyUrl }
           <Link href="/privacy" style={{ color: "#8c95a8" }}>Privacy Policy</Link>
           <Link href="/terms" style={{ color: "#8c95a8" }}>Terms</Link>
           <Link href="/accessibility" style={{ color: "#8c95a8" }}>Accessibility</Link>
-          <Link href="/admin" style={{ color: "#6cb6e6", fontWeight: 600 }}>Admin login</Link>
-          {isAdmin && <Link href="/roadmap" style={{ color: "#6cb6e6", fontWeight: 600 }}>Build roadmap</Link>}
+          {isAdmin && <Link href="/admin" style={{ color: "#6cb6e6", fontWeight: 600 }}>Admin</Link>}
         </div>
       </div>
     </footer>

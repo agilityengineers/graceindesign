@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.1 — pre-launch review (October 2026)
+- Removed prototype/demo content from the public site: invented products, ratings and review counts, Caribbean events, regional headlines attributed to real publishers, placeholder article bodies, the model-home testimonial placeholder, and every admin-facing instruction visible to visitors (before/after note, lead-source pills, form-builder notes).
+- Corrected claims: no unsupported volume claims ("hundreds of…"), Aging In Place wording describes assessment, recommendations and contractor coordination (not installation), Project Management describes owner-side coordination without outcome guarantees, Commercial hero reads "A workspace…".
+- Brand casing: prose uses "Aging In Place"; the credential stays "Certified Aging-in-Place Specialist (CAPS)". URL slugs unchanged.
+- Footer: placeholder address removed (fields render only when set); public "Admin login" link removed.
+- Forms: service-page lead forms now require an explicit consent checkbox; consult form thank-you no longer says "You're booked" when no slot was chosen; newsletter form carries consent wording.
+- Empty states for products, news, events and the regional column; product cards show title, price and "View on Etsy" (review counts only after a real Etsy sync); article cards credit RSS sources.
+- SEO: sitemap, robots, favicon, canonical links, noindex on private pages, unique meta descriptions, GA4 via `NEXT_PUBLIC_GA_MEASUREMENT_ID`, 301 redirect map, media-library alt text on images.
+- `scripts/launch-content.ts` (`npm run content:launch`) applies these content corrections to an already-seeded database; `npm run db:seed` is content-only unless `--demo`.
+- `tests/launch-content.mjs` guards against prototype/admin text and checks the SEO plumbing.
+
 ## 0.1.0 — first complete build (all four phases)
 
 ### Phase 1 — site, funnel, leads, pipeline
@@ -34,4 +45,4 @@
 ### Tooling
 - Drizzle migrations (`drizzle/0000_init.sql`), `scripts/migrate.ts`, `scripts/seed.ts` (`--force`, `--if-empty`), `scripts/reset.ts`, `scripts/cron.ts`, `scripts/fetch-media.ts`.
 - `tests/smoke.mjs` (funnel + route smoke test) and `tests/shot.mjs` (full-page screenshots, with dev login).
-- `.replit` autoscale deployment: build runs migrate + seed-if-empty + `next build`.
+- `.replit` autoscale deployment: build runs `npm ci --include=dev && npm run build` (migrations and seeding happen in the workspace workflow, not in the publish build).

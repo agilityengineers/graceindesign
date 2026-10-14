@@ -13,7 +13,7 @@ Production build of graceindesign.net for Grace In Design Services, LLC (Atlanta
 ```bash
 cp .env.example .env     # set DATABASE_URL (Replit provides it automatically)
 npm install
-npm run db:setup         # migrations + prototype seed (owners, demo team, content, leads, projects…)
+npm run db:setup         # migrations + content seed (owners, pages, services, media slots). Add `-- --demo` for sample leads/projects
 npm run dev              # http://localhost:5000
 ```
 
@@ -25,12 +25,14 @@ Sign in at `/login` with `info@graceindesign.net` or `emailme@clarencewilliams.c
 | --- | --- |
 | `npm run dev` / `npm run build` / `npm run start` | Next.js dev server, production build, production server (port 5000) |
 | `npm run db:migrate` | Apply SQL migrations from `drizzle/` |
-| `npm run db:seed [-- --force | --if-empty]` | Seed prototype data (force = wipe first; if-empty = skip when data exists) |
+| `npm run db:seed [-- --force | --if-empty | --demo]` | Seed site content (force = wipe first; if-empty = skip when data exists; demo = also plant sample leads, projects, team accounts and subscribers) |
+| `npm run content:launch [-- --dry-run | --ops]` | Apply the October 2026 pre-launch content corrections to an already-seeded database without wiping it (dry-run prints the changes; ops also removes sample operations data). See `docs/launch-content.md` |
 | `npm run db:reset` | Drop everything |
 | `npm run cron -- <job>` | Run a scheduled job (`reminders`, `rss`, `etsy`, `social`, `drips`, `webhooks`, `outbox`, `hubspot`, `all`) |
 | `npm run media:fetch` | Download generated/stock imagery into `public/media/` |
 | `npm run verify` | Typecheck + lint + production build |
-| `node tests/smoke.mjs` | Funnel and route smoke test against a running server |
+| `node tests/smoke.mjs` | Funnel and route smoke test against a running server (writes a test lead) |
+| `npm run test:launch-content` | Read-only crawl of the public pages: no prototype/admin text, unique titles and descriptions, robots, sitemap, favicon, noindex, redirects |
 | `node tests/shot.mjs --login <owner email> /route …` | Full-page screenshots (dev helper) |
 
 ## Where things live

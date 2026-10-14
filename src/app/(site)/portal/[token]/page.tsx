@@ -9,7 +9,7 @@ import { money, fmtDate, relativeDay } from "@/lib/utils";
 import { Check } from "@/components/ui/Icons";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Client portal" };
+export const metadata = { title: "Client portal", robots: { index: false, follow: false } };
 
 async function loadPortal(token: string) {
   const access = await db.query.portalAccess.findFirst({ where: eq(portalAccess.token, token) });

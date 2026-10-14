@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowLeft, Check } from "@/components/ui/Icons";
 import { ConsultButton } from "./ConsultContext";
 
-export function HomeClassicHero({ kicker, title, sub, cta, source, secondary, secondaryHref, img, stats, badgeTitle, badgeSub }: { kicker: string; title: string; sub: string; cta: string; source: string; secondary: string; secondaryHref: string; img: string; stats: [string, string][]; badgeTitle: string; badgeSub: string }) {
+export function HomeClassicHero({ kicker, title, sub, cta, source, secondary, secondaryHref, img, imgAlt, stats, badgeTitle, badgeSub }: { kicker: string; title: string; sub: string; cta: string; source: string; secondary: string; secondaryHref: string; img: string; imgAlt?: string; stats: [string, string][]; badgeTitle: string; badgeSub: string }) {
   return (
     <section className="hero-classic" style={{ position: "relative", minHeight: 680 }}>
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "96px 64px 96px var(--gutter)", gap: 28, minWidth: 0 }}>
@@ -18,7 +18,7 @@ export function HomeClassicHero({ kicker, title, sub, cta, source, secondary, se
         </div>
       </div>
       <div className="hero-photo-wrap" style={{ position: "relative", minWidth: 0, minHeight: 0 }}>
-        <div className="hero-photo"><img src={img} alt="Signature project" /></div>
+        <div className="hero-photo"><img src={img} alt={imgAlt || "Grace In Design project"} /></div>
         <div style={{ position: "absolute", left: -56, bottom: 88, display: "flex", alignItems: "center", gap: 14, background: "#fff", borderRadius: 14, padding: "16px 20px", boxShadow: "0 18px 44px rgba(26,34,56,.14)", pointerEvents: "none" }} className="hero-badge">
           <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#e6f3fc", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={22} /></div>
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}><span style={{ fontSize: 14, fontWeight: 600 }}>{badgeTitle}</span><span style={{ fontSize: 12, color: "#6b7486" }}>{badgeSub}</span></div>
@@ -28,7 +28,7 @@ export function HomeClassicHero({ kicker, title, sub, cta, source, secondary, se
   );
 }
 
-export function ServiceClassicHero({ kicker, kickerHref, title, sub, cta, source, img }: { kicker: string; kickerHref: string; title: string; sub: string; cta: string; source: string; img: string }) {
+export function ServiceClassicHero({ kicker, kickerHref, title, sub, cta, source, img, imgAlt }: { kicker: string; kickerHref: string; title: string; sub: string; cta: string; source: string; img: string; imgAlt?: string }) {
   return (
     <section className="hero-classic">
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "88px 64px 88px var(--gutter)", gap: 26, minWidth: 0 }}>
@@ -40,7 +40,7 @@ export function ServiceClassicHero({ kicker, kickerHref, title, sub, cta, source
           <span style={{ fontSize: 13, color: "#6b7486" }}>Free · No obligation · Reply within one business day</span>
         </div>
       </div>
-      <div className="hero-photo-wrap" style={{ position: "relative", minWidth: 0, minHeight: 0 }}><div className="hero-photo"><img src={img} alt={title} /></div></div>
+      <div className="hero-photo-wrap" style={{ position: "relative", minWidth: 0, minHeight: 0 }}><div className="hero-photo"><img src={img} alt={imgAlt || title} /></div></div>
     </section>
   );
 }

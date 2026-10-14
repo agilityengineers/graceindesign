@@ -8,7 +8,7 @@ import { money, fmtDateTime } from "@/lib/utils";
 import { Check } from "@/components/ui/Icons";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Your proposal" };
+export const metadata = { title: "Your proposal", robots: { index: false, follow: false } };
 
 async function sign(formData: FormData) {
   "use server";
