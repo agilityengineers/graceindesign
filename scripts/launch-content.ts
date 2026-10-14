@@ -17,6 +17,7 @@ import "dotenv/config";
 import { and, eq, inArray, isNull, like, or, sql } from "drizzle-orm";
 import { db, pool } from "../src/lib/db";
 import * as S from "../src/lib/db/schema";
+import { isSeedSocialAccount, isSeedSocialPost, isSeedSubscriber } from "./launch-cleanup-matches";
 
 const args = process.argv.slice(2);
 const DRY = args.includes("--dry-run");
@@ -119,7 +120,6 @@ const DEMO_TEAM_EMAILS = ["marcus@graceindesign.net", "dana@graceindesign.net"];
 const DEMO_LEAD_EMAILS = ["m.ellison@gmail.com", "ops@northlinedental.com", "dpshah@outlook.com", "linda@mobilityfirstot.com", "rosa.delgado@me.com", "pm@harborviewliving.com", "tbrandt@yahoo.com", "evelyn.marsh@aol.com"];
 const DEMO_PROJECT_CODES = ["GID-2026-014", "GID-2026-015", "GID-2026-012", "GID-2026-011", "GID-2026-009", "GID-2026-006", "GID-2026-003"];
 const DEMO_PROPOSAL_TOKENS = ["demo-shah-proposal-v2", "demo-delgado-refresh"];
-const DEMO_SUBSCRIBER_EMAILS = ["p.campbell@gmail.com", "ann.marie.w@yahoo.com", "nurse.reid@manchesterhealth.gov.jm", "kmorgan@outlook.com", "info@stannseniorcare.org"];
 
 // --------------------------------------------------------------------------------------------------------------------
 const changes: string[] = [];
@@ -269,30 +269,29 @@ async function main() {
   if (OPS) {
     const demoUsers = await db.select({ id: S.users.id, email: S.users.email, lastLoginAt: S.users.lastLoginAt, isActive: S.users.isActive }).from(S.users).where(inArray(S.users.email, DEMO_TEAM_EMAILS));
     for (const u of demoUsers) {
-      if (u.lastLoginAt) { note(`users.${u.email}: SKIPPED — this account has signed in, so it may be real; deactivate it in Admin → Users if not`); continue; }
+      if (u.lastLoginAt) { console.log(`users.${u.email}: SKIPPED — this account has signed in, so it may be real; deactivate it in Admin → Users if not`); continue; }
       if (u.isActive) await write(`users.${u.email}: deactivate sample team account`, () => db.update(S.users).set({ isActive: false, updatedAt: new Date() }).where(eq(S.users.id, u.id)));
     }
-    const fakeLeads = await db.select({ id: S.leads.id, name: S.leads.name, email: S.leads.email }).from(S.leads).where(or(inArray(S.leads.email, DEMO_LEAD_EMAILS), like(S.leads.email, "%@example.com")));
-    if (fakeLeads.length) await write(`leads: delete ${fakeLeads.length} sample/test lead(s) with their activity and bookings: ${fakeLeads.map((l) => l.name).join(", ")}`, () => db.delete(S.leads).where(inArray(S.leads.id, fakeLeads.map((l) => l.id))));
+    const fakeLeads = await db.select({ id: S.leads.id }).from(S.leads).where(inArray(S.leads.email, DEMO_LEAD_EMAILS));
+    if (fakeLeads.length) console.log(`REVIEW REQUIRED: retaining ${fakeLeads.length} seed-associated leads; deletion could cascade to real bookings and activity.`);
     const fakeProjects = await db.select({ id: S.projects.id, code: S.projects.code }).from(S.projects).where(inArray(S.projects.code, DEMO_PROJECT_CODES));
-    if (fakeProjects.length) await write(`projects: delete ${fakeProjects.length} sample project(s) with invoices, milestones, documents, approvals and portal links: ${fakeProjects.map((p) => p.code).join(", ")}`, () => db.delete(S.projects).where(inArray(S.projects.id, fakeProjects.map((p) => p.id))));
+    if (fakeProjects.length) console.log(`REVIEW REQUIRED: retaining ${fakeProjects.length} seed-associated projects; deletion could cascade to real invoices, documents and approvals.`);
     const fakeProposals = await db.select({ id: S.proposals.id, token: S.proposals.token }).from(S.proposals).where(inArray(S.proposals.token, DEMO_PROPOSAL_TOKENS));
-    if (fakeProposals.length) await write(`proposals: delete ${fakeProposals.length} sample proposal(s) reachable at public demo URLs`, () => db.delete(S.proposals).where(inArray(S.proposals.id, fakeProposals.map((p) => p.id))));
-    const demoPortals = await db.select({ id: S.portalAccess.id }).from(S.portalAccess).where(like(S.portalAccess.token, "demo-%"));
-    if (demoPortals.length) await write(`portal_access: delete ${demoPortals.length} demo portal link(s)`, () => db.delete(S.portalAccess).where(inArray(S.portalAccess.id, demoPortals.map((p) => p.id))));
-    const fakeSocial = await db.select({ id: S.socialAccounts.id, network: S.socialAccounts.network }).from(S.socialAccounts).where(isNull(S.socialAccounts.accessTokenEnc));
+    if (fakeProposals.length) console.log(`REVIEW REQUIRED: retaining ${fakeProposals.length} seed-associated proposals pending review for real signatures.`);
+    const demoPortals = await db.select({ id: S.portalAccess.id }).from(S.portalAccess).where(inArray(S.portalAccess.token, ["demo-shah-portal", ...DEMO_PROJECT_CODES.map((code) => `demo-${code.toLowerCase()}`)]));
+    if (demoPortals.length) console.log(`REVIEW REQUIRED: retaining ${demoPortals.length} seed-associated portal links pending review for real client use.`);
+    const fakeSocial = (await db.select().from(S.socialAccounts)).filter(isSeedSocialAccount);
     if (fakeSocial.length) await write(`social_accounts: delete ${fakeSocial.length} sample account(s) shown as connected without credentials (${fakeSocial.map((s) => s.network).join(", ")})`, () => db.delete(S.socialAccounts).where(inArray(S.socialAccounts.id, fakeSocial.map((s) => s.id))));
-    const [{ n: fakeSocialPosts }] = await db.select({ n: sql<number>`count(*)` }).from(S.socialPosts);
-    if (Number(fakeSocialPosts)) await write(`social_posts: delete ${fakeSocialPosts} sample post(s)`, () => db.delete(S.socialPosts));
-    const fakeSubs = await db.select({ id: S.ccSubscribers.id }).from(S.ccSubscribers).where(or(like(S.ccSubscribers.email, "%@example.com"), inArray(S.ccSubscribers.email, DEMO_SUBSCRIBER_EMAILS)));
+    const fakeSocialPosts = (await db.select().from(S.socialPosts)).filter(isSeedSocialPost);
+    if (fakeSocialPosts.length) await write(`social_posts: delete ${fakeSocialPosts.length} unchanged seed post(s)`, () => db.delete(S.socialPosts).where(inArray(S.socialPosts.id, fakeSocialPosts.map((p) => p.id))));
+    const fakeSubs = (await db.select().from(S.ccSubscribers)).filter(isSeedSubscriber);
     if (fakeSubs.length) await write(`cc_subscribers: delete ${fakeSubs.length} sample subscriber(s) so newsletter sends never hit invented addresses`, () => db.delete(S.ccSubscribers).where(inArray(S.ccSubscribers.id, fakeSubs.map((s) => s.id))));
-    const fakeNl = await db.select({ id: S.newsletterSubscribers.id }).from(S.newsletterSubscribers).where(like(S.newsletterSubscribers.email, "%@example.com"));
-    if (fakeNl.length) await write(`newsletter_subscribers: delete ${fakeNl.length} test subscriber(s)`, () => db.delete(S.newsletterSubscribers).where(inArray(S.newsletterSubscribers.id, fakeNl.map((s) => s.id))));
+    // The seed never inserted newsletter_subscribers. An example.com address is not provenance.
     const fakeRes = await db.select({ id: S.ccResources.id, name: S.ccResources.name }).from(S.ccResources).where(and(inArray(S.ccResources.name, FAKE_RESOURCE_NAMES), sql`${S.ccResources.kind} <> 'curated'`));
     if (fakeRes.length) await write(`cc_resources: delete ${fakeRes.length} sample directory submission(s): ${fakeRes.map((r) => r.name).join(" | ")}`, () => db.delete(S.ccResources).where(inArray(S.ccResources.id, fakeRes.map((r) => r.id))));
   }
 
-  console.log(`\n${changes.length} change(s) ${DRY ? "would be applied" : "applied"}.${changes.length === 0 ? " Database already matches the launch content." : ""}`);
+  console.log(`\n${changes.length} change(s) ${DRY ? "would be applied" : "applied"}.${changes.length === 0 ? " No automatic changes remain; review any REVIEW REQUIRED messages separately." : ""}`);
   if (!OPS) console.log("Demo operations data (sample team accounts, leads, projects, proposals, subscribers) was left alone; add --ops to remove it.");
   await pool.end();
 }

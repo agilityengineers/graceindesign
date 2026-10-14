@@ -25,7 +25,13 @@ DATABASE_URL='postgresql://…' npm run content:launch
 DATABASE_URL='postgresql://…' npm run content:launch -- --ops
 ```
 
-Running it a second time reports `0 change(s)`.
+Running it a second time reports `0 change(s)` for automatic changes. Any `REVIEW REQUIRED` messages remain separate and do not mean the database is fully launch-ready.
+
+### Cleanup safety
+
+Social posts must match the seed body, networks, status and metrics, with no media, links or provider results. Social accounts must match the seed profile and have no credentials, external identity or synchronization history. Subscribers must match the seed identity and profile, including the original bounded padding list; an `@example.com` address alone is never enough. Newsletter subscribers are untouched because the seed did not create them.
+
+Leads, projects, proposals and portal links are now **retained for manual review**, even when their identifiers match the seed. Removing those records could delete real linked activity or signed work. The original operations inventory below describes what the prototype planted, not a promise that all of it is automatically deleted. Review demo public links before launch.
 
 ## What it changes
 

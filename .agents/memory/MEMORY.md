@@ -2,3 +2,4 @@
 - [Preview rebuild loops](preview-rebuild-loops.md) — broad Tailwind scanning can trigger continuous reloads; dependency reinstalls require a fresh server process.
 - [Development link transport](development-link-transport.md) — ephemeral display state is development-only; URL protection does not protect stored email bodies.
 - [GitHub synchronization](github-sync.md) — local merge recovery must be synced upstream to prevent repeated pull-rebase conflicts.
+- [Launch cleanup safety](launch-cleanup-safety.md) — preserve ambiguous operations records and linked client work; seed identifiers alone are insufficient.
