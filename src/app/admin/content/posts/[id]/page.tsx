@@ -11,7 +11,7 @@ import ContentTabs from "@/components/admin/ContentTabs";
 import { savePost } from "@/lib/actions/content";
 
 export const dynamic = "force-dynamic";
-const CATEGORIES = ["Healthy Home Resources", "Aging in Place", "Design", "Commercial", "Project Management", "Caribbean", "News", "Company"];
+const CATEGORIES = ["Healthy Home Resources", "Aging In Place", "Design", "Commercial", "Project Management", "Caribbean", "News", "Company"];
 
 export default async function PostEdit({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireArea("posts");

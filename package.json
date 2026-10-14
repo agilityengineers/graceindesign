@@ -16,6 +16,7 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:reset": "tsx scripts/reset.ts",
     "db:setup": "npm run db:migrate && npm run db:seed --",
+    "content:launch": "tsx scripts/launch-content.ts",
     "cron": "tsx scripts/cron.ts",
     "media:fetch": "tsx scripts/fetch-media.ts",
     "test": "playwright test",
@@ -23,6 +24,7 @@
     "test:auth-logging": "node tests/auth-logging-smoke.mjs",
     "test:magic-link-concurrency": "node tests/magic-link-concurrency.mjs",
     "test:dev-link-store": "tsx --test tests/dev-link-store.test.ts",
+    "test:launch-content": "node tests/launch-content.mjs",
     "test:notifications": "tsx --test tests/email-senders.test.ts tests/cft-launch-token.test.ts tests/slack-payload.test.ts tests/cft-sms-contract.test.ts",
     "verify": "npm run typecheck && npm run lint && npm run build"
   },

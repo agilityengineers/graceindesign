@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Play } from "@/components/ui/Icons";
 import { useConsult } from "./ConsultContext";
 
-export type Scene = { name: string; word: string; line?: string; img: string; href?: string };
+export type Scene = { name: string; word: string; line?: string; img: string; imgAlt?: string; href?: string };
 type Props = { kicker: string; kickerHref?: string; lead: string; tail: string; scenes: Scene[]; scenesLabel: string; cta: string; ctaHref?: string; ctaSource?: string; secondary?: string; secondaryHref?: string; secondaryOnClick?: () => void; secondaryPlay?: boolean; sub?: string; height?: 760 | 720; slideSeconds?: number; hoverSelects?: boolean; wordOnly?: boolean; wordMinWidth?: number; children?: ReactNode };
 
 export default function CineHero(p: Props) {
@@ -31,7 +31,7 @@ export default function CineHero(p: Props) {
   return (
     <section className={`hero-cine${p.height === 720 ? " hero-cine-720" : ""}`} style={{ ["--kb-dur" as string]: `${dur / 1000 + 1.5}s` }}>
       <div style={{ position: "absolute", inset: 0 }}>
-        {p.scenes.map((s, k) => <img key={k} src={s.img} alt={s.name} className={`scene-img${k === i ? " is-on" : ""}`} loading={k === 0 ? "eager" : "lazy"} />)}
+        {p.scenes.map((s, k) => <img key={k} src={s.img} alt={s.imgAlt || s.name} className={`scene-img${k === i ? " is-on" : ""}`} loading={k === 0 ? "eager" : "lazy"} />)}
       </div>
       <div className="scrim-x" /><div className="scrim-y" />
       <div className="hero-grid gx">

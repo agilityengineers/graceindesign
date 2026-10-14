@@ -46,7 +46,7 @@ export default function ConsultForm({ sourcePage, inModal, onBooked }: { sourceP
   const projectFields = [...(path ? S.pathFields[path] || [] : []).map((f) => ({ ...f, extra: true })), ...S.baseFields.filter((f) => f.step === "project").map((f) => ({ ...f, extra: false }))];
   const contactFields = S.baseFields.filter((f) => f.step === "contact");
   const reviewFields = S.baseFields.filter((f) => f.step === "review");
-  const titles: Record<string, [string, string]> = { path: ["Tell us a little about you", "We tailor the next few questions to your situation."], project: ["Your project", `${P ? P.short : ""} details — fields marked ● are specific to this path.`], contact: ["How should we reach you?", "We reply within one business day."], schedule: [`Pick a time for your ${P ? P.consult : "15-min discovery call"}`, "Free, no obligation."], review: ["Confirm and book", "One last look before we save your request."], all: ["Schedule a consultation", "All questions on one page."] };
+  const titles: Record<string, [string, string]> = { path: ["Tell us a little about you", "We tailor the next few questions to your situation."], project: ["Your project", `${P ? P.short : ""} details — fields marked ● are specific to this path.`], contact: ["How should we reach you?", "We reply within one business day."], schedule: [`Pick a time for your ${consultType}`, "Free, no obligation."], review: ["Confirm and book", "One last look before we save your request."], all: ["Schedule a consultation", "All questions on one page."] };
   const pickedWhen = time ? `${time.label} ET` : "No time selected yet";
   const last = step === stepIds.length - 1;
   const set = (k: string, v: string | string[] | boolean) => setAnswers((a) => ({ ...a, [k]: v }));
@@ -104,14 +104,13 @@ export default function ConsultForm({ sourcePage, inModal, onBooked }: { sourceP
           {S.steps.map((s, k) => { const done = k < step || single || !!sent; const on = k === step && !single && !sent; return <li key={s.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, background: on ? "rgba(255,255,255,.1)" : "transparent" }}><span style={{ width: 26, height: 26, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, background: done ? "#6cb6e6" : on ? "#fff" : "rgba(255,255,255,.12)", color: on || done ? "#1a2238" : "#c6cbd6" }}>{k + 1}</span><span style={{ fontSize: 13.5, fontWeight: on ? 600 : 500, color: k <= step || single ? "#fff" : "#8c95a8" }}>{s.label}</span></li>; })}
         </ol>
         <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 6, padding: 14, borderRadius: 12, background: "rgba(255,255,255,.06)", fontSize: 12, color: "#c6cbd6", lineHeight: 1.5 }}>
-          <span style={{ display: "flex", alignItems: "center", gap: 8, color: "#fff", fontWeight: 600 }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: "#6cb6e6" }} />Lead source</span>
-          <span>{S.sourceLabel}</span>
-          <span style={{ color: "#8c95a8" }}>Tracked automatically · visible on the admin dashboard</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 8, color: "#fff", fontWeight: 600 }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: "#6cb6e6" }} />What happens next</span>
+          <span>We review your answers and reply within one business day. If you pick a time, Grace calls you then.</span>
         </div>
       </aside>
       <div style={{ padding: "36px 40px", display: "flex", flexDirection: "column", gap: 24, minWidth: 0 }} className="consult-body">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><h2 className="display" style={{ fontSize: 32, fontWeight: 500, lineHeight: 1.1 }}>{sent ? "You're booked." : titles[cur][0]}</h2>{!sent && <span style={{ fontSize: 13, color: "#6b7486" }}>{titles[cur][1]}</span>}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><h2 className="display" style={{ fontSize: 32, fontWeight: 500, lineHeight: 1.1 }}>{sent ? (sent.bookingId ? "You're booked." : "Thank you — we've got it.") : titles[cur][0]}</h2>{!sent && <span style={{ fontSize: 13, color: "#6b7486" }}>{titles[cur][1]}</span>}</div>
           {S.allowToggle && !sent && (
             <div className="seg seg-pill" role="tablist" aria-label="Form mode">
               <button type="button" role="tab" aria-selected={!single} className={!single ? "is-on" : ""} onClick={() => setMode("wizard")}>Steps</button>
@@ -139,7 +138,7 @@ export default function ConsultForm({ sourcePage, inModal, onBooked }: { sourceP
                   <div className="g4" style={{ gap: 8 }}>{dayObj?.times.map((tm) => <button type="button" key={tm.iso} disabled={tm.taken} onClick={() => setTime({ iso: tm.iso, label: `${dayObj.label} · ${tm.label}` })} style={{ padding: "12px 0", textAlign: "center", borderRadius: 10, border: `1.5px solid ${time?.iso === tm.iso ? "#1a2238" : "#e3e6ec"}`, background: tm.taken ? "#f2f4f7" : time?.iso === tm.iso ? "#e6f3fc" : "#fff", color: tm.taken ? "#c6cbd6" : "#1a2238", fontSize: 13, fontWeight: 600, textDecoration: tm.taken ? "line-through" : "none", cursor: tm.taken ? "not-allowed" : "pointer" }}>{tm.label}</button>)}</div>
                 </>
               )}
-              <span style={{ fontSize: 12, color: "#8c95a8" }}>Times shown in Eastern Time. Availability is set by the admin in Calendar → Availability.</span>
+              <span style={{ fontSize: 12, color: "#8c95a8" }}>Times shown in Eastern Time.</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 18, borderRadius: 14, background: "#f7f8fa", border: "1px solid #e9ecf1" }}>
               <span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".14em" }}>Your appointment</span>
@@ -155,7 +154,7 @@ export default function ConsultForm({ sourcePage, inModal, onBooked }: { sourceP
         {show("review") && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div className="g3" style={{ gap: 12 }}>
-              {[["Path", P ? P.label : "Not selected"], ["Appointment", pickedWhen], ["Source", S.sourceLabel]].map(([k, v]) => <div key={k} style={{ padding: 16, borderRadius: 12, background: "#f7f8fa", display: "flex", flexDirection: "column", gap: 4 }}><span className="label-caps" style={{ letterSpacing: ".12em" }}>{k}</span><span style={{ fontSize: 14, fontWeight: 600 }}>{v}</span></div>)}
+              {[["I am", P ? P.label : "Not selected"], ["Appointment", pickedWhen], ["Consultation", consultType]].map(([k, v]) => <div key={k} style={{ padding: 16, borderRadius: 12, background: "#f7f8fa", display: "flex", flexDirection: "column", gap: 4 }}><span className="label-caps" style={{ letterSpacing: ".12em" }}>{k}</span><span style={{ fontSize: 14, fontWeight: 600 }}>{v}</span></div>)}
             </div>
             {reviewFields.map((f) => <div key={f.key} style={{ maxWidth: f.type === "select" ? 360 : undefined }}>{renderField(f, true)}</div>)}
             <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: -9999, opacity: 0 }} value={(answers as any).__hp || ""} onChange={(e) => set("__hp", e.target.value)} />
@@ -166,7 +165,7 @@ export default function ConsultForm({ sourcePage, inModal, onBooked }: { sourceP
             <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#e6f3fc", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={30} /></div>
             <h3 className="display" style={{ fontSize: 34, fontWeight: 500 }}>{sent.bookingId ? "You're booked." : "Thank you — we've got it."}</h3>
             <p style={{ maxWidth: 440, fontSize: 15, lineHeight: 1.65, color: "#6b7486" }}>
-              {sent.bookingId ? <>{consultType} · {sent.when}. A confirmation and calendar invite are on their way. <Link href={`/booking/${sent.bookingId}?e=${encodeURIComponent(String(answers.email || ""))}`} style={{ color: "#3f9ad9", fontWeight: 600 }}>View booking details</Link>.</> : <>Your request from the <strong>{S.sourceLabel}</strong> is on our dashboard. Expect a reply within one business day.</>}
+              {sent.bookingId ? <>{consultType} · {sent.when}. A confirmation and calendar invite are on their way. <Link href={`/booking/${sent.bookingId}?e=${encodeURIComponent(String(answers.email || ""))}`} style={{ color: "#3f9ad9", fontWeight: 600 }}>View booking details</Link>.</> : <>We've received your request. Expect a reply from Grace within one business day.</>}
             </p>
           </div>
         )}

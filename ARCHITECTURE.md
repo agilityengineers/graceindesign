@@ -69,7 +69,8 @@ Set `CFT_URL` so the login page can link back to CFT, register this app's launch
 3. **Run**: the "Project" workflow runs `npm run db:setup -- --if-empty && npm run dev`. First run creates the schema and seeds the prototype data, including the two owner accounts (`info@graceindesign.net`, `emailme@clarencewilliams.com` as super admin) and the demo team.
 4. **Sign in**: open `/login`, enter an owner email. Until SendGrid is configured the sign-in link is shown on screen; afterwards it is emailed.
 5. **Images**: run `npm run media:fetch` once in the Replit shell (needs `MAGNIFIC_API_KEY`, or `-- --stock` to self-host the prototype stock photos) so generated photos are stored under `public/media/`; or upload replacements through Content → Media library.
-6. **Publish**: Deployments → Autoscale. The build command runs migrations, seeds if the database is empty, and `next build`; run command is `npm run start`. Point the custom domain at the deployment.
+6. **Publish**: Deployments → Autoscale. The build command is `npm ci --include=dev && npm run build` (no migrations or seeding: Replit manages the production schema and the initial data copy); run command is `npm run start`. Point the custom domain at the deployment and set `BASE_URL` to it.
+   **Content fixes never reach a populated database through the seed files.** Use `npm run content:launch` (see `docs/launch-content.md`) against the workspace database and again with `DATABASE_URL` pointed at production, or edit in the admin.
 7. **Scheduled jobs**: Deployments → Scheduled → command `npm run cron -- all`, every 15 minutes (same secrets).
 8. **Object Storage**: create a bucket and set `REPLIT_OBJECT_STORAGE_BUCKET` so uploads persist across deployments (otherwise they live on the instance disk).
 
@@ -85,4 +86,12 @@ node tests/shot.mjs --login emailme@clarencewilliams.com /admin /admin/leads   #
 npm run verify                  # typecheck + lint + production build
 ```
 
-`npm run db:seed -- --force` wipes and reseeds; `npm run db:reset` drops everything.
+`npm run db:seed -- --force` wipes and reseeds; `npm run db:reset` drops everything. The default seed is content only; `--demo` adds sample team accounts, leads, projects, proposals and newsletter subscribers for a demo workspace.
+
+## SEO, analytics and redirects
+
+- `src/app/sitemap.ts` (dynamic, from published pages/services/posts), `src/app/robots.ts`, `src/app/icon.png` / `apple-icon.png`.
+- Per-page canonical links; portal, proposal, booking, unsubscribe, login and roadmap are `noindex`.
+- Meta descriptions come from each page's SEO fields in the admin, falling back to Site settings → SEO default description.
+- Google Analytics 4 loads only when `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set.
+- Permanent redirects from old graceindesign.net paths live in `src/lib/redirects.json` (`next.config.ts` turns them into 301s); add entries from the old site's sitemap before cutover.

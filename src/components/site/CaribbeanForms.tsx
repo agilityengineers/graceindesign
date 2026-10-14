@@ -62,7 +62,7 @@ export function NewsletterForm() {
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: -9999, opacity: 0 }} />
       {f.err && <div role="alert" style={{ color: "#9a3c1e", fontSize: 13 }}>{f.err}</div>}
       <button type="submit" disabled={f.busy} className="btn btn-navy" style={{ height: 50, fontWeight: 700, marginTop: 4 }}>{f.busy ? "Subscribing…" : "Subscribe"}</button>
-      <span style={{ fontSize: 11, color: "#8c95a8", textAlign: "center" }}>Subscribers appear in the admin under Caribbean Connection → Newsletter.</span>
+      <span style={{ fontSize: 11, color: "#8c95a8", textAlign: "center", lineHeight: 1.5 }}>By subscribing you agree to receive the Caribbean Connection newsletter by email. Unsubscribe anytime.</span>
     </form>
   );
 }

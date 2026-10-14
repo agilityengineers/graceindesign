@@ -1,0 +1,4 @@
+[
+  { "source": "/blog", "destination": "/news" },
+  { "source": "/blog/:path*", "destination": "/news" }
+]

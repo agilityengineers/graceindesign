@@ -9,6 +9,7 @@ import { getProducts, getPublishedPosts, getFounder, getServiceList, getCaribbea
 import { getMediaMap, resolveDeep } from "@/lib/data/media";
 import { WELLNESS_GROUPS, EPISODES } from "@/lib/seed-data/demo";
 import { fmtDate } from "@/lib/utils";
+import { env } from "@/lib/env";
 import CaribbeanForms, { NewsletterForm, SuggestResourceForm, SubmitEventForm, LeadMagnetForm } from "./CaribbeanForms";
 import dynamic from "next/dynamic";
 
@@ -26,7 +27,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
   const c = b.content;
   switch (b.type) {
     case "hero": {
-      if (ctx.heroStyle === "classic") return <HomeClassicHero kicker={c.kicker} title={c.classic.title} sub={c.classic.sub} cta={c.cta} source={ctx.sourceKey} secondary={c.secondary} secondaryHref={c.secondaryHref} img={c.classic.img} stats={c.classic.stats} badgeTitle={c.classic.badgeTitle} badgeSub={c.classic.badgeSub} />;
+      if (ctx.heroStyle === "classic") return <HomeClassicHero kicker={c.kicker} title={c.classic.title} sub={c.classic.sub} cta={c.cta} source={ctx.sourceKey} secondary={c.secondary} secondaryHref={c.secondaryHref} img={c.classic.img} imgAlt={c.classic.imgAlt} stats={c.classic.stats} badgeTitle={c.classic.badgeTitle} badgeSub={c.classic.badgeSub} />;
       return <CineHero kicker={c.kicker} lead={c.lead} tail={c.tail} scenes={c.scenes as Scene[]} scenesLabel={c.scenesLabel} cta={c.cta} ctaSource={ctx.sourceKey} secondary={c.secondary} secondaryHref={c.secondaryHref} slideSeconds={c.slideSeconds} hoverSelects />;
     }
     case "cine_hero": return <CineHero kicker={c.kicker} lead={c.lead} tail={c.tail} scenes={c.scenes as Scene[]} scenesLabel={c.scenesLabel} cta={c.cta} ctaHref={c.ctaHref} ctaSource={c.ctaHref?.startsWith("/contact") ? ctx.sourceKey : undefined} secondary={c.secondary} secondaryHref={c.secondaryHref} sub={c.sub} height={720} hoverSelects={!!c.hoverSelects} wordOnly={!!c.wordOnly} slideSeconds={c.slideSeconds} />;
@@ -43,7 +44,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
         <div className="svc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 24 }}>
           {(c.cards as any[]).map((s, k) => (
             <article key={s.title} className="card-hover card-lift" style={{ gridColumn: `span ${k < 4 ? 3 : 4}`, display: "flex", flexDirection: "column", background: "#fff", border: "1px solid #e9ecf1", borderRadius: 18, overflow: "hidden" }}>
-              <div style={{ position: "relative", height: 230 }}><img src={s.img} alt={s.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div>
+              <div style={{ position: "relative", height: 230 }}><img src={s.img} alt={s.imgAlt || s.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "26px 26px 28px", flex: 1 }}>
                 <span className="eyebrow eyebrow-sm">{s.kicker}</span>
                 <h3 style={{ fontSize: 21, fontWeight: 600, lineHeight: 1.25 }}>{s.title}</h3>
@@ -57,7 +58,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
       <section className="gx g2 g2-stack-md" style={{ position: "relative", background: "#1a2238", color: "#fff", paddingTop: 96, paddingBottom: 96, gap: 80, alignItems: "center", overflow: "hidden" }}>
         <div style={{ position: "absolute", right: -120, top: -120, width: 420, height: 420, borderRadius: "50%", background: "#6cb6e6", opacity: .12 }} />
         <div style={{ display: "flex", flexDirection: "column", gap: 22, position: "relative" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}><img src={c.founderPhoto} alt="Grace, Founder" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", objectPosition: "center 30%", border: "2px solid #6cb6e6" }} /><div style={{ display: "flex", flexDirection: "column", gap: 2 }}><span style={{ fontSize: 14, fontWeight: 600 }}>{c.founderName}</span><span style={{ fontSize: 12, color: "#c6cbd6" }}>{c.founderCreds}</span></div></div>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}><img src={c.founderPhoto} alt={c.founderPhotoAlt || "Grace A. Williams, Principal"} style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", objectPosition: "center 30%", border: "2px solid #6cb6e6" }} /><div style={{ display: "flex", flexDirection: "column", gap: 2 }}><span style={{ fontSize: 14, fontWeight: 600 }}>{c.founderName}</span><span style={{ fontSize: 12, color: "#c6cbd6" }}>{c.founderCreds}</span></div></div>
           <span className="eyebrow eyebrow-sky">{c.eyebrow}</span>
           <h2 className="h2" style={{ fontSize: 48, color: "#fff" }}>{c.title}</h2>
           <p style={{ fontSize: 16, lineHeight: 1.75, color: "#c6cbd6", maxWidth: 520 }}>{c.body}</p>
@@ -67,7 +68,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
           {(c.cards as [string, string][]).map(([t, d]) => <div key={t} style={{ display: "flex", flexDirection: "column", gap: 10, padding: 28, borderRadius: 16, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)" }}><span className="display" style={{ fontSize: 22, fontWeight: 600 }}>{t}</span><span style={{ fontSize: 13.5, lineHeight: 1.6, color: "#c6cbd6" }}>{d}</span></div>)}
         </div>
       </section>);
-    case "featured_products": { const products = (await getProducts(true)).slice(0, c.count || 4); return (
+    case "featured_products": { const products = (await getProducts(true)).slice(0, c.count || 4); if (products.length === 0) return null; return (
       <section className="gx" style={{ paddingTop: 104, paddingBottom: 104, background: "#f7f8fa", display: "flex", flexDirection: "column", gap: 48 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 40, flexWrap: "wrap" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 600 }}><span className="eyebrow">{c.eyebrow}</span><h2 className="h2">{c.title}</h2></div>
@@ -75,7 +76,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
         </div>
         <div className="g4" style={{ gap: 24 }}>{products.map((p) => <ProductCard key={p.id} p={p} />)}</div>
       </section>); }
-    case "news": { const posts = (await getPublishedPosts("news", c.count || 3)).slice(0, c.count || 3); return (
+    case "news": { const posts = (await getPublishedPosts("news", c.count || 3)).slice(0, c.count || 3); if (posts.length === 0) return null; return (
       <section className="gx" style={{ paddingTop: 104, paddingBottom: 112, display: "flex", flexDirection: "column", gap: 48 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 40, flexWrap: "wrap" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 600 }}><span className="eyebrow">{c.eyebrow}</span><h2 className="h2">{c.title}</h2></div>
@@ -94,7 +95,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
           <span className="eyebrow">{c.eyebrow}</span><h1 className="h1">{c.title}</h1><p className="lede" style={{ maxWidth: 540 }}>{c.body}</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 4 }}>{(c.chips as string[]).map((ch) => <span key={ch} className="pill" style={{ cursor: "default" }}>{ch}</span>)}</div>
         </div>
-        <div className="hero-photo-wrap" style={{ position: "relative", minWidth: 0, minHeight: 0 }}><div className="hero-photo"><img src={c.img} alt="Grace In Design studio" /></div></div>
+        <div className="hero-photo-wrap" style={{ position: "relative", minWidth: 0, minHeight: 0 }}><div className="hero-photo"><img src={c.img} alt={c.imgAlt || "Grace In Design studio"} /></div></div>
       </section>);
     case "about_intro": return (
       <section className="gx section" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.4fr)", gap: 72, alignItems: "start" }} data-stack>
@@ -142,7 +143,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
       <section className="gx g4" style={{ paddingTop: 104, paddingBottom: 104, gap: 24 }}>
         {(c.cards as any[]).map((card) => (
           <Link key={card.title} href={card.href} className="reveal card-hover" style={{ display: "flex", flexDirection: "column", border: "1px solid #e9ecf1", borderRadius: 18, overflow: "hidden", color: "#1a2238" }}>
-            <div style={{ position: "relative", height: 220 }}><img src={card.img} alt={card.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div>
+            <div style={{ position: "relative", height: 220 }}><img src={card.img} alt={card.imgAlt || card.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 28 }}><span className="eyebrow eyebrow-sm">{card.kicker}</span><h2 className="h3">{card.title}</h2><p style={{ fontSize: 14.5, lineHeight: 1.65, color: "#6b7486" }}>{card.body}</p><span style={{ fontSize: 13, fontWeight: 600, marginTop: 6 }}>{card.cta} →</span></div>
           </Link>))}
       </section>);
@@ -158,10 +159,10 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
           <h1 className="h1" style={{ fontSize: 60 }}>{c.title}</h1>
           {c.body && <p style={{ maxWidth: 620, fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>{c.body}</p>}
         </div>
-        {c.badge && <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderRadius: 12, background: "#fff", border: "1px solid #e9ecf1", fontSize: 13, color: "#6b7486", whiteSpace: "nowrap" }}>{c.badgeRss ? <Rss /> : <span style={{ width: 8, height: 8, borderRadius: "50%", background: c.badgeDot || "#6cb6e6" }} />}{c.badge}{c.badge === "Sold on Etsy" && <> · <strong style={{ color: "#1a2238" }}>{(await getProducts()).length} listings</strong></>}</div>}
+        {c.badge && <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderRadius: 12, background: "#fff", border: "1px solid #e9ecf1", fontSize: 13, color: "#6b7486", whiteSpace: "nowrap" }}>{c.badgeRss ? <Rss /> : <span style={{ width: 8, height: 8, borderRadius: "50%", background: c.badgeDot || "#6cb6e6" }} />}{c.badge}{c.badge === "Sold on Etsy" && (await getProducts()).length > 0 && <> · <strong style={{ color: "#1a2238" }}>{(await getProducts()).length} listings</strong></>}</div>}
       </section>);
-    case "product_carousel": { const all = await getProducts(); return <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={306} count={all.length}>{all.map((p) => <ProductCard key={p.id} p={p} compact />)}</Carousel>; }
-    case "product_grid": { const all = await getProducts(); const ProductGrid = (await import("./ProductGrid")).default; return <ProductGrid title={c.title} categories={c.categories} products={all.map((p) => ({ id: p.id, title: p.title, category: p.category, price: p.price, reviews: p.reviews, type: p.type, tag: p.tag || "", img: p.imageUrl || "", url: p.etsyUrl }))} />; }
+    case "product_carousel": { const all = await getProducts(); if (all.length === 0) return null; return <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={306} count={all.length}>{all.map((p) => <ProductCard key={p.id} p={p} compact />)}</Carousel>; }
+    case "product_grid": { const all = await getProducts(); const ProductGrid = (await import("./ProductGrid")).default; return <ProductGrid title={c.title} categories={c.categories} products={all.map((p) => ({ id: p.id, title: p.title, category: p.category, price: p.price, reviews: p.reviews, synced: !!p.lastSyncedAt, type: p.type, tag: p.tag || "", img: p.imageUrl || "", url: p.etsyUrl }))} shopUrl={env.etsyShopUrl} />; }
     case "guide_carousel": { const map = await getMediaMap(); const items = WELLNESS_GROUPS.flatMap((g) => g.items.map((r) => ({ concept: g.title, kind: r[0], title: r[1], desc: r[2], img: resolveDeep(map, r[3]) }))).slice(0, 6); return (
       <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={416} count={items.length}>{items.map((r, k) => (
         <a key={k} href="#guides" className="card-hover" style={{ display: "flex", flexDirection: "column", borderRadius: 16, overflow: "hidden", border: "1px solid #e9ecf1", color: "#1a2238" }}>
@@ -205,7 +206,12 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
         <h3 className="display" style={{ fontSize: 26, fontWeight: 600, lineHeight: 1.2 }}>{e.title}</h3>
         <p style={{ fontSize: 14, lineHeight: 1.6, color: "#6b7486" }}>{e.desc}</p>
       </a>))}</Carousel><div style={{ height: 104 }} /></div>); }
-    case "news_grid": { const all = await getPublishedPosts("news", (c.count || 6) + 1); const [feat, ...rest] = all; return (
+    case "news_grid": { const all = await getPublishedPosts("news", (c.count || 6) + 1); const [feat, ...rest] = all; if (all.length === 0) return (
+      <section className="gx" style={{ paddingTop: 72, paddingBottom: 104, display: "flex", flexDirection: "column", gap: 18, maxWidth: 720 }}>
+        <h2 className="h2" style={{ fontSize: 36 }}>New articles are on the way.</h2>
+        <p style={{ fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>We're preparing our first pieces on healthy, accessible homes. In the meantime, explore our guides and the Home Health Series.</p>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}><Link href="/healthy-home-resources" className="btn btn-navy">Healthy Home Resources</Link><Link href="/caribbean-connection#blog" className="btn btn-ghost">Caribbean Connection</Link></div>
+      </section>); return (
       <section className="gx" style={{ paddingTop: 72, paddingBottom: 104, display: "flex", flexDirection: "column", gap: 56 }}>
         {feat && <Link href={`/news/${feat.slug}`} className="g2 g2-stack-sm" style={{ gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)", gap: 48, alignItems: "center", color: "#1a2238" }}>
           <div style={{ position: "relative", height: 460, borderRadius: 20, overflow: "hidden" }}><img src={feat.imageUrl || ""} alt={feat.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /></div>
@@ -234,9 +240,9 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
       </section>); }
     case "cc_pillars": return (
       <section className="gx g4" style={{ paddingBottom: 104, gap: 24 }}>
-        {(c.pillars as any[]).map((p) => <a key={p.title} href={p.href} className="reveal card-hover" style={{ display: "flex", flexDirection: "column", border: "1px solid #e9ecf1", borderRadius: 18, overflow: "hidden", color: "#1a2238" }}><div style={{ position: "relative", height: 200 }}><img src={p.img} alt={p.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div><div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 26 }}><span className="eyebrow eyebrow-sm">{p.kicker}</span><h2 className="h3">{p.title}</h2><p style={{ fontSize: 14, lineHeight: 1.65, color: "#6b7486" }}>{p.desc}</p><span style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>{p.cta} →</span></div></a>)}
+        {(c.pillars as any[]).map((p) => <a key={p.title} href={p.href} className="reveal card-hover" style={{ display: "flex", flexDirection: "column", border: "1px solid #e9ecf1", borderRadius: 18, overflow: "hidden", color: "#1a2238" }}><div style={{ position: "relative", height: 200 }}><img src={p.img} alt={p.imgAlt || p.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div><div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 26 }}><span className="eyebrow eyebrow-sm">{p.kicker}</span><h2 className="h3">{p.title}</h2><p style={{ fontSize: 14, lineHeight: 1.65, color: "#6b7486" }}>{p.desc}</p><span style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>{p.cta} →</span></div></a>)}
       </section>);
-    case "cc_blog": { const { gidPosts, regional } = await getCaribbeanData(); const [feat, ...more] = gidPosts; return (
+    case "cc_blog": { const { gidPosts, regional, feeds } = await getCaribbeanData(); const [feat, ...more] = gidPosts; const lastSync = feeds.map((f) => f.lastSyncedAt).filter((d): d is Date => !!d).sort((a, b) => b.getTime() - a.getTime())[0]; return (
       <section id="blog" className="gx" style={{ paddingTop: 96, paddingBottom: 96, background: "#f7f8fa", display: "flex", flexDirection: "column", gap: 40 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 40, flexWrap: "wrap" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 640 }}><span className="eyebrow">{c.eyebrow}</span><h2 className="h2">{c.title}</h2></div>
@@ -244,6 +250,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
         </div>
         <div className="g2 g2-stack-md" style={{ gridTemplateColumns: "minmax(0,1.25fr) minmax(0,1fr)", gap: 40, alignItems: "start" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+            {gidPosts.length === 0 && <div style={{ padding: "28px 32px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff", display: "flex", flexDirection: "column", gap: 8 }}><span style={{ fontSize: 17, fontWeight: 600 }}>Our first Caribbean Connection articles are on the way.</span><span style={{ fontSize: 14, lineHeight: 1.65, color: "#6b7486" }}>Subscribe to the newsletter below and we'll send them to you as they're published.</span></div>}
             {feat && <Link href={`/news/${feat.slug}`} style={{ display: "flex", flexDirection: "column", gap: 16, color: "#1a2238" }}>
               <div style={{ position: "relative", height: 380, borderRadius: 18, overflow: "hidden" }}><img src={feat.imageUrl || ""} alt={feat.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /><span style={{ position: "absolute", top: 16, left: 16, padding: "6px 12px", borderRadius: 999, background: "#1a2238", color: "#fff", fontSize: 11, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase" }}>GID Article</span></div>
               <PostMeta post={feat} /><h3 className="display" style={{ fontSize: 36, fontWeight: 600, lineHeight: 1.15, textWrap: "pretty" }}>{feat.title}</h3><p style={{ fontSize: 15, lineHeight: 1.7, color: "#4b5569" }}>{feat.excerpt}</p>
@@ -251,8 +258,9 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
             <div className="g2 g2-stack-sm" style={{ gap: 24 }}>{more.map((g) => <Link key={g.id} href={`/news/${g.slug}`} style={{ display: "flex", flexDirection: "column", gap: 12, color: "#1a2238" }}><div style={{ position: "relative", height: 180, borderRadius: 14, overflow: "hidden" }}><img src={g.imageUrl || ""} alt={g.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div><span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".1em" }}>{g.category} · {fmtDate(g.publishedAt, { month: "short", day: "numeric", year: "numeric" })}</span><h3 className="display" style={{ fontSize: 24, fontWeight: 600, lineHeight: 1.2 }}>{g.title}</h3><p style={{ fontSize: 13.5, lineHeight: 1.6, color: "#6b7486" }}>{g.excerpt}</p></Link>)}</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><span className="eyebrow eyebrow-sm" style={{ color: "#6b7486" }}>{c.regionalLabel}</span><span style={{ fontSize: 11, color: "#8c95a8" }}>Updated hourly via RSS</span></div>
-            {regional.map((r) => <a key={r.id} href={r.sourceUrl || "#"} target={r.sourceUrl && r.sourceUrl !== "#" ? "_blank" : undefined} rel="noreferrer" style={{ display: "grid", gridTemplateColumns: "72px 1fr", gap: 14, padding: 14, borderRadius: 14, background: "#fff", border: "1px solid #e9ecf1", color: "#1a2238" }}><div style={{ position: "relative", width: 72, height: 60, borderRadius: 8, overflow: "hidden" }}><img src={r.imageUrl || ""} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div><div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}><span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.35 }}>{r.title}</span><span style={{ fontSize: 11, color: "#6b7486" }}>{r.sourceName} · {fmtDate(r.publishedAt)}</span></div></a>)}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><span className="eyebrow eyebrow-sm" style={{ color: "#6b7486" }}>{c.regionalLabel}</span>{lastSync && <span style={{ fontSize: 11, color: "#8c95a8" }}>Updated {fmtDate(lastSync, { month: "short", day: "numeric" })}</span>}</div>
+            {regional.length === 0 && <span style={{ fontSize: 14, color: "#6b7486", lineHeight: 1.6 }}>Regional headlines will appear here as our curated sources are confirmed.</span>}
+            {regional.map((r) => <a key={r.id} href={r.sourceUrl && r.sourceUrl !== "#" ? r.sourceUrl : `/news/${r.slug}`} target={r.sourceUrl && r.sourceUrl !== "#" ? "_blank" : undefined} rel="noreferrer" style={{ display: "grid", gridTemplateColumns: "72px 1fr", gap: 14, padding: 14, borderRadius: 14, background: "#fff", border: "1px solid #e9ecf1", color: "#1a2238" }}><div style={{ position: "relative", width: 72, height: 60, borderRadius: 8, overflow: "hidden" }}><img src={r.imageUrl || ""} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div><div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}><span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.35 }}>{r.title}</span><span style={{ fontSize: 11, color: "#6b7486" }}>{r.sourceName} · {fmtDate(r.publishedAt)}</span></div></a>)}
             <span style={{ fontSize: 12, color: "#8c95a8", lineHeight: 1.6 }}>{c.regionalNote}</span>
           </div>
         </div>
@@ -275,6 +283,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
           <a href="#suggest-event" className="btn btn-navy" style={{ alignSelf: "flex-start" }}>Submit an event</a>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {events.length === 0 && <div style={{ padding: "28px 32px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff", display: "flex", flexDirection: "column", gap: 8 }}><span style={{ fontSize: 17, fontWeight: 600 }}>No upcoming events are listed yet.</span><span style={{ fontSize: 14, lineHeight: 1.65, color: "#6b7486" }}>Know of a fair, workshop, clinic or talk for older adults, families or caregivers? Submit it below and we'll review it for listing.</span></div>}
           {events.map((e, k) => { const virtual = e.format === "virtual"; const d = e.startsAt; const bg = k === 0 ? "#1a2238" : virtual ? "#e6f3fc" : "#f7f8fa"; const color = k === 0 ? "#fff" : "#1a2238"; return (
             <div key={e.id} className="reveal" style={{ display: "grid", gridTemplateColumns: "84px 1fr auto", gap: 20, alignItems: "center", padding: "20px 24px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff" }}>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 84, height: 84, borderRadius: 14, background: bg, color }}><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase" }}>{fmtDate(d, { month: "short" }, e.tz)}</span><span className="display" style={{ fontSize: 36, fontWeight: 600, lineHeight: 1 }}>{fmtDate(d, { day: "numeric" }, e.tz)}</span></div>
@@ -299,7 +308,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
   }
 }
 
-export function ProductCard({ p, compact }: { p: { id: number; title: string; price: string; reviews: string; type: string; tag: string | null; imageUrl: string | null; etsyUrl: string }; compact?: boolean }) {
+export function ProductCard({ p, compact }: { p: { id: number; title: string; price: string; reviews: string; type: string; tag: string | null; imageUrl: string | null; etsyUrl: string; lastSyncedAt?: Date | null }; compact?: boolean }) {
   return (
     <a href={p.etsyUrl} target="_blank" rel="noreferrer" className="card-hover" style={{ display: "flex", flexDirection: "column", background: "#fff", borderRadius: 14, overflow: "hidden", border: "1px solid #e9ecf1", color: "#1a2238" }}>
       <div style={{ position: "relative", aspectRatio: "1/1" }}>
@@ -309,18 +318,18 @@ export function ProductCard({ p, compact }: { p: { id: number; title: string; pr
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "16px 18px 18px" }}>
         <span style={{ fontSize: 14.5, fontWeight: 500, lineHeight: 1.4 }}>{p.title}</span>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6b7486" }}><span style={{ color: "#f0a500", letterSpacing: -1 }}>★★★★★</span><span>{p.reviews}</span></div>
+        {p.lastSyncedAt && p.reviews && p.reviews !== "(0)" && <span style={{ fontSize: 12, color: "#6b7486" }}>{p.reviews.replace(/[()]/g, "")} reviews on Etsy</span>}
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginTop: 2 }}><span style={{ fontSize: 18, fontWeight: 700 }}>{p.price}</span><span style={{ fontSize: 11, fontWeight: 600, color: "#3f9ad9" }}>{p.type}</span></div>
       </div>
     </a>
   );
 }
 
-export function PostMeta({ post }: { post: { category: string; publishedAt: Date | null } }) {
-  return <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: "#6b7486" }}><span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".1em" }}>{post.category}</span><span style={{ width: 3, height: 3, borderRadius: "50%", background: "#c6cbd6" }} /><span>{fmtDate(post.publishedAt, { month: "short", day: "numeric", year: "numeric" })}</span></div>;
+export function PostMeta({ post }: { post: { category: string; publishedAt: Date | null; origin?: string; sourceName?: string | null } }) {
+  return <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: "#6b7486", flexWrap: "wrap" }}><span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".1em" }}>{post.category}</span><span style={{ width: 3, height: 3, borderRadius: "50%", background: "#c6cbd6" }} /><span>{fmtDate(post.publishedAt, { month: "short", day: "numeric", year: "numeric" })}</span>{post.origin === "rss" && post.sourceName && <><span style={{ width: 3, height: 3, borderRadius: "50%", background: "#c6cbd6" }} /><span>via {post.sourceName}</span></>}</div>;
 }
 
-export function PostCard({ post, height }: { post: { slug: string; title: string; excerpt: string | null; imageUrl: string | null; category: string; publishedAt: Date | null }; height: number }) {
+export function PostCard({ post, height }: { post: { slug: string; title: string; excerpt: string | null; imageUrl: string | null; category: string; publishedAt: Date | null; origin?: string; sourceName?: string | null }; height: number }) {
   return (
     <article style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <Link href={`/news/${post.slug}`} style={{ position: "relative", height, borderRadius: 16, overflow: "hidden", display: "block" }}><img src={post.imageUrl || ""} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></Link>

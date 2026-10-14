@@ -9,7 +9,7 @@ import { ssoConfigured } from "@/lib/auth/cft-sso";
 import { getDevLink, setDevLink } from "@/lib/auth/dev-link";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Admin sign in" };
+export const metadata = { title: "Admin sign in", robots: { index: false, follow: false } };
 
 async function sendLink(formData: FormData) {
   "use server";

@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import SiteFrame from "@/components/site/SiteFrame";
 import { db, ccSubscribers, newsletterSubscribers } from "@/lib/db";
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Unsubscribe" };
+export const metadata = { title: "Unsubscribe", robots: { index: false, follow: false } };
 async function unsubscribe(formData: FormData) {
   "use server";
   const email = String(formData.get("e") || "").trim().toLowerCase(); if (!email) return;

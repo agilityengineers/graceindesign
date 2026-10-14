@@ -30,7 +30,7 @@ export default async function SettingsAdmin() {
             <label className="label label-caps">Hours<input name="hours" defaultValue={s.contact.hours} className="admin-input admin-input-sm" /></label>
             <label className="label label-caps">Consultations note<input name="consultationsNote" defaultValue={s.contact.consultationsNote} className="admin-input admin-input-sm" /></label>
             <label className="label label-caps">Address<input name="address" defaultValue={s.contact.address} className="admin-input admin-input-sm" /></label>
-            <label className="label label-caps">City, State ZIP<input name="addressLine2" defaultValue={s.contact.addressLine2} className="admin-input admin-input-sm" /></label>
+            <label className="label label-caps">Second line (city, state or service area)<input name="addressLine2" defaultValue={s.contact.addressLine2} className="admin-input admin-input-sm" /></label>
             <label className="label label-caps" style={{ gridColumn: "1/-1" }}>Utility-bar credential (homepage)<input name="utilityLabel" defaultValue={s.contact.utilityLabel} className="admin-input admin-input-sm" /></label>
             <label className="label label-caps" style={{ gridColumn: "1/-1" }}>Footer blurb<textarea name="blurb" rows={3} defaultValue={s.footer.blurb} className="admin-input" /></label>
             <label className="label label-caps">Copyright line<input name="copyright" defaultValue={s.footer.copyright} className="admin-input admin-input-sm" /></label>

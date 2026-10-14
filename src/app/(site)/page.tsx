@@ -6,7 +6,7 @@ import { getPage } from "@/lib/data/site";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
-export async function generateMetadata(): Promise<Metadata> { const p = await getPage("home"); return { title: { absolute: p?.page.seoTitle || "Grace In Design" }, description: p?.page.seoDescription || undefined }; }
+export async function generateMetadata(): Promise<Metadata> { const p = await getPage("home"); return { title: { absolute: p?.page.seoTitle || "Grace In Design" }, description: p?.page.seoDescription || undefined, alternates: { canonical: "/" } }; }
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
   const sp = await searchParams;

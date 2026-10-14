@@ -32,8 +32,8 @@ export type ConsultSettings = { mode: "wizard" | "single"; allowVisitorToggle: b
 export type CftRoleMap = Record<string, "owner" | "editor" | "sales" | "social">;
 
 export const SETTINGS_DEFAULTS = {
-  contact: { phone: "(770) 691-1600", email: "support@graceindesign.net", hours: "Mon–Fri · 9:00am–5:00pm", address: "Street address", addressLine2: "City, State ZIP", utilityLabel: "Certified Aging-in-Place Specialists", consultationsNote: "Consultations by appointment" } as ContactSettings,
-  footer: { blurb: "Atlanta-based interior design and project management firm, founded in 2008. Registered Interior Designer — Georgia · WELL AP · Certified Aging-In-Place Specialist (CAPS).", copyright: "© 2026 Grace In Design. All rights reserved." },
+  contact: { phone: "(770) 691-1600", email: "support@graceindesign.net", hours: "Mon–Fri · 9:00am–5:00pm", address: "", addressLine2: "", utilityLabel: "Certified Aging-in-Place Specialists", consultationsNote: "Consultations by appointment" } as ContactSettings,
+  footer: { blurb: "Atlanta-based interior design and project management firm, founded in 2008. Registered Interior Designer — Georgia · WELL AP · Certified Aging-in-Place Specialist (CAPS).", copyright: "© 2026 Grace In Design. All rights reserved." },
   social_links: [
     { name: "Facebook", url: "https://facebook.com/graceindesign", enabled: true },
     { name: "Instagram", url: "https://instagram.com/graceindesign", enabled: true },
@@ -48,7 +48,7 @@ export const SETTINGS_DEFAULTS = {
   social: { showInstagramFeed: true, feedCount: 6, autoShare: { facebook: true, linkedin: true, instagram: false, pinterest: true } } as SocialSettings,
   consult_form: { mode: "wizard", allowVisitorToggle: true } as ConsultSettings,
   cft_role_map: { admin: "owner", marketing_manager: "social", partner: "sales", client: "sales" } as CftRoleMap,
-  seo: { siteName: "Grace In Design", defaultDescription: "Interior design, aging-in-place and project management in Atlanta." },
+  seo: { siteName: "Grace In Design", defaultDescription: "Interior design, Aging In Place and project management in Atlanta." },
   hero_defaults: { slideSeconds: 5 },
 };
 export type SettingKey = keyof typeof SETTINGS_DEFAULTS;
