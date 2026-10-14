@@ -27,7 +27,7 @@ export async function sendInvoice(invoiceId: number, userId?: number | null) {
     await db.update(invoices).set({ stripeInvoiceId: finalized.id, stripeHostedUrl: hostedUrl, status: "scheduled", updatedAt: new Date() }).where(eq(invoices.id, inv.id));
   } else {
     await db.update(invoices).set({ status: "scheduled", updatedAt: new Date() }).where(eq(invoices.id, inv.id));
-    await sendEmail({ to: email, subject: `Invoice: ${project.name} — ${inv.label}`, relatedType: "invoice", relatedId: inv.id, text: `Hi ${(lead?.name || "there").split(" ")[0]},\n\nPlease find your invoice for ${project.name}:\n\n${inv.label}: $${Number(inv.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}${inv.dueAt ? `\nDue: ${inv.dueAt}` : ""}\n\nPayment instructions will follow (online payments arrive once Stripe is connected).\n\nThank you,\nGrace In Design` });
+    await sendEmail({ to: email, from: "support", subject: `Invoice: ${project.name} — ${inv.label}`, relatedType: "invoice", relatedId: inv.id, text: `Hi ${(lead?.name || "there").split(" ")[0]},\n\nPlease find your invoice for ${project.name}:\n\n${inv.label}: $${Number(inv.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}${inv.dueAt ? `\nDue: ${inv.dueAt}` : ""}\n\nPayment instructions will follow (online payments arrive once Stripe is connected).\n\nThank you,\nGrace In Design` });
   }
   await db.insert(projectActivity).values({ projectId: project.id, userId: userId ?? null, type: "invoice", body: `Invoice sent: ${inv.label} ($${Number(inv.amount).toLocaleString()})${hostedUrl ? " via Stripe" : ""}` });
   return hostedUrl;

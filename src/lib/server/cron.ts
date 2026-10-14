@@ -38,7 +38,7 @@ const JOB_FNS: Record<Exclude<Job, "all">, () => Promise<Record<string, unknown>
     for (const b of due) {
       const lead = await db.query.leads.findFirst({ where: eq(leads.id, b.leadId) }); if (!lead) continue;
       const when = fmtWhen(b.startsAt); const first = lead.name.split(" ")[0];
-      if (lead.email) await sendEmail({ to: lead.email, subject: `Reminder: your consultation is tomorrow (${when})`, text: `Hi ${first},\n\nA quick reminder that your consultation with Grace In Design is tomorrow, ${when}. We'll call ${lead.phone || "you"}.\n\nNeed to reschedule? Reply to this email or call (770) 691-1600.\n\nGrace`, relatedType: "booking", relatedId: b.id });
+      if (lead.email) await sendEmail({ to: lead.email, from: "consultation", subject: `Reminder: your consultation is tomorrow (${when})`, text: `Hi ${first},\n\nA quick reminder that your consultation with Grace In Design is tomorrow, ${when}. We'll call ${lead.phone || "you"}.\n\nNeed to reschedule? Reply to this email or call (770) 691-1600.\n\nGrace`, relatedType: "booking", relatedId: b.id });
       if (lead.phone && booking.smsConfirm) await sendSms({ to: lead.phone, body: `Reminder: your consultation with Grace In Design is tomorrow at ${when}. Need to reschedule? Call (770) 691-1600.`, relatedType: "booking", relatedId: b.id });
       await db.update(bookings).set({ reminderSentAt: new Date() }).where(eq(bookings.id, b.id));
       sent++;

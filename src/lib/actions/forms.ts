@@ -53,7 +53,19 @@ export async function reorderFormFields(ids: number[]) {
 export async function saveFormSettings(formData: FormData) {
   await adminAction("forms", "setting", "update", async () => {
     const n = await getSetting("notifications"); const c = await getSetting("consult_form");
-    await setSetting("notifications", { ...n, emailAdminOnNewLead: bool(formData.get("emailAdminOnNewLead")), adminEmail: str(formData.get("adminEmail")) || n.adminEmail, smsAdminOnNewLead: bool(formData.get("smsAdminOnNewLead")), adminPhone: str(formData.get("adminPhone")) });
+    await setSetting("notifications", {
+      ...n,
+      emailAdminOnNewLead: bool(formData.get("emailAdminOnNewLead")),
+      salesEmail: str(formData.get("salesEmail")) || n.salesEmail,
+      adminEmail: str(formData.get("adminEmail")) || n.adminEmail,
+      smsAdminOnNewLead: bool(formData.get("smsAdminOnNewLead")),
+      adminPhone: str(formData.get("adminPhone")),
+      slackOnNewLead: bool(formData.get("slackOnNewLead")),
+      slackOnOtherForms: bool(formData.get("slackOnOtherForms")),
+      slackOnCftEvents: bool(formData.get("slackOnCftEvents")),
+      cftLinkInSlack: bool(formData.get("cftLinkInSlack")),
+      cftUserEmail: str(formData.get("cftUserEmail")).toLowerCase() || n.cftUserEmail,
+    });
     await setSetting("consult_form", { ...c, mode: str(formData.get("mode")) === "single" ? "single" : "wizard", allowVisitorToggle: bool(formData.get("allowVisitorToggle")) });
     return "notifications";
   }, { back: "/admin/forms", ok: "Form settings saved", entityId: (k) => k, revalidate: REVAL });

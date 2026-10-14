@@ -56,7 +56,7 @@ async function main() {
   console.log("Settings …");
   for (const [key, value] of Object.entries(SETTINGS_DEFAULTS)) await db.insert(S.siteSettings).values({ key, value: value as unknown }).onConflictDoNothing();
   for (const [key, name, purpose, phase] of D.INTEGRATIONS) {
-    const status = key === "sendgrid" ? (env.sendgridApiKey ? "connected" : "not_connected") : key === "twilio" ? (env.twilio.sid ? "connected" : "not_connected") : key === "rss" ? "connected" : key === "etsy" ? "connected" : key === "cft" ? (env.cft.ssoSecret || env.cft.webhookSecret ? "connected" : "not_connected") : key === "stripe" ? (env.stripe.secret ? "connected" : "planned") : phase >= 3 ? "not_connected" : "not_connected";
+    const status = key === "sendgrid" ? (env.sendgridApiKey ? "connected" : "not_connected") : key === "twilio" ? (env.twilio.sid ? "connected" : "not_connected") : key === "rss" ? "connected" : key === "etsy" ? "connected" : key === "cft" ? (env.cft.ssoSecret || env.cft.webhookSecret || env.cft.masterSecret ? "connected" : "not_connected") : key === "slack" ? (env.slack.webhookUrl ? "connected" : "not_connected") : key === "stripe" ? (env.stripe.secret ? "connected" : "planned") : phase >= 3 ? "not_connected" : "not_connected";
     await db.insert(S.integrations).values({ key, name, purpose, phase, status }).onConflictDoNothing();
   }
 

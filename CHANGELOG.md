@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 — notifications: SendGrid senders, Slack, texts and auto sign-in through Call Flow Tracker
+- Email now goes out from the right verified SendGrid sender per message (noreply@ / support@ / consultation@ / newsletter@); the outbox records sender and Reply-To, and the admin outbox shows them.
+- Consultation requests are notified to the sales inbox (consultation@) with Reply-To the visitor; Caribbean Connection submissions and newsletter sign-ups to the support inbox.
+- Slack incoming-webhook notifications (Block Kit, "Open in admin" / "Open Call Flow Tracker" buttons) for consultation requests, other public forms and Call Flow Tracker call events; toggles in Form builder → Notifications.
+- Texts to Grace (and every other SMS) are sent through Call Flow Tracker's Twilio connection from her tracking number (`CFT_SMS_FROM`), falling back to direct Twilio, then the logged outbox.
+- Auto sign-in links into Call Flow Tracker (`/go/cft/<token>`, 24h, hashed, audited, revocable) carried by the text and Slack post; "Open in Call Flow Tracker" in the lead drawer for signed-in team members.
+- New secrets documented in `.env.example` and `docs/replit-notifications-setup.md`; migration `drizzle/0001_notifications.sql`; `npm run test:notifications`.
+
 ## 0.1.0 — first complete build (all four phases)
 
 ### Phase 1 — site, funnel, leads, pipeline
