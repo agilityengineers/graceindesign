@@ -4,4 +4,4 @@
 - [GitHub synchronization](github-sync.md) — local merge recovery must be synced upstream to prevent repeated pull-rebase conflicts.
 - [Launch cleanup safety](launch-cleanup-safety.md) — preserve ambiguous operations records and linked client work; seed identifiers alone are insufficient.
 - [Email compatibility expectations](email-compatibility.md) — broad device support is the goal; Google-hosted test mailboxes do not establish other gateways' behavior.
-- [Launch notification scope](launch-notification-scope.md) — Slack is explicitly deferred and is not a production launch blocker.
+- [Launch notification scope](launch-notification-scope.md) — Slack and Call Flow Tracker are explicitly deferred, not production launch blockers.
