@@ -17,6 +17,16 @@ and authentication credentials out of memory.
 
 Treat click tracking and open tracking as separate provider behaviors.
 
+The owner confirmed that the sending domain is authenticated and verified,
+the SendGrid key has Mail Send permissions, and both notification inboxes
+receive incoming mail.
+
+**Why:** These are owner-confirmed external settings, not facts established
+by local code inspection.
+
+**How to apply:** Do not repeatedly request this setup confirmation. Distinguish
+it from actual delivery testing, and recheck if provider errors indicate a change.
+
 **Why:** A real SendGrid canary delivery preserved the fragment URL without a
 redirect wrapper but still inserted an open-tracking image despite per-message
 click tracking being disabled.
