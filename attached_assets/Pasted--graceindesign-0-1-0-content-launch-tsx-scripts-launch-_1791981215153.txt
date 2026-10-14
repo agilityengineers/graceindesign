@@ -1,0 +1,54 @@
+
+> graceindesign@0.1.0 content:launch
+> tsx scripts/launch-content.ts --dry-run --ops
+
+Launch content patch (dry run — nothing will be written) + demo operations cleanup
+DrizzleQueryError: Failed query: select "key", "value", "updated_at" from "site_settings"
+params: 
+    at NodePgPreparedQuery.queryWithCache (/home/runner/workspace/node_modules/src/pg-core/session.ts:73:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:154:19)
+    at async main (/home/runner/workspace/scripts/launch-content.ts:158:24) {
+  query: 'select "key", "value", "updated_at" from "site_settings"',
+  params: [],
+  cause: Error: getaddrinfo ENOTFOUND base
+      at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:161:13)
+      at async NodePgPreparedQuery.queryWithCache (/home/runner/workspace/node_modules/src/pg-core/session.ts:71:12)
+      at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:154:19)
+      at async main (/home/runner/workspace/scripts/launch-content.ts:158:24) {
+    errno: -3008,
+    code: 'ENOTFOUND',
+    syscall: 'getaddrinfo',
+    hostname: 'base'
+  }
+}
+~/workspace$ DATABASE_URL="$PROD_DB_URL" npm run content:launch -- --dry-run --ops
+
+> graceindesign@0.1.0 content:launch
+> tsx scripts/launch-content.ts --dry-run --ops
+
+Launch content patch (dry run — nothing will be written) + demo operations cleanup
+DrizzleQueryError: Failed query: select "key", "value", "updated_at" from "site_settings"
+params: 
+    at NodePgPreparedQuery.queryWithCache (/home/runner/workspace/node_modules/src/pg-core/session.ts:73:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:154:19)
+    at async main (/home/runner/workspace/scripts/launch-content.ts:158:24) {
+  query: 'select "key", "value", "updated_at" from "site_settings"',
+  params: [],
+  cause: Error: connect ECONNREFUSED 127.0.0.1:5432
+      at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:161:13)
+      at async NodePgPreparedQuery.queryWithCache (/home/runner/workspace/node_modules/src/pg-core/session.ts:71:12)
+      at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:154:19)
+      at async main (/home/runner/workspace/scripts/launch-content.ts:158:24) {
+    errno: -111,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 5432
+  }
+}
