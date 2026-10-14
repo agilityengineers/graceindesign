@@ -31,7 +31,9 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${montserrat.variable} ${cormorant.variable}`}>
-      <body>
+      {/* Extensions such as Grammarly add body attributes before hydration.
+          Suppress only this element's attribute warning, not child mismatches. */}
+      <body suppressHydrationWarning>
         {children}
         {GA_ID && (
           <>
