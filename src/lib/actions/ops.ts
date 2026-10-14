@@ -7,7 +7,7 @@ import { requireArea } from "@/lib/auth/session";
 import { audit } from "@/lib/server/audit";
 import { adminAction, backTo } from "./_util";
 import { str, strOrNull, parseNum, bool } from "@/lib/utils";
-import { sendSms, deliverOutbox } from "@/lib/server/outbox";
+import { sendSms, retryOutbox } from "@/lib/server/outbox";
 import { renderTemplate, enrollLeadInSequences } from "@/lib/server/sequences";
 import { sendProposal } from "@/lib/server/esign";
 import { emitEvent, deliver, GID_EVENTS, isSafeUrl, type GidEvent } from "@/lib/server/webhooks";
@@ -153,7 +153,7 @@ export async function emitTestEvent(formData: FormData) {
 // --- Outbox / jobs / HubSpot ----------------------------------------------------------
 export async function outboxAction(formData: FormData) {
   const id = parseNum(formData.get("outboxId")); const op = str(formData.get("op"));
-  await adminAction("ops", "outbox", op, async () => { if (op === "retry") { await db.update(outbox).set({ status: "queued", error: null }).where(eq(outbox.id, id)); const r = await deliverOutbox(id); if (r?.status === "failed") throw new Error(`Still failing: ${(r as { error?: string }).error || "unknown"}`); } else if (op === "delete") await db.delete(outbox).where(eq(outbox.id, id)); return id; }, { back: backTo(formData, tab("outbox")), ok: op === "retry" ? "Re-sent" : "Deleted", entityId: () => id, revalidate: [OPS] });
+  await adminAction("ops", "outbox", op, async () => { if (op === "retry") { const r = await retryOutbox(id); if (r?.status === "failed") throw new Error(`Still failing: ${(r as { error?: string }).error || "unknown"}`); } else if (op === "delete") await db.delete(outbox).where(eq(outbox.id, id)); return id; }, { back: backTo(formData, tab("outbox")), ok: op === "retry" ? "Re-sent" : "Deleted", entityId: () => id, revalidate: [OPS] });
 }
 export async function purgeOutbox(_formData: FormData) {
   await adminAction("ops", "outbox", "purge", async () => { const r = await db.delete(outbox).where(sql`${outbox.createdAt} < now() - interval '30 days'`).returning({ id: outbox.id }); return r.length; }, { back: tab("outbox"), ok: "Messages older than 30 days removed", entityId: (n) => n, revalidate: [OPS] });

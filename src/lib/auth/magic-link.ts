@@ -14,10 +14,11 @@ export async function issueMagicLink(emailRaw: string, redirectTo = "/admin") {
   // Always respond identically to avoid account enumeration.
   if (!user) return { ok: true as const, sent: false, devLink: null as string | null };
   const token = randomToken(32);
-  await db.insert(magicLinkTokens).values({ email, tokenHash: sha256Hex(token), redirectTo, expiresAt: new Date(Date.now() + TTL_MIN * 60000) });
+  const expiresAt = new Date(Date.now() + TTL_MIN * 60000);
+  await db.insert(magicLinkTokens).values({ email, tokenHash: sha256Hex(token), redirectTo, expiresAt });
   const link = `${env.baseUrl}/auth/verify#token=${encodeURIComponent(token)}`;
   await sendEmail({
-    to: email, subject: "Your Grace In Design sign-in link", relatedType: "user", relatedId: user.id,
+    to: email, subject: "Your Grace In Design sign-in link", relatedType: "user", relatedId: user.id, authExpiresAt: expiresAt,
     text: `Hi ${user.name.split(" ")[0]},\n\nClick to sign in to the Grace In Design admin:\n${link}\n\nThis link expires in ${TTL_MIN} minutes and can be used once. If you didn't request it, you can ignore this email.`,
   });
   return { ok: true as const, sent: true, devLink: env.isProd || env.sendgridApiKey ? null : link };

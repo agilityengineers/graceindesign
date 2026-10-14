@@ -20,6 +20,7 @@
     "media:fetch": "tsx scripts/fetch-media.ts",
     "test": "playwright test",
     "test:log-redaction": "node --test tests/log-redaction.test.mjs",
+    "test:outbox-privacy": "tsx --test tests/outbox-privacy.test.ts",
     "test:auth-logging": "node tests/auth-logging-smoke.mjs",
     "test:magic-link-concurrency": "node tests/magic-link-concurrency.mjs",
     "test:dev-link-store": "tsx --test tests/dev-link-store.test.ts",

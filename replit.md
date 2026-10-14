@@ -32,6 +32,10 @@ Run `npm run test:dev-link-store` for expiry and isolation tests. The auth brows
 
 Use `npm run dev` / `npm start`, not bare `next`: the launcher redacts auth query values from both Next.js output streams, including worker errors. Request paths, statuses, timings, and ordinary messages remain visible. Sign-in email previews omit their body; actual delivery and the development login-page link are unchanged. This only protects application console output, not browser history, proxy access logs, or stored email bodies.
 
+Sign-in outbox bodies and attachments are cleared on successful or console delivery and after the third failed attempt. Unexpired retry payloads stay private to delivery; admin queries hide them and provider errors are generic. Expired payloads are cleared by the outbox cron job, admin outbox reads, and attempts to deliver them. Keep the outbox cron scheduled for cleanup even without admin visits. Delivery metadata and ordinary email retention are unchanged. Migration scrubs legacy sign-in records, including pending ones whose expiry cannot reliably be established; those users must request a fresh link. Database backups and email-provider retention are outside this cleanup.
+
+Run `npm run test:outbox-privacy` against the development database for mocked-provider delivery, retry, expiry, preview and ordinary-mail retention checks (no real emails are sent).
+
 Run `npm run test:log-redaction` for synthetic logging regression tests. Run the existing browser auth smoke with `AUTH_SERVER_LOGS_REDACTED=1 node tests/auth-smoke.mjs` against that launcher; never enable traces or raw credential diagnostics.
 
 `npm run test:auth-logging` starts its own development server on port 5000 and captures logs in memory while testing login, the dev-link UI, email persistence, verification, and invalid-link errors. Stop the normal workflow first, run against a development database without SendGrid configured, then restart the workflow. It removes its temporary account and auth records and never follows credentials to a different origin.

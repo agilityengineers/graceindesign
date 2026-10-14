@@ -57,9 +57,9 @@ try {
   check("legacy query cannot inject a development link", !forgedPage.includes("open sign-in link"));
   check("development link UI retains a working href",
     sentPage.includes(`href="${dev.replaceAll("&", "&amp;")}"`) && sentPage.includes("open sign-in link"));
-  const mail = (await pool.query("select body_text, status from outbox where to_addr=$1", [email])).rows[0];
-  check("email payload remains intact and is logged rather than sent",
-    mail?.body_text.includes(dev) && mail.status === "logged");
+  const mail = (await pool.query("select body_text, body_html, status from outbox where to_addr=$1", [email])).rows[0];
+  check("console delivery clears stored credentials without losing the dev link",
+    mail?.body_text === null && mail?.body_html === null && mail.status === "logged");
   stage = "verification and invalid-link handling";
   const url = new URL(dev);
   const verified = await fetch(new URL(url.pathname, base), {

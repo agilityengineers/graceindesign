@@ -4,6 +4,7 @@ import { requireArea } from "@/lib/auth/session";
 import { db, emailSequences, emailSequenceSteps, sequenceEnrollments, smsTemplates, proposals, leads, projects, invoices, approvals, webhookSubscriptions, webhookDeliveries, webhookEvents, outbox, cronRuns, hubspotSync, paths, LEAD_STAGES, LEAD_STAGE_LABELS } from "@/lib/db";
 import { GID_EVENTS } from "@/lib/server/webhooks";
 import { JOBS } from "@/lib/server/cron";
+import { readOutboxPreviews } from "@/lib/server/outbox-privacy";
 import { env } from "@/lib/env";
 import AdminShell from "@/components/admin/AdminShell";
 import { Card, Stat, StatusPill } from "@/components/admin/ui";
@@ -243,14 +244,14 @@ export default async function OpsPage({ searchParams }: { searchParams: Promise<
       })()}
 
       {tab === "outbox" && await (async () => {
-        const rows = await db.select().from(outbox).orderBy(desc(outbox.createdAt)).limit(150);
+        const rows = await readOutboxPreviews();
         return (
           <Card title="Email & SMS outbox" sub={`${env.sendgridApiKey ? "SendGrid" : "Email: logged only (no SENDGRID_API_KEY)"} · ${env.twilio.sid ? "Twilio" : "SMS: logged only (no Twilio keys)"} · every message the app sends lands here first`} action={<form action={purgeOutbox}><ConfirmButton message="Delete outbox records older than 30 days?" className="btn btn-ghost btn-xs" style={{ borderRadius: 8 }}>Purge &gt; 30 days</ConfirmButton></form>}>
             {rows.map((m) => (
               <details key={m.id} style={{ borderBottom: "1px solid #f2f4f7", padding: "6px 0" }}>
                 <summary style={{ display: "grid", gridTemplateColumns: "60px minmax(0, 1.2fr) minmax(0, 2fr) 80px 90px auto", gap: 10, fontSize: 12, alignItems: "center", cursor: "pointer", listStyle: "none" }}>
                   <span className="tag">{m.channel}</span><span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.toAddr}</span><span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.subject || m.bodyText?.slice(0, 80)}</span><StatusPill status={m.status} /><span style={{ color: "#8c95a8" }}>{relativeDay(m.createdAt)}</span>
-                  <span style={{ display: "flex", gap: 8 }}>{m.status !== "sent" && <form action={outboxAction}><input type="hidden" name="outboxId" value={m.id} /><input type="hidden" name="op" value="retry" /><button type="submit" className="link-btn">Re-send</button></form>}<form action={outboxAction}><input type="hidden" name="outboxId" value={m.id} /><input type="hidden" name="op" value="delete" /><ConfirmButton message="Delete this message record?">×</ConfirmButton></form></span>
+                  <span style={{ display: "flex", gap: 8 }}>{m.status !== "sent" && (!m.authExpiresAt || (m.status !== "logged" && m.attempts < 3 && m.authExpiresAt > new Date())) && <form action={outboxAction}><input type="hidden" name="outboxId" value={m.id} /><input type="hidden" name="op" value="retry" /><button type="submit" className="link-btn">Re-send</button></form>}<form action={outboxAction}><input type="hidden" name="outboxId" value={m.id} /><input type="hidden" name="op" value="delete" /><ConfirmButton message="Delete this message record?">×</ConfirmButton></form></span>
                 </summary>
                 <pre style={{ whiteSpace: "pre-wrap", fontSize: 12, color: "#4b5569", background: "#f7f9fc", padding: 10, borderRadius: 8, marginTop: 6 }}>{m.error ? `ERROR: ${m.error}\n\n` : ""}{m.bodyText}</pre>
               </details>))}

@@ -8,6 +8,13 @@
       "when": 1791765917700,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791765917701,
+      "tag": "0001_auth_outbox",
+      "breakpoints": true
     }
   ]
 }

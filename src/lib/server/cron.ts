@@ -4,6 +4,7 @@ import { and, eq, gte, lte, isNull, lt, sql } from "drizzle-orm";
 import { db, bookings, leads, cronRuns, outbox, socialPosts } from "@/lib/db";
 import { getSetting } from "@/lib/server/settings";
 import { sendEmail, sendSms, deliverOutbox } from "@/lib/server/outbox";
+import { purgeAuthOutboxBodies } from "@/lib/server/outbox-privacy";
 import { fmtWhen } from "@/lib/server/consult";
 import { syncAllRss } from "@/lib/server/rss";
 import { syncEtsyProducts } from "@/lib/server/etsy";
@@ -51,9 +52,11 @@ const JOB_FNS: Record<Exclude<Job, "all">, () => Promise<Record<string, unknown>
   async drips() { return { sent: await runDueSequenceSteps() }; },
   async webhooks() { return { retried: await retryDueDeliveries() }; },
   async outbox() {
-    const queued = await db.select({ id: outbox.id }).from(outbox).where(and(eq(outbox.status, "queued"), lt(outbox.attempts, 3))).limit(50);
+    await purgeAuthOutboxBodies();
+    const retryable = sql`(${outbox.authExpiresAt} is null or (${outbox.authExpiresAt} > now() and ${outbox.bodyText} is not null))`;
+    const queued = await db.select({ id: outbox.id }).from(outbox).where(and(retryable, eq(outbox.status, "queued"), lt(outbox.attempts, 3))).limit(50);
     for (const r of queued) await deliverOutbox(r.id);
-    const failed = await db.select({ id: outbox.id }).from(outbox).where(and(eq(outbox.status, "failed"), lt(outbox.attempts, 3), sql`${outbox.createdAt} > now() - interval '2 days'`)).limit(20);
+    const failed = await db.select({ id: outbox.id }).from(outbox).where(and(retryable, eq(outbox.status, "failed"), lt(outbox.attempts, 3), sql`${outbox.createdAt} > now() - interval '2 days'`)).limit(20);
     for (const r of failed) await deliverOutbox(r.id);
     return { retried: queued.length + failed.length };
   },

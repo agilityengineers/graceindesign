@@ -701,6 +701,7 @@ export const outbox = pgTable("outbox", {
   subject: text("subject"),
   bodyText: text("body_text"),
   bodyHtml: text("body_html"),
+  authExpiresAt: timestamp("auth_expires_at", { withTimezone: true }),
   attachments: jsonb("attachments").$type<{ filename: string; contentType: string; contentBase64?: string; url?: string }[]>(),
   status: outboxStatusEnum("status").notNull().default("queued"),
   provider: text("provider"),
