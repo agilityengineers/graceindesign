@@ -27,7 +27,7 @@ export default function SiteNav({ label, active, sourceKey, phone, email, servic
   return (
     <div style={{ position: "relative", zIndex: 50 }}>
       <div className="util-bar gx">
-        <div style={{ display: "flex", alignItems: "center", gap: 28, minWidth: 0 }}>
+        <div className="util-contact" style={{ display: "flex", alignItems: "center", gap: 28, minWidth: 0 }}>
           <a className="util-item" href={`tel:${phone.replace(/[^\d+]/g, "")}`}><Phone />{phone}</a>
           <a className="util-item util-email" href={`mailto:${email}`}><Mail />{email}</a>
           <span className="util-item util-mid"><span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6cb6e6", flex: "none" }} />{label}</span>

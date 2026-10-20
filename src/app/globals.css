@@ -320,8 +320,10 @@ p { margin: 0; }
 }
 @media (max-width: 720px) {
   .nav-logo { height: 36px; }
-  .util-bar { font-size: 12px; }
-  .util-cta { padding: 0 14px; font-size: 11px; letter-spacing: .04em; gap: 6px; }
+  .util-bar { font-size: 12px; gap: 12px; }
+  .util-contact { flex-shrink: 0; }
+  .util-contact svg { flex-shrink: 0; }
+  .util-cta { padding: 0 14px; font-size: 11px; letter-spacing: .04em; gap: 6px; min-width: 0; white-space: normal; justify-content: center; }
   .util-item { min-height: var(--util-h); }
   .h1, .h1-xl, .h1-xxl { font-size: 40px !important; line-height: 1.08 !important; }
   .h2 { font-size: 32px !important; }
