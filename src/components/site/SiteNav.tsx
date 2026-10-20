@@ -35,7 +35,7 @@ export default function SiteNav({ label, active, sourceKey, phone, email, servic
           <Link href="/about" className={cls("about")}>About</Link>
           <div className={`nav-dd${dd === "svc" ? " is-open" : ""}`} onMouseEnter={() => setDd("svc")} onMouseLeave={() => setDd(null)}>
             <Link href="/services" className={cls("services")} aria-haspopup="true" aria-expanded={dd === "svc"} onKeyDown={(e) => { if (e.key === "ArrowDown") { e.preventDefault(); setDd("svc"); } }}>Services <Chevron /></Link>
-            <div className="nav-dd-menu" style={{ width: 300 }}>
+            <div className="nav-dd-menu" style={{ width: "max-content", minWidth: 300, maxWidth: "calc(100vw - 48px)", whiteSpace: "normal" }}>
               <div className="nav-dd-panel">
                 <span className="nav-dd-notch" />
                 {services.map((s) => (
