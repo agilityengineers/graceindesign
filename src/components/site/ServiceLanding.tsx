@@ -46,7 +46,7 @@ export default async function ServiceLanding({ s, all, heroStyle }: { s: Svc; al
 
     {s.features.length > 0 && (
       <section className="gx g2 g2-stack-md" style={{ paddingBottom: 104, gap: 64, alignItems: "center" }}>
-        <div style={{ position: "relative", height: 520, borderRadius: 18, overflow: "hidden" }}><img src={s.img2} alt={s.img2Alt || ""} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div>
+        <div className="media-tall" style={{ position: "relative", height: 520, borderRadius: 18, overflow: "hidden" }}><img src={s.img2} alt={s.img2Alt || ""} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div>
         <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
           <h2 className="h2" style={{ fontSize: 42 }}>What we help with</h2>
           <div className="g2 g2-stack-sm" style={{ gap: 16 }}>{s.features.map(([t, d]) => <div key={t} style={{ display: "flex", flexDirection: "column", gap: 8, padding: 22, borderRadius: 14, border: "1px solid #e9ecf1" }}><span style={{ fontSize: 15, fontWeight: 600 }}>{t}</span><span style={{ fontSize: 13.5, lineHeight: 1.6, color: "#6b7486" }}>{d}</span></div>)}</div>
@@ -87,7 +87,7 @@ export default async function ServiceLanding({ s, all, heroStyle }: { s: Svc; al
       <div style={{ padding: 36, borderRadius: 18, border: "1px solid #e9ecf1", background: "#f7f8fa", display: "flex", flexDirection: "column", gap: 12 }}><span className="eyebrow" style={{ color: "#6b7486", letterSpacing: ".16em" }}>Or, without a guide…</span><p className="display" style={{ fontSize: 28, lineHeight: 1.3 }}>{s.failure}</p></div>
     </section>
 
-    <section id="lead-form" className="mx-gx g2 g2-stack-md" style={{ marginBottom: 104, padding: 72, borderRadius: 24, background: "#e6f3fc", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.1fr)", gap: 64, alignItems: "start" }}>
+    <section id="lead-form" className="mx-gx g2 g2-stack-md panel" style={{ marginBottom: 104, padding: 72, borderRadius: 24, background: "#e6f3fc", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.1fr)", gap: 64, alignItems: "start" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         <span className="eyebrow">Take the first step</span><h2 className="h2">Tell us about your project</h2>
         <p style={{ fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>A few details is all we need. We'll follow up within one business day with next steps — no obligation.</p>
@@ -97,7 +97,7 @@ export default async function ServiceLanding({ s, all, heroStyle }: { s: Svc; al
     </section>
 
     <section className="gx" style={{ paddingBottom: 104, display: "flex", flexDirection: "column", gap: 28 }}>
-      <h2 className="display" style={{ fontSize: 34, fontWeight: 500 }}>{isPartners ? "More from Healthy Home Resources" : "Explore other services"}</h2>
+      <h2 className="display t-display-lg" style={{ fontSize: 34, fontWeight: 500 }}>{isPartners ? "More from Healthy Home Resources" : "Explore other services"}</h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>{others.map((o) => <Link key={o.href} href={o.href} className="btn btn-ghost" style={{ height: 44, padding: "0 20px", fontSize: 14, fontWeight: 500 }}>{o.title}</Link>)}</div>
     </section>
   </>);

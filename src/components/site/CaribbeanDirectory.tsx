@@ -16,7 +16,7 @@ export default function CaribbeanDirectory({ eyebrow, title, categories, resourc
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}><span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".14em" }}>{d.category}</span><span className="tag" style={{ fontSize: 10 }}>{d.where}</span></div>
           <span style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.3 }}>{d.name}</span>
           <p style={{ fontSize: 13.5, lineHeight: 1.6, color: "#6b7486", flex: 1 }}>{d.description}</p>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px solid #eef0f4" }}><span style={{ fontSize: 12, color: "#8c95a8" }}>{d.type}</span><a href={d.url || "#directory"} target={d.url ? "_blank" : undefined} rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#3f9ad9" }}>Visit →</a></div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px solid #eef0f4" }}><span style={{ fontSize: 12, color: "#8c95a8" }}>{d.type}</span><a href={d.url || "#directory"} target={d.url ? "_blank" : undefined} rel="noreferrer" className="tap" style={{ fontSize: 12, fontWeight: 600, color: "#3f9ad9" }}>Visit →</a></div>
         </div>))}
       {!list.length && <p style={{ color: "#6b7486", fontSize: 14 }}>No listings in this category yet — suggest one below.</p>}
     </div>

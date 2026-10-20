@@ -18,7 +18,7 @@ export default function BeforeAfter({ before, after, title, note, beforeAlt, aft
         onPointerMove={(e) => { if (drag) set(e.clientX); }} onPointerUp={() => setDrag(false)} onPointerCancel={() => setDrag(false)}
         onKeyDown={(e) => { if (e.key === "ArrowLeft") setPct((p) => Math.max(3, p - 3)); if (e.key === "ArrowRight") setPct((p) => Math.min(97, p + 3)); }}>
         <img src={after} alt={afterAlt ? `After: ${afterAlt}` : "After"} draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-        <div style={{ position: "absolute", inset: 0, width: `${pct}%`, overflow: "hidden" }}><img src={before} alt={beforeAlt ? `Before: ${beforeAlt}` : "Before"} draggable={false} style={{ position: "absolute", top: 0, left: 0, width: ref.current?.clientWidth || 1296, height: "100%", objectFit: "cover", filter: "saturate(.75)" }} /></div>
+        <div style={{ position: "absolute", inset: 0, width: `${pct}%`, overflow: "hidden" }}><img src={before} alt={beforeAlt ? `Before: ${beforeAlt}` : "Before"} draggable={false} style={{ position: "absolute", top: 0, left: 0, width: `${10000 / pct}%`, maxWidth: "none", height: "100%", objectFit: "cover", filter: "saturate(.75)" }} /></div>
         <div style={{ position: "absolute", top: 0, bottom: 0, left: `${pct}%`, width: 2, background: "#fff", transform: "translateX(-1px)", boxShadow: "0 0 24px rgba(0,0,0,.3)" }}>
           <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 56, height: 56, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 30px rgba(26,34,56,.3)" }}><Compare /></span>
         </div>
