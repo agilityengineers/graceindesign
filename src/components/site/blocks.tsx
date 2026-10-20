@@ -85,13 +85,13 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
         <div className="g3" style={{ gap: 32 }}>{posts.map((a) => <PostCard key={a.id} post={a} height={260} />)}</div>
       </section>); }
     case "cta": return (
-      <section className="mx-gx" style={{ marginBottom: 104, padding: "72px 80px", borderRadius: 24, background: "#e6f3fc", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 48, flexWrap: "wrap" }}>
+      <section className="mx-gx panel" style={{ marginBottom: 104, padding: "72px 80px", borderRadius: 24, background: "#e6f3fc", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 48, flexWrap: "wrap" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 640 }}><h2 className="h2" style={{ fontSize: 44 }}>{c.title}</h2><p style={{ fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>{c.body}</p></div>
         <ConsultButton sourceKey={ctx.sourceKey} className="btn btn-navy btn-lg" style={{ fontWeight: 700 }}>{c.cta} <ArrowRight size={18} color="#fff" width={2} /></ConsultButton>
       </section>);
     case "about_hero": return (
       <section className="hero-classic" style={{ minHeight: 600 }}>
-        <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "88px 64px 88px var(--gutter)", gap: 24, minWidth: 0 }}>
+        <div className="hero-copy" style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "88px 64px 88px var(--gutter)", gap: 24, minWidth: 0 }}>
           <span className="eyebrow">{c.eyebrow}</span><h1 className="h1">{c.title}</h1><p className="lede" style={{ maxWidth: 540 }}>{c.body}</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 4 }}>{(c.chips as string[]).map((ch) => <span key={ch} className="pill" style={{ cursor: "default" }}>{ch}</span>)}</div>
         </div>
@@ -106,14 +106,14 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
         </div>
       </section>);
     case "founder": { const f = await getFounder(); if (!f) return null; return (
-      <section className="mx-gx founder-grid" style={{ marginBottom: 104, padding: "64px 72px", borderRadius: 24, background: "#f7f8fa", display: "grid", gridTemplateColumns: "260px minmax(0,1fr)", gap: 56, alignItems: "start" }}>
+      <section className="mx-gx founder-grid panel" style={{ marginBottom: 104, padding: "64px 72px", borderRadius: 24, background: "#f7f8fa", display: "grid", gridTemplateColumns: "260px minmax(0,1fr)", gap: 56, alignItems: "start" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 18, position: "sticky", top: 24 }}>
-          <div style={{ position: "relative", width: 220, aspectRatio: "625/991", borderRadius: 16, overflow: "hidden" }}><img src={f.photoUrl || "/assets/grace-headshot-bw.jpg"} alt={f.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} /></div>
+          <div className="founder-photo" style={{ position: "relative", width: 220, aspectRatio: "625/991", borderRadius: 16, overflow: "hidden" }}><img src={f.photoUrl || "/assets/grace-headshot-bw.jpg"} alt={f.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} /></div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 18, fontWeight: 600 }}>{f.name}</span><span style={{ fontSize: 12.5, lineHeight: 1.5, color: "#6b7486" }}>{f.credentials}</span><span style={{ fontSize: 12.5, color: "#6b7486" }}>{f.title}</span></div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <span className="eyebrow">{c.eyebrow}</span>
-          <blockquote className="display" style={{ margin: 0, fontSize: 34, fontWeight: 500, lineHeight: 1.2, textWrap: "pretty" }}>“{f.quote}”</blockquote>
+          <blockquote className="display t-display-lg" style={{ margin: 0, fontSize: 34, fontWeight: 500, lineHeight: 1.2, textWrap: "pretty" }}>“{f.quote}”</blockquote>
           <p style={{ fontSize: 16, lineHeight: 1.75, color: "#4b5569" }}>{f.bio}</p>
           {f.bio2 && <p style={{ fontSize: 16, lineHeight: 1.75, color: "#4b5569" }}>{f.bio2}</p>}
           <div className="g2 g2-stack-sm" style={{ gap: 14, marginTop: 4 }}>
@@ -127,7 +127,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
       <section className="gx" style={{ paddingTop: 80, paddingBottom: 104, display: "flex", flexDirection: "column", gap: 40 }}>
         {list.map((s, k) => (
           <article key={s.slug} className="reveal g2 g2-stack-sm" style={{ gap: 64, alignItems: "center", padding: "40px 0", borderBottom: "1px solid #eef0f4" }}>
-            <div style={{ position: "relative", height: 360, borderRadius: 18, overflow: "hidden", order: k % 2 ? 2 : 0 }}><img src={s.img} alt={s.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div>
+            <div className="media-tall" style={{ position: "relative", height: 360, borderRadius: 18, overflow: "hidden", order: k % 2 ? 2 : 0 }}><img src={s.img} alt={s.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div>
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
               <span className="display" style={{ fontSize: 40, color: "#6cb6e6", lineHeight: 1 }}>{String(k + 1).padStart(2, "0")}</span>
               <h2 className="h2" style={{ fontSize: 42 }}>{s.title}</h2>
@@ -148,7 +148,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
           </Link>))}
       </section>);
     case "assessment_cta": return (
-      <section className="reveal mx-gx" style={{ marginBottom: 104, padding: "64px 80px", borderRadius: 24, background: "#1a2238", color: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 48, flexWrap: "wrap" }}>
+      <section className="reveal mx-gx panel" style={{ marginBottom: 104, padding: "64px 80px", borderRadius: 24, background: "#1a2238", color: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 48, flexWrap: "wrap" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 640 }}><h2 className="h2" style={{ fontSize: 40, color: "#fff" }}>{c.title}</h2><p style={{ fontSize: 15, lineHeight: 1.7, color: "#c6cbd6" }}>{c.body}</p></div>
         <ConsultButton sourceKey="aging-in-place" className="btn btn-sky btn-md" style={{ boxShadow: "none" }}>{c.cta}</ConsultButton>
       </section>);
@@ -159,7 +159,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
           <h1 className="h1" style={{ fontSize: 60 }}>{c.title}</h1>
           {c.body && <p style={{ maxWidth: 620, fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>{c.body}</p>}
         </div>
-        {c.badge && <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderRadius: 12, background: "#fff", border: "1px solid #e9ecf1", fontSize: 13, color: "#6b7486", whiteSpace: "nowrap" }}>{c.badgeRss ? <Rss /> : <span style={{ width: 8, height: 8, borderRadius: "50%", background: c.badgeDot || "#6cb6e6" }} />}{c.badge}{c.badge === "Sold on Etsy" && (await getProducts()).length > 0 && <> · <strong style={{ color: "#1a2238" }}>{(await getProducts()).length} listings</strong></>}</div>}
+        {c.badge && <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderRadius: 12, background: "#fff", border: "1px solid #e9ecf1", fontSize: 13, color: "#6b7486", whiteSpace: "nowrap" }} className="badge-box">{c.badgeRss ? <Rss /> : <span style={{ width: 8, height: 8, borderRadius: "50%", background: c.badgeDot || "#6cb6e6" }} />}{c.badge}{c.badge === "Sold on Etsy" && (await getProducts()).length > 0 && <> · <strong style={{ color: "#1a2238" }}>{(await getProducts()).length} listings</strong></>}</div>}
       </section>);
     case "product_carousel": { const all = await getProducts(); if (all.length === 0) return null; return <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={306} count={all.length}>{all.map((p) => <ProductCard key={p.id} p={p} compact />)}</Carousel>; }
     case "product_grid": { const all = await getProducts(); const ProductGrid = (await import("./ProductGrid")).default; return <ProductGrid title={c.title} categories={c.categories} products={all.map((p) => ({ id: p.id, title: p.title, category: p.category, price: p.price, reviews: p.reviews, synced: !!p.lastSyncedAt, type: p.type, tag: p.tag || "", img: p.imageUrl || "", url: p.etsyUrl }))} shopUrl={env.etsyShopUrl} />; }
@@ -174,7 +174,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
         <div style={{ display: "flex", flexDirection: "column", gap: 56 }}>
           {WELLNESS_GROUPS.map((g) => (
             <div key={g.letter} className="reveal" style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 18 }}><span className="display" style={{ width: 52, height: 52, borderRadius: 14, background: "#e6f3fc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 600, color: "#3f9ad9" }}>{g.letter}</span><div style={{ display: "flex", flexDirection: "column", gap: 2 }}><h2 className="display" style={{ fontSize: 34, fontWeight: 600 }}>{g.title}</h2><span style={{ fontSize: 14, color: "#6b7486" }}>{g.sub}</span></div></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 18 }}><span className="display" style={{ width: 52, height: 52, borderRadius: 14, background: "#e6f3fc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 600, color: "#3f9ad9" }}>{g.letter}</span><div style={{ display: "flex", flexDirection: "column", gap: 2 }}><h2 className="display t-display-lg" style={{ fontSize: 34, fontWeight: 600 }}>{g.title}</h2><span style={{ fontSize: 14, color: "#6b7486" }}>{g.sub}</span></div></div>
               <div className="g2 g2-stack-sm" style={{ gap: 16 }}>
                 {g.items.map(([kind, title, desc, img]) => <a key={title} href="#guides" className="card-hover" style={{ display: "flex", gap: 16, padding: 20, borderRadius: 14, border: "1px solid #e9ecf1", color: "#1a2238" }}><div style={{ width: 96, height: 96, flex: "none", borderRadius: 10, overflow: "hidden", position: "relative" }}><img src={resolveDeep(map, img)} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div><div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}><span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".14em" }}>{kind}</span><span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.35 }}>{title}</span><span style={{ fontSize: 13, lineHeight: 1.55, color: "#6b7486" }}>{desc}</span></div></a>)}
               </div>
@@ -214,8 +214,8 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
       </section>); return (
       <section className="gx" style={{ paddingTop: 72, paddingBottom: 104, display: "flex", flexDirection: "column", gap: 56 }}>
         {feat && <Link href={`/news/${feat.slug}`} className="g2 g2-stack-sm" style={{ gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)", gap: 48, alignItems: "center", color: "#1a2238" }}>
-          <div style={{ position: "relative", height: 460, borderRadius: 20, overflow: "hidden" }}><img src={feat.imageUrl || ""} alt={feat.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /></div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}><PostMeta post={feat} /><h2 className="display" style={{ fontSize: 44, fontWeight: 600, lineHeight: 1.1, textWrap: "pretty" }}>{feat.title}</h2><p style={{ fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>{feat.excerpt}</p><span style={{ fontSize: 14, fontWeight: 600 }}>Read article →</span></div>
+          <div className="media-tall" style={{ position: "relative", height: 460, borderRadius: 20, overflow: "hidden" }}><img src={feat.imageUrl || ""} alt={feat.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}><PostMeta post={feat} /><h2 className="display t-display-lg" style={{ fontSize: 44, fontWeight: 600, lineHeight: 1.1, textWrap: "pretty" }}>{feat.title}</h2><p style={{ fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>{feat.excerpt}</p><span style={{ fontSize: 14, fontWeight: 600 }}>Read article →</span></div>
         </Link>}
         <div className="g3" style={{ gap: 32 }}>{rest.slice(0, c.count || 6).map((p) => <PostCard key={p.id} post={p} height={240} />)}</div>
       </section>); }
@@ -246,14 +246,14 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
       <section id="blog" className="gx" style={{ paddingTop: 96, paddingBottom: 96, background: "#f7f8fa", display: "flex", flexDirection: "column", gap: 40 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 40, flexWrap: "wrap" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 640 }}><span className="eyebrow">{c.eyebrow}</span><h2 className="h2">{c.title}</h2></div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderRadius: 12, background: "#fff", border: "1px solid #e9ecf1", fontSize: 13, color: "#6b7486", whiteSpace: "nowrap" }}><Rss />{c.badge}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderRadius: 12, background: "#fff", border: "1px solid #e9ecf1", fontSize: 13, color: "#6b7486", whiteSpace: "nowrap" }} className="badge-box"><Rss />{c.badge}</div>
         </div>
         <div className="g2 g2-stack-md" style={{ gridTemplateColumns: "minmax(0,1.25fr) minmax(0,1fr)", gap: 40, alignItems: "start" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
             {gidPosts.length === 0 && <div style={{ padding: "28px 32px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff", display: "flex", flexDirection: "column", gap: 8 }}><span style={{ fontSize: 17, fontWeight: 600 }}>Our first Caribbean Connection articles are on the way.</span><span style={{ fontSize: 14, lineHeight: 1.65, color: "#6b7486" }}>Subscribe to the newsletter below and we'll send them to you as they're published.</span></div>}
             {feat && <Link href={`/news/${feat.slug}`} style={{ display: "flex", flexDirection: "column", gap: 16, color: "#1a2238" }}>
-              <div style={{ position: "relative", height: 380, borderRadius: 18, overflow: "hidden" }}><img src={feat.imageUrl || ""} alt={feat.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /><span style={{ position: "absolute", top: 16, left: 16, padding: "6px 12px", borderRadius: 999, background: "#1a2238", color: "#fff", fontSize: 11, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase" }}>GID Article</span></div>
-              <PostMeta post={feat} /><h3 className="display" style={{ fontSize: 36, fontWeight: 600, lineHeight: 1.15, textWrap: "pretty" }}>{feat.title}</h3><p style={{ fontSize: 15, lineHeight: 1.7, color: "#4b5569" }}>{feat.excerpt}</p>
+              <div className="media-tall" style={{ position: "relative", height: 380, borderRadius: 18, overflow: "hidden" }}><img src={feat.imageUrl || ""} alt={feat.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /><span style={{ position: "absolute", top: 16, left: 16, padding: "6px 12px", borderRadius: 999, background: "#1a2238", color: "#fff", fontSize: 11, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase" }}>GID Article</span></div>
+              <PostMeta post={feat} /><h3 className="display t-display-lg" style={{ fontSize: 36, fontWeight: 600, lineHeight: 1.15, textWrap: "pretty" }}>{feat.title}</h3><p style={{ fontSize: 15, lineHeight: 1.7, color: "#4b5569" }}>{feat.excerpt}</p>
             </Link>}
             <div className="g2 g2-stack-sm" style={{ gap: 24 }}>{more.map((g) => <Link key={g.id} href={`/news/${g.slug}`} style={{ display: "flex", flexDirection: "column", gap: 12, color: "#1a2238" }}><div style={{ position: "relative", height: 180, borderRadius: 14, overflow: "hidden" }}><img src={g.imageUrl || ""} alt={g.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div><span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".1em" }}>{g.category} · {fmtDate(g.publishedAt, { month: "short", day: "numeric", year: "numeric" })}</span><h3 className="display" style={{ fontSize: 24, fontWeight: 600, lineHeight: 1.2 }}>{g.title}</h3><p style={{ fontSize: 13.5, lineHeight: 1.6, color: "#6b7486" }}>{g.excerpt}</p></Link>)}</div>
           </div>
@@ -268,7 +268,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
     case "cc_directory": { const { resources } = await getCaribbeanData(); const Dir = (await import("./CaribbeanDirectory")).default; return (
       <section id="directory" className="gx" style={{ paddingTop: 104, paddingBottom: 104, display: "flex", flexDirection: "column", gap: 40 }}>
         <Dir eyebrow={c.eyebrow} title={c.title} categories={c.categories} resources={resources.map((r) => ({ id: r.id, name: r.name, category: r.category, where: r.area ? `${r.country} · ${r.area}`.replace(/ · National$/, "") : r.country, type: r.type || "", description: r.description, url: r.url || "" }))} />
-        <div id="suggest-resource" className="g2 g2-stack-md" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1.3fr)", gap: 40, padding: "36px 40px", borderRadius: 20, background: "#f7f8fa", border: "1px solid #e9ecf1" }}>
+        <div id="suggest-resource" className="g2 g2-stack-md panel" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1.3fr)", gap: 40, padding: "36px 40px", borderRadius: 20, background: "#f7f8fa", border: "1px solid #e9ecf1" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <span className="eyebrow">{c.formEyebrow}</span><h3 className="display" style={{ fontSize: 32, fontWeight: 500, lineHeight: 1.1 }}>{c.formTitle}</h3><p style={{ fontSize: 14, lineHeight: 1.65, color: "#4b5569" }}>{c.formBody}</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13, color: "#6b7486" }}>{(c.bullets as string[]).map((b) => <span key={b} style={{ display: "flex", gap: 8, alignItems: "center" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6cb6e6" }} />{b}</span>)}</div>
@@ -278,14 +278,14 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
       </section>); }
     case "cc_events": { const { events } = await getCaribbeanData(); return (
       <section id="events" className="gx g2 g2-stack-md" style={{ paddingBottom: 104, gridTemplateColumns: "minmax(0,1fr) minmax(0,1.4fr)", gap: 64, alignItems: "start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 24 }}>
+        <div className="sticky-md-off" style={{ display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 24 }}>
           <span className="eyebrow">{c.eyebrow}</span><h2 className="h2" style={{ fontSize: 44 }}>{c.title}</h2><p style={{ fontSize: 15, lineHeight: 1.7, color: "#4b5569" }}>{c.body}</p>
           <a href="#suggest-event" className="btn btn-navy" style={{ alignSelf: "flex-start" }}>Submit an event</a>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {events.length === 0 && <div style={{ padding: "28px 32px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff", display: "flex", flexDirection: "column", gap: 8 }}><span style={{ fontSize: 17, fontWeight: 600 }}>No upcoming events are listed yet.</span><span style={{ fontSize: 14, lineHeight: 1.65, color: "#6b7486" }}>Know of a fair, workshop, clinic or talk for older adults, families or caregivers? Submit it below and we'll review it for listing.</span></div>}
           {events.map((e, k) => { const virtual = e.format === "virtual"; const d = e.startsAt; const bg = k === 0 ? "#1a2238" : virtual ? "#e6f3fc" : "#f7f8fa"; const color = k === 0 ? "#fff" : "#1a2238"; return (
-            <div key={e.id} className="reveal" style={{ display: "grid", gridTemplateColumns: "84px 1fr auto", gap: 20, alignItems: "center", padding: "20px 24px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff" }}>
+            <div key={e.id} className="reveal event-row" style={{ display: "grid", gridTemplateColumns: "84px 1fr auto", gap: 20, alignItems: "center", padding: "20px 24px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff" }}>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 84, height: 84, borderRadius: 14, background: bg, color }}><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase" }}>{fmtDate(d, { month: "short" }, e.tz)}</span><span className="display" style={{ fontSize: 36, fontWeight: 600, lineHeight: 1 }}>{fmtDate(d, { day: "numeric" }, e.tz)}</span></div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}><div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><span style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.3 }}>{e.title}</span>{virtual && <span style={{ padding: "3px 8px", borderRadius: 999, background: "#e6f3fc", fontSize: 10, fontWeight: 700, letterSpacing: ".06em" }}>VIRTUAL</span>}</div><span style={{ fontSize: 13, lineHeight: 1.55, color: "#6b7486" }}>{e.description}</span><span style={{ fontSize: 12, color: "#8c95a8" }}>{e.whereLabel} · {e.host}</span></div>
               <a href={e.url || "#events"} target={e.url ? "_blank" : undefined} rel="noreferrer" className="btn btn-ghost btn-sm" style={{ height: 40 }}>Details</a>
@@ -297,7 +297,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
         </div>
       </section>); }
     case "cc_newsletter": return (
-      <section id="newsletter" className="mx-gx g2 g2-stack-md" style={{ marginBottom: 104, padding: "72px 80px", borderRadius: 24, background: "#1a2238", color: "#fff", gridTemplateColumns: "minmax(0,1.2fr) minmax(0,1fr)", gap: 64, alignItems: "center" }}>
+      <section id="newsletter" className="mx-gx g2 g2-stack-md panel" style={{ marginBottom: 104, padding: "72px 80px", borderRadius: 24, background: "#1a2238", color: "#fff", gridTemplateColumns: "minmax(0,1.2fr) minmax(0,1fr)", gap: 64, alignItems: "center" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <span className="eyebrow eyebrow-sky">{c.eyebrow}</span><h2 className="h2" style={{ fontSize: 44, color: "#fff" }}>{c.title}</h2><p style={{ fontSize: 15, lineHeight: 1.7, color: "#c6cbd6", maxWidth: 520 }}>{c.body}</p>
           <div style={{ display: "flex", gap: 20, flexWrap: "wrap", fontSize: 12, color: "#c6cbd6" }}>{(c.bullets as string[]).map((b) => <span key={b} style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6cb6e6" }} />{b}</span>)}</div>

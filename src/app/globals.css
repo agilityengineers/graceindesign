@@ -287,9 +287,62 @@ p { margin: 0; }
 @media (max-width: 720px) { .modal-backdrop { padding: 12px; } }
 
 /* Before/after */
-.ba { position: relative; height: 620px; border-radius: 22px; overflow: hidden; cursor: ew-resize; user-select: none; touch-action: none; background: #e9ebef; }
+.ba { position: relative; height: 620px; border-radius: 22px; overflow: hidden; cursor: ew-resize; user-select: none; touch-action: pan-y; background: #e9ebef; }
 @media (max-width: 1024px) { .ba { height: 440px; } }
 @media (max-width: 720px) { .ba { height: 300px; border-radius: 14px; } }
+
+/* ---------------------------------------------------------------------------
+   Responsive overrides for public-site blocks.
+   Most block layout lives in inline styles (desktop values), which beat
+   stylesheet rules — so these overrides use !important, scoped to the class
+   hooks the components carry.
+   --------------------------------------------------------------------------- */
+.nav-logo { height: 60px; width: auto; display: block; }
+.util-item { display: flex; align-items: center; gap: 8px; color: var(--light-text); white-space: nowrap; }
+.util-item.util-mid { color: #fff; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.carousel-dot { position: relative; }
+.carousel-dot::before { content: ""; position: absolute; inset: -12px -3px; } /* 28px hit area on a 4px bar */
+@media (max-width: 1024px) {
+  .nav-logo { height: 48px; }
+  .site-header { gap: 16px; }
+  /* Headings carry inline desktop sizes; restore the responsive type scale. */
+  .h1, .h1-xl, .h1-xxl { font-size: 52px !important; }
+  .h2 { font-size: 38px !important; }
+  .hero-copy { padding: 72px var(--gutter) 48px !important; }
+  .hero-classic .hero-badge { left: calc(var(--gutter) + 16px) !important; bottom: 16px !important; }
+  [data-stack], .founder-grid, .wellness-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 32px !important; }
+  [data-stack] > :nth-child(2) { padding-top: 0 !important; }
+  section.g2-stack-md { row-gap: 32px !important; }
+  .founder-grid > :first-child, .wellness-grid > aside, .sticky-md-off { position: static !important; }
+  .step-cell { padding: 16px 24px 16px 0 !important; border-left: 0 !important; }
+  .panel { padding: 48px 40px !important; gap: 32px !important; }
+  .media-tall { height: 380px !important; }
+}
+@media (max-width: 720px) {
+  .nav-logo { height: 36px; }
+  .util-bar { font-size: 12px; }
+  .util-cta { padding: 0 14px; font-size: 11px; letter-spacing: .04em; gap: 6px; }
+  .util-item { min-height: var(--util-h); }
+  .h1, .h1-xl, .h1-xxl { font-size: 40px !important; line-height: 1.08 !important; }
+  .h2 { font-size: 32px !important; }
+  .t-display-lg { font-size: 28px !important; }
+  .hero-copy { padding: 48px var(--gutter) 36px !important; gap: 20px !important; }
+  .hero-classic .hero-photo-wrap { height: 300px; }
+  section.g2-stack-sm, article.g2-stack-sm { row-gap: 28px !important; }
+  .step-cell { padding: 18px 0 !important; }
+  .step-cell + .step-cell { border-top: 1px solid var(--border-3); }
+  .panel { padding: 32px 20px !important; border-radius: 18px !important; gap: 24px !important; margin-bottom: 64px !important; }
+  .form-card { padding: 20px !important; }
+  .founder-photo { width: 160px !important; }
+  .media-tall { height: 260px !important; }
+  .badge-box { white-space: normal !important; }
+  .event-row { grid-template-columns: 64px minmax(0, 1fr) !important; padding: 16px !important; gap: 14px !important; }
+  .event-row > :first-child { width: 64px !important; height: 64px !important; }
+  .event-row > :last-child { grid-column: 1 / -1; }
+  .tap { display: inline-flex; align-items: center; min-height: 40px; }
+  /* iOS Safari zooms the page when a focused field is under 16px. */
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px !important; }
+}
 
 /* Admin */
 .admin-shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; background: var(--surface-2); }

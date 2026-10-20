@@ -72,7 +72,7 @@ export function LeadMagnetForm({ cta }: { cta: string }) {
   if (f.sent) return <span style={{ fontSize: 14, color: "#6cb6e6", fontWeight: 600 }}>Sent! Check your inbox for the checklist.</span>;
   return (
     <form style={{ display: "flex", flexDirection: "column", gap: 12 }} onSubmit={async (e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); f.setBusy(true); f.setErr(null); try { await post("/api/newsletter/checklist", Object.fromEntries(fd.entries())); f.setSent(true); } catch (x: any) { f.setErr(x.message); } finally { f.setBusy(false); } }}>
-      <input name="email" type="email" required placeholder="Your email" style={{ height: 46, padding: "0 14px", border: 0, borderRadius: 10, fontSize: 14 }} />
+      <input name="email" type="email" required placeholder="Your email" style={{ height: 46, padding: "0 14px", border: 0, borderRadius: 10, fontSize: 14, background: "#fff" }} />
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: -9999, opacity: 0 }} />
       {f.err && <span style={{ color: "#f5b7a3", fontSize: 12 }}>{f.err}</span>}
       <button type="submit" disabled={f.busy} className="btn btn-sky" style={{ boxShadow: "none" }}>{f.busy ? "Sending…" : cta}</button>

@@ -10,7 +10,7 @@ export default function Carousel({ eyebrow, title, cardWidth, gap = 24, children
   const wrap = useRef<HTMLDivElement>(null);
   const [cw, setCw] = useState(cardWidth);
   useEffect(() => {
-    const calc = () => { const w = wrap.current?.clientWidth || 1296; const small = w < 720; const c = small ? w : cardWidth; setCw(c); setVisible(Math.max(1, Math.floor((w + gap) / (c + gap)))); };
+    const calc = () => { const el = wrap.current; const cs = el ? getComputedStyle(el) : null; const w = el && cs ? el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) : 1296; const small = w < 720; const c = small ? w : cardWidth; setCw(c); setVisible(Math.max(1, Math.floor((w + gap) / (c + gap)))); };
     calc(); window.addEventListener("resize", calc); return () => window.removeEventListener("resize", calc);
   }, [cardWidth, gap]);
   const max = Math.max(0, count - visible);
@@ -33,7 +33,7 @@ export default function Carousel({ eyebrow, title, cardWidth, gap = 24, children
         </div>
       </div>
       <div className="gx" style={{ display: "flex", gap: 6 }}>
-        {Array.from({ length: max + 1 }, (_, k) => <button key={k} type="button" aria-label={`Go to ${k + 1}`} onClick={() => setIdx(k)} style={{ height: 4, width: k === c ? 28 : 10, borderRadius: 2, background: k === c ? "#1a2238" : "#dfe3ea", border: 0, padding: 0, transition: "all .4s", cursor: "pointer" }} />)}
+        {Array.from({ length: max + 1 }, (_, k) => <button key={k} type="button" className="carousel-dot" aria-label={`Go to ${k + 1}`} onClick={() => setIdx(k)} style={{ height: 4, width: k === c ? 28 : 10, borderRadius: 2, background: k === c ? "#1a2238" : "#dfe3ea", border: 0, padding: 0, transition: "all .4s", cursor: "pointer" }} />)}
       </div>
     </section>
   );

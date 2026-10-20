@@ -34,7 +34,7 @@ export default function ServiceLeadForm({ slug, title, cta, pathId, extras }: { 
     </div>
   );
   return (
-    <form onSubmit={submit} className="g2 g2-stack-sm" style={{ gap: 16, background: "#fff", padding: 32, borderRadius: 18, boxShadow: "0 18px 44px rgba(26,34,56,.08)" }}>
+    <form onSubmit={submit} className="g2 g2-stack-sm form-card" style={{ gap: 16, background: "#fff", padding: 32, borderRadius: 18, boxShadow: "0 18px 44px rgba(26,34,56,.08)" }}>
       <label className="label">Full name<input required placeholder="Jane Doe" style={inp} value={(a.name as string) || ""} onChange={(e) => set("name", e.target.value)} /></label>
       <label className="label">Email<input required type="email" placeholder="jane@email.com" style={inp} value={(a.email as string) || ""} onChange={(e) => set("email", e.target.value)} /></label>
       <label className="label">Phone<input type="tel" placeholder="(555) 555-5555" style={inp} value={(a.phone as string) || ""} onChange={(e) => set("phone", e.target.value)} /></label>

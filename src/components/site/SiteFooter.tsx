@@ -43,9 +43,9 @@ export default function SiteFooter({ contact, footer, social, isAdmin, etsyUrl }
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap", paddingTop: 28, borderTop: "1px solid rgba(255,255,255,.12)", fontSize: 12.5, color: "#8c95a8" }}>
         <span>{footer.copyright}</span>
         <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
-          <Link href="/privacy" style={{ color: "#8c95a8" }}>Privacy Policy</Link>
-          <Link href="/terms" style={{ color: "#8c95a8" }}>Terms</Link>
-          <Link href="/accessibility" style={{ color: "#8c95a8" }}>Accessibility</Link>
+          <Link href="/privacy" className="tap" style={{ color: "#8c95a8" }}>Privacy Policy</Link>
+          <Link href="/terms" className="tap" style={{ color: "#8c95a8" }}>Terms</Link>
+          <Link href="/accessibility" className="tap" style={{ color: "#8c95a8" }}>Accessibility</Link>
           {isAdmin && <Link href="/admin" style={{ color: "#6cb6e6", fontWeight: 600 }}>Admin</Link>}
         </div>
       </div>

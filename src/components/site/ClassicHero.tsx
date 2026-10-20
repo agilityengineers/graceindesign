@@ -5,7 +5,7 @@ import { ConsultButton } from "./ConsultContext";
 export function HomeClassicHero({ kicker, title, sub, cta, source, secondary, secondaryHref, img, imgAlt, stats, badgeTitle, badgeSub }: { kicker: string; title: string; sub: string; cta: string; source: string; secondary: string; secondaryHref: string; img: string; imgAlt?: string; stats: [string, string][]; badgeTitle: string; badgeSub: string }) {
   return (
     <section className="hero-classic" style={{ position: "relative", minHeight: 680 }}>
-      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "96px 64px 96px var(--gutter)", gap: 28, minWidth: 0 }}>
+      <div className="hero-copy" style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "96px 64px 96px var(--gutter)", gap: 28, minWidth: 0 }}>
         <div className="eyebrow" style={{ display: "flex", alignItems: "center", gap: 10 }}><span style={{ width: 28, height: 2, background: "#6cb6e6", display: "block" }} />{kicker}</div>
         <h1 className="h1" style={{ fontSize: 68, lineHeight: 1.04 }}>{title}</h1>
         <p className="body-lg" style={{ maxWidth: 520, lineHeight: 1.65 }}>{sub}</p>
@@ -31,7 +31,7 @@ export function HomeClassicHero({ kicker, title, sub, cta, source, secondary, se
 export function ServiceClassicHero({ kicker, kickerHref, title, sub, cta, source, img, imgAlt }: { kicker: string; kickerHref: string; title: string; sub: string; cta: string; source: string; img: string; imgAlt?: string }) {
   return (
     <section className="hero-classic">
-      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "88px 64px 88px var(--gutter)", gap: 26, minWidth: 0 }}>
+      <div className="hero-copy" style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "88px 64px 88px var(--gutter)", gap: 26, minWidth: 0 }}>
         <Link href={kickerHref} className="eyebrow" style={{ display: "flex", alignItems: "center", gap: 8 }}><ArrowLeft size={12} />{kicker}</Link>
         <h1 className="h1">{title}</h1>
         <p className="lede" style={{ maxWidth: 540 }}>{sub}</p>
