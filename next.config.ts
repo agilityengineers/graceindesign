@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: { bodySizeLimit: "25mb" },
+    // middleware.ts matches /admin, so Next buffers admin request bodies for it — default cap is 10MB,
+    // which truncates larger media uploads ("Unexpected end of form"). Keep in step with bodySizeLimit.
+    middlewareClientMaxBodySize: "25mb",
   },
   serverExternalPackages: ["pg", "@replit/object-storage", "pdf-lib", "twilio", "@sendgrid/mail", "stripe"],
   async redirects() {
