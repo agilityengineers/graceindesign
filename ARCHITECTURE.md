@@ -12,7 +12,7 @@ Think of the app as one house with three doors: the **public site** visitors wal
 | Storage | Replit Object Storage (`@replit/object-storage`) with local `./.data/uploads` fallback; served through `/api/media/[...key]` |
 | Email / SMS / Slack | SendGrid (four verified senders, `src/lib/email-senders.ts`), SMS through Call Flow Tracker's Twilio (fallback: direct Twilio), Slack incoming webhook — all through the `outbox` table / `src/lib/server/notify.ts` |
 | PDFs / calendar | `pdf-lib` (checklist, proposals), server-generated `.ics` |
-| Products | Catalog in Postgres linking out to Amazon (Associates tracking id, add-to-cart links, optional Product Advertising API 5 in `src/lib/server/amazon.ts`) or Etsy; details read from the store page otherwise (`src/lib/server/listings.ts`). See `docs/products.md` |
+| Products | Catalog in Postgres linking out to Amazon (Associates tracking id, add-to-cart links, optional Product Advertising API 5 in `src/lib/server/amazon.ts`) or Etsy; details read from the store page otherwise (`src/lib/server/listings.ts`). Named shelves (`src/lib/shelves.ts`) put curated listings on pages, e.g. WELLness-Products at the bottom of Healthy Home Resources. See `docs/products.md` |
 | Auth | Magic links + DB sessions + signed cookie; roles owner/editor/sales/social, super admin flag |
 | Hosting | Replit Autoscale (`.replit`), port 5000 → 80 |
 

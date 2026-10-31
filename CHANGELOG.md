@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — WELLness-Products on Healthy Home Resources
+- A **WELLness-Products** section at the bottom of Healthy Home Resources (`/healthy-home-resources#wellness`): a `product_shelf` block showing the catalog listings on the new `wellness` shelf, with "Add to Amazon cart" per item and "Add all to your Amazon cart" once the tracking id is set. The section hides itself while the shelf is empty.
+- Named shelves: `products.shelves` (migration `drizzle/0004_product_shelves.sql`) and a registry in `src/lib/shelves.ts`. A listing stays on the AIP Products page and can sit on any number of shelves; `product_shelf` blocks take a `shelf` field and shelf sections get an `id` anchor.
+- Admin → Products: a WELLness-Products box on "Fetch & add" and on the Amazon search results (ticked by default), an "Add to / Remove from WELLness-Products" link and badge on every card, the shelf count in the header, and a status strip that says what is on the shelf and links to the page and to the block's copy in Content → Pages.
+- `npm run content:products` adds the section to an existing database's Healthy Home Resources page and stocks the shelf with the catalog's Amazon listings the first time (never again once something is on it); seeded Amazon picks start on the shelf. `npm run test:shelves` covers the helpers and the seed.
+
 ## Unreleased — Caribbean Connection: past events leave the public page
 - A published event now stays in **Community Events** through the end of its own date (midnight in the event's time zone) and is gone the next morning. Before, an event stayed for 24 hours after its start instant, so yesterday's noon event was still listed until noon today.
 - The rule lives in one place (`src/lib/cc-events.ts`) and is shared by the public page and Admin → Caribbean Connection, where the **Upcoming events** count now uses it and past events in the list are marked "Past · not shown".

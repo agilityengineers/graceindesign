@@ -11,6 +11,7 @@ import { WELLNESS_GROUPS, EPISODES } from "@/lib/seed-data/demo";
 import { fmtDate } from "@/lib/utils";
 import { env } from "@/lib/env";
 import { retailerLabel, asinFromUrl, amazonCartUrl, withAssociateTag } from "@/lib/retailers";
+import { onShelf } from "@/lib/shelves";
 import { getAmazonShop, type AmazonShop } from "@/lib/server/amazon";
 
 type ProductRow = Awaited<ReturnType<typeof getProducts>>[number];
@@ -80,6 +81,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
     case "product_shelf": {
       const shop = await getAmazonShop();
       let all = await getProducts(!!c.featuredOnly);
+      if (typeof c.shelf === "string" && c.shelf) all = all.filter((p) => onShelf(p.shelves, c.shelf)); // a named shelf (e.g. "wellness"): only the listings the admin put on it
       const cats: string[] = Array.isArray(c.categories) ? c.categories.filter(Boolean) : [];
       if (cats.length) all = all.filter((p) => cats.includes(p.category));
       if (Number(c.limit) > 0) all = all.slice(0, Number(c.limit));
@@ -88,7 +90,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
       const asins = cards.map((p) => p.asin).filter((a): a is string => !!a);
       const cartAll = c.cartAll !== false && shop.cartButtons && shop.tag && asins.length > 1 ? amazonCartUrl(asins, shop.tag, shop.marketplace) : "";
       return (
-      <section className="gx" style={{ paddingTop: 96, paddingBottom: 96, background: c.tone === "white" ? "#fff" : "#f7f8fa", display: "flex", flexDirection: "column", gap: 40 }}>
+      <section id={typeof c.shelf === "string" && c.shelf ? c.shelf : undefined} className="gx" style={{ paddingTop: 96, paddingBottom: 96, background: c.tone === "white" ? "#fff" : "#f7f8fa", display: "flex", flexDirection: "column", gap: 40 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 40, flexWrap: "wrap" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 640 }}>{c.eyebrow && <span className="eyebrow">{c.eyebrow}</span>}<h2 className="h2">{c.title}</h2>{c.body && <p style={{ fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>{c.body}</p>}</div>
           <div style={{ display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>

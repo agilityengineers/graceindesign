@@ -29,6 +29,13 @@
       "when": 1793477327919,
       "tag": "0003_products_retailers",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793484698129,
+      "tag": "0004_product_shelves",
+      "breakpoints": true
     }
   ]
 }

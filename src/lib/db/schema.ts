@@ -471,6 +471,7 @@ export const products = pgTable("products", {
   rating: text("rating").notNull().default("5.0"),
   type: text("type").notNull().default("Digital download"),
   featured: boolean("featured").notNull().default(false),
+  shelves: text("shelves").array().notNull().default(sql`'{}'::text[]`), // named shelves the listing sits on (src/lib/shelves.ts): "wellness" = WELLness-Products at the bottom of Healthy Home Resources
   sort: integer("sort").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
   lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
