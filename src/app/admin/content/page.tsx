@@ -14,7 +14,7 @@ import { relativeDay } from "@/lib/utils";
 
 export const metadata = { title: "Content" };
 export const dynamic = "force-dynamic";
-const BLOCK_TYPES = ["rich_text", "page_header", "cta", "steps", "news", "featured_products", "consult_form", "product_grid", "service_list", "contact_steps"];
+const BLOCK_TYPES = ["rich_text", "page_header", "cta", "steps", "news", "featured_products", "consult_form", "product_grid", "product_shelf", "service_list", "contact_steps"];
 const CORE = ["home", "about", "services", "hhr", "caribbean", "news", "contact"];
 const PAGE_HREF: Record<string, string> = { home: "/", about: "/about", services: "/services", hhr: "/healthy-home-resources", caribbean: "/caribbean-connection", news: "/news", contact: "/contact", "aip-products": "/healthy-home-resources/aip-products", wellness: "/healthy-home-resources/wellness", "home-health": "/healthy-home-resources/home-health-series", privacy: "/privacy", terms: "/terms", accessibility: "/accessibility" };
 const preview = (c: Record<string, unknown>) => { for (const k of ["title", "lead", "kicker", "eyebrow", "heading", "body"]) { const v = c[k]; if (typeof v === "string" && v) return v.replace(/<[^>]+>/g, "").slice(0, 90); } const first = Object.values(c).find((v) => typeof v === "string" && v); return typeof first === "string" ? first.slice(0, 90) : ""; };

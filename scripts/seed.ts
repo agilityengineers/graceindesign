@@ -19,6 +19,7 @@ import { MEDIA_SLOTS } from "../src/lib/seed-data/media";
 import { PATHS, BASE_FIELDS, PATH_FIELDS } from "../src/lib/seed-data/form";
 import { SERVICES } from "../src/lib/seed-data/services";
 import { PAGES } from "../src/lib/seed-data/pages";
+import { PRODUCTS, productRow } from "../src/lib/seed-data/products";
 import * as D from "../src/lib/seed-data/demo";
 import { slugify } from "../src/lib/utils";
 
@@ -111,7 +112,7 @@ async function main() {
   console.log("Content …");
   await db.insert(S.teamMembers).values({ name: D.TEAM.name, title: D.TEAM.title, credentials: D.TEAM.credentials, quote: D.TEAM.quote, bio: D.TEAM.bio, bio2: D.TEAM.bio2, education: [...D.TEAM.education], credentialList: [...D.TEAM.credentialList], photoUrl: D.TEAM.photo, sort: 0 });
   for (const [i, [quote, who, where, slug]] of D.TESTIMONIALS.entries()) await db.insert(S.testimonials).values({ quote, who, whereLabel: where, serviceSlug: slug, sort: i });
-  for (const [i, [title, category, price, reviews, featured, image, tag, type]] of D.PRODUCTS.entries()) await db.insert(S.products).values({ etsyUrl: D.ETSY_LISTING, title, category, price, reviews, featured, imageUrl: image, tag, type, sort: i, isActive: false }); // hidden until the price/listing is confirmed in the admin
+  for (const [i, p] of PRODUCTS.entries()) await db.insert(S.products).values(productRow(p, i)); // the Etsy download stays hidden until its price/listing is confirmed in the admin
   const rssIdByName: Record<string, number> = {};
   for (const [name, url, scope, country] of D.RSS_SOURCES) { const [r] = await db.insert(S.rssSources).values({ name, url, scope, country, lastSyncedAt: null, itemCount: 0 }).returning(); rssIdByName[name] = r.id; }
   for (const [slug, title, category, excerpt, image, origin, status, ago, scope, featured, sourceName] of D.POSTS) {

@@ -51,6 +51,15 @@ export const env = {
   objectStorageBucket: process.env.REPLIT_OBJECT_STORAGE_BUCKET || "",
   magnificApiKey: process.env.MAGNIFIC_API_KEY || "",
   etsyShopUrl: process.env.ETSY_SHOP_URL || "https://www.etsy.com/shop/GraceInDesign",
+  amazon: {
+    /** Product Advertising API 5 keys (Associates Central → Tools → Product Advertising API). Without them, listings are read from the public page. */
+    accessKey: process.env.AMAZON_PAAPI_ACCESS_KEY || "",
+    secretKey: process.env.AMAZON_PAAPI_SECRET_KEY || "",
+    /** Associates tracking id, e.g. graceindesign-20. Site settings → Amazon shop overrides it. */
+    partnerTag: process.env.AMAZON_ASSOCIATE_TAG || "",
+    /** Storefront the links and cart point at. */
+    marketplace: process.env.AMAZON_MARKETPLACE || "www.amazon.com",
+  },
   etsyApiKey: process.env.ETSY_API_KEY || "",
   stripe: { secret: process.env.STRIPE_SECRET_KEY || "", webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "" },
   dropboxSignKey: process.env.DROPBOX_SIGN_API_KEY || "",

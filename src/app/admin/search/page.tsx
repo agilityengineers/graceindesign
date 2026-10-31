@@ -27,7 +27,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     <AdminShell user={user} active="" title={empty ? "Search" : `Results for “${q}”`} subtitle={empty ? "Search leads, projects, products, posts, pages and directory listings" : `${total} match${total === 1 ? "" : "es"}`}>
       {L.length > 0 && <Card title="Leads">{L.map((l) => <Row key={l.id} href={`/admin/leads?open=${l.id}`} title={l.name} sub={`${l.email || ""} · ${l.sourceLabel || l.sourcePage}`} right={<StagePill stage={l.stage} />} />)}</Card>}
       {P.length > 0 && <Card title="Projects">{P.map((p) => <Row key={p.id} href={`/admin/projects?open=${p.id}`} title={p.name} sub={`${p.code} · ${p.serviceName || ""}`} />)}</Card>}
-      {PR.length > 0 && <Card title="Etsy products">{PR.map((p) => <Row key={p.id} href="/admin/products" title={p.title} sub={`${p.category} · ${p.price}`} />)}</Card>}
+      {PR.length > 0 && <Card title="Products">{PR.map((p) => <Row key={p.id} href="/admin/products" title={p.title} sub={`${p.category} · ${p.price}`} />)}</Card>}
       {PO.length > 0 && <Card title="Posts">{PO.map((p) => <Row key={p.id} href={`/admin/content/posts/${p.id}`} title={p.title} sub={`${p.category} · ${p.status}`} />)}</Card>}
       {PG.length > 0 && <Card title="Pages">{PG.map((p) => <Row key={p.id} href={`/admin/content?page=${p.key}`} title={p.title} sub={p.slug} />)}</Card>}
       {SV.length > 0 && <Card title="Services">{SV.map((s) => <Row key={s.id} href={`/admin/content/services/${s.id}`} title={s.title} sub={`/services/${s.slug}`} />)}</Card>}

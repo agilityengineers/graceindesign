@@ -1,5 +1,5 @@
 "use server";
-/** Etsy products, RSS feeds and Caribbean Connection moderation. */
+/** Products (Amazon, Etsy, other stores), RSS feeds and Caribbean Connection moderation. */
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db, products, rssSources, posts, ccResources, ccEvents, ccCountries, ccSubscribers, newsletterSubscribers, outbox } from "@/lib/db";
@@ -7,7 +7,8 @@ import { requireArea } from "@/lib/auth/session";
 import { audit } from "@/lib/server/audit";
 import { adminAction, backTo } from "./_util";
 import { str, strOrNull, parseNum, bool } from "@/lib/utils";
-import { fetchEtsyListing, syncEtsyProducts } from "@/lib/server/etsy";
+import { fetchListing, syncProducts, refreshedFields, retailerFor, retailerLabel, isListingUrl, asRetailer, defaultType, asinFromUrl } from "@/lib/server/listings";
+import { getAmazonItems } from "@/lib/server/amazon";
 import { syncRssSource, syncAllRss } from "@/lib/server/rss";
 import { getSetting, setSetting } from "@/lib/server/settings";
 import { sendEmail } from "@/lib/server/outbox";
@@ -15,17 +16,30 @@ import { emitEvent } from "@/lib/server/webhooks";
 import { uploadToMedia } from "@/lib/server/media-upload";
 import { env } from "@/lib/env";
 
-// --- Etsy products -------------------------------------------------------------
+// --- Products (links to Amazon, Etsy or any other store) ------------------------
 const PREVAL = ["/admin/products", "/", "/healthy-home-resources/aip-products", "/healthy-home-resources"];
 export async function addProduct(formData: FormData) {
   await adminAction("products", "product", "create", async () => {
-    const url = str(formData.get("etsyUrl")); if (!/^https?:\/\/(www\.)?etsy\.com\//.test(url)) throw new Error("Paste a full Etsy listing URL");
-    if (await db.query.products.findFirst({ where: eq(products.etsyUrl, url) })) throw new Error("That listing is already in the catalog");
-    const d = await fetchEtsyListing(url);
+    const url = str(formData.get("url")); if (!isListingUrl(url)) throw new Error("Paste the full product link (an Amazon or Etsy listing URL)");
+    if (await db.query.products.findFirst({ where: eq(products.url, url) })) throw new Error("That listing is already in the catalog");
+    const retailer = retailerFor(url);
+    const d = await fetchListing(url);
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(products);
-    const [p] = await db.insert(products).values({ etsyUrl: url, title: d?.title || str(formData.get("title")) || "New Etsy listing (edit title)", price: d?.price || "$—", imageUrl: d?.image || null, reviews: d?.reviews || "(0)", category: str(formData.get("category")) || "Uncategorized", featured: bool(formData.get("featured")), sort: Number(n), lastSyncedAt: d ? new Date() : null }).returning();
+    const [p] = await db.insert(products).values({ url, retailer, title: str(formData.get("title")) || d?.title || `New ${retailerLabel(retailer)} listing (edit title)`, description: strOrNull(formData.get("description")) ?? d?.description ?? null, price: d?.price || "$—", imageUrl: d?.image || null, reviews: d?.reviews || "(0)", type: defaultType(retailer), category: str(formData.get("category")) || "Uncategorized", featured: bool(formData.get("featured")), sort: Number(n), lastSyncedAt: d ? new Date() : null }).returning();
     return p;
-  }, { back: "/admin/products", ok: "Listing added — details pulled from Etsy", entityId: (p) => p.id, revalidate: PREVAL });
+  }, { back: "/admin/products", ok: "Listing added — check the title, photo and price on its card", entityId: (p) => p.id, revalidate: PREVAL });
+}
+/** Add a product picked from the Amazon search in the admin (Product Advertising API). */
+export async function addAmazonItem(formData: FormData) {
+  await adminAction("products", "product", "create", async () => {
+    const asin = str(formData.get("asin")).toUpperCase(); if (!/^[A-Z0-9]{10}$/.test(asin)) throw new Error("Pick a product from the search results");
+    const existing = (await db.select({ id: products.id, url: products.url }).from(products)).find((p) => asinFromUrl(p.url) === asin);
+    if (existing) throw new Error("That product is already in the catalog");
+    const [it] = await getAmazonItems([asin]); if (!it) throw new Error("Amazon didn't return that product — try again in a moment");
+    const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(products);
+    const [p] = await db.insert(products).values({ url: it.url, retailer: "amazon", title: it.title, description: it.description, price: it.price, imageUrl: it.image, reviews: it.reviews, rating: it.rating || "—", type: "", category: str(formData.get("category")) || "Uncategorized", featured: bool(formData.get("featured")), sort: Number(n), lastSyncedAt: new Date() }).returning();
+    return p;
+  }, { back: "/admin/products", ok: "Product added from Amazon", entityId: (p) => p.id, revalidate: PREVAL });
 }
 export async function productAction(formData: FormData) {
   const id = parseNum(formData.get("productId")); const op = str(formData.get("op"));
@@ -34,13 +48,18 @@ export async function productAction(formData: FormData) {
     if (op === "delete") await db.delete(products).where(eq(products.id, id));
     else if (op === "feature") await db.update(products).set({ featured: !p.featured, updatedAt: new Date() }).where(eq(products.id, id));
     else if (op === "active") await db.update(products).set({ isActive: !p.isActive, updatedAt: new Date() }).where(eq(products.id, id));
-    else if (op === "refresh") { const d = await fetchEtsyListing(p.etsyUrl); if (!d) throw new Error("Etsy didn't return listing details (try again later)"); await db.update(products).set({ title: d.title, price: d.price, imageUrl: p.imageUrl?.startsWith("media://") ? p.imageUrl : d.image || p.imageUrl, reviews: d.reviews, lastSyncedAt: new Date(), updatedAt: new Date() }).where(eq(products.id, id)); }
-    else if (op === "update") { let imageUrl = strOrNull(formData.get("imageUrl")) ?? p.imageUrl; const f = formData.get("image_file"); if (f instanceof File && f.size > 0) imageUrl = (await uploadToMedia(f, { folder: "products", usedOn: ["AIP Products"], userId: user.id })).url; await db.update(products).set({ title: str(formData.get("title")) || p.title, price: str(formData.get("price")) || p.price, category: str(formData.get("category")) || p.category, tag: strOrNull(formData.get("tag")), type: str(formData.get("type")) || p.type, rating: str(formData.get("rating")) || p.rating, reviews: str(formData.get("reviews")) || p.reviews, imageUrl, updatedAt: new Date() }).where(eq(products.id, id)); }
+    else if (op === "refresh") { const d = await fetchListing(p.url); if (!d) throw new Error(`${retailerLabel(p.retailer)} didn't return listing details — try again later, or fill the card in by hand`); await db.update(products).set({ ...refreshedFields(p, d), updatedAt: new Date() }).where(eq(products.id, id)); }
+    else if (op === "update") {
+      let imageUrl = strOrNull(formData.get("imageUrl")) ?? p.imageUrl; const f = formData.get("image_file"); if (f instanceof File && f.size > 0) imageUrl = (await uploadToMedia(f, { folder: "products", usedOn: ["AIP Products"], userId: user.id })).url;
+      const url = str(formData.get("url")); const nextUrl = url && isListingUrl(url) ? url : p.url;
+      const retailer = nextUrl !== p.url ? retailerFor(nextUrl) : asRetailer(str(formData.get("retailer")) || p.retailer);
+      await db.update(products).set({ url: nextUrl, retailer, title: str(formData.get("title")) || p.title, description: strOrNull(formData.get("description")), price: str(formData.get("price")) || p.price, category: str(formData.get("category")) || p.category, tag: strOrNull(formData.get("tag")), type: str(formData.get("type")), rating: str(formData.get("rating")) || p.rating, reviews: str(formData.get("reviews")) || p.reviews, imageUrl, updatedAt: new Date() }).where(eq(products.id, id));
+    }
     return id;
-  }, { back: "/admin/products", ok: { delete: "Listing removed", feature: "Featured updated", active: "Visibility updated", refresh: "Refreshed from Etsy", update: "Product saved" }[op] || "Done", entityId: () => id, revalidate: PREVAL });
+  }, { back: "/admin/products", ok: { delete: "Listing removed", feature: "Featured updated", active: "Visibility updated", refresh: "Refreshed from the store page", update: "Product saved" }[op] || "Done", entityId: () => id, revalidate: PREVAL });
 }
 export async function syncProductsNow() {
-  await adminAction("products", "product", "sync", async () => syncEtsyProducts(), { back: "/admin/products", ok: "Etsy sync complete", revalidate: PREVAL });
+  await adminAction("products", "product", "sync", async () => syncProducts(), { back: "/admin/products", ok: "Prices, ratings and photos refreshed", revalidate: PREVAL });
 }
 export async function reorderProducts(ids: number[]) {
   const user = await requireArea("products");

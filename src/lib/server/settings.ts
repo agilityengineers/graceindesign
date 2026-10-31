@@ -30,6 +30,8 @@ export type RssSettings = { refreshHours: number; homepageItems: number; useFeed
 export type SocialSettings = { showInstagramFeed: boolean; feedCount: number; autoShare: { facebook: boolean; linkedin: boolean; instagram: boolean; pinterest: boolean } };
 export type ConsultSettings = { mode: "wizard" | "single"; allowVisitorToggle: boolean };
 export type CftRoleMap = Record<string, "owner" | "editor" | "sales" | "social">;
+/** Amazon shop: the Associates tracking id goes on every Amazon link and powers the "Add to Amazon cart" buttons. */
+export type AmazonSettings = { associateTag: string; cartButtons: boolean };
 
 export const SETTINGS_DEFAULTS = {
   contact: { phone: "(770) 691-1600", email: "support@graceindesign.net", hours: "Mon–Fri · 9:00am–5:00pm", address: "", addressLine2: "", utilityLabel: "Certified Aging-in-Place Specialists", consultationsNote: "Consultations by appointment" } as ContactSettings,
@@ -50,6 +52,7 @@ export const SETTINGS_DEFAULTS = {
   cft_role_map: { admin: "owner", marketing_manager: "social", partner: "sales", client: "sales" } as CftRoleMap,
   seo: { siteName: "Grace In Design", defaultDescription: "Interior design, Aging In Place and project management in Atlanta." },
   hero_defaults: { slideSeconds: 5 },
+  amazon: { associateTag: "", cartButtons: true } as AmazonSettings,
 };
 export type SettingKey = keyof typeof SETTINGS_DEFAULTS;
 

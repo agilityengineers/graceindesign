@@ -13,7 +13,7 @@ Every design file in `design/` mapped to what was built. "Deviation" lists anyth
 | `Service.dc.html` (template) | `/services/residential`, `/services/residential/design-refresh`, `/services/residential/model-home`, `/services/aging-in-place`, `/services/aging-in-place/virtual`, `/services/commercial`, `/services/project-management`, `/services/start` (general), `/healthy-home-resources/aip-partners` | Done | All nine slugs from `services-data.js`. Before/after slider appears where the service has a pair. Model Home tier pricing is a labelled placeholder (open item). |
 | `Residential Alt.dc.html` | `/services/residential` with the classic hero | Done | Same page; the alternate is the hero style toggle, persisted per service. |
 | `Healthy Home Resources.dc.html` | `/healthy-home-resources` | Done | — |
-| `AIP Products.dc.html` | `/healthy-home-resources/aip-products` | Done | Grid and carousel read from Etsy products; filters by category. |
+| `AIP Products.dc.html` | `/healthy-home-resources/aip-products` | Done | Grid and carousel read from the product catalog (Amazon, Etsy or other store links); filters come from the products' categories; "View on Amazon" / "View on Etsy" per card. |
 | `WELLness Resources.dc.html` | `/healthy-home-resources/wellness` | Done | Lead magnet emails the checklist PDF and records a newsletter subscriber. |
 | `Home Health Series.dc.html` | `/healthy-home-resources/home-health-series` | Done | Episode data seeded from the prototype. |
 | `Caribbean Connection.dc.html` | `/caribbean-connection` | Done | Directory, events and regional column read from moderated tables; forms create Pending items and email the submitter. |
@@ -27,7 +27,7 @@ Every design file in `design/` mapped to what was built. "Deviation" lists anyth
 | `Admin.dc.html` — Form builder | `/admin/forms` | Done | Added audience (path) editing and a "new audience" form. |
 | `Admin.dc.html` — Content (CMS) | `/admin/content`, `/admin/content/services`, `/admin/content/services/[id]`, `/admin/content/posts`, `/admin/content/posts/[id]`, `/admin/content/testimonials`, `/admin/content/team`, `/admin/content/media`, `/admin/content/settings` | Done | Sub-sections are separate routes with a tab strip. Block editor is a generated form (JSON-driven) rather than inline editing on the page. |
 | `Admin.dc.html` — Hero editor | `/admin/hero?page=<key or service slug>` | Done | — |
-| `Admin.dc.html` — Etsy products | `/admin/products` | Done | Listing details scraped from the public listing page; inline edits for category, tag, price, rating. |
+| `Admin.dc.html` — Products | `/admin/products` | Done | Paste an Amazon or Etsy link; details read from the public listing page; inline edits for title, description, link, store, category, tag, price, rating. |
 | `Admin.dc.html` — RSS feeds | `/admin/rss` | Done | — |
 | `Admin.dc.html` — Caribbean Connection | `/admin/caribbean?tab=resources|events|sources|countries|subscribers` | Done | "Compose issue" queues the newsletter through the outbox (no external ESP). |
 | `Admin.dc.html` — Social media | `/admin/social` | Done | Engagement numbers come from stored post metrics; zero until networks are connected. |

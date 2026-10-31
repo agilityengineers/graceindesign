@@ -7,7 +7,7 @@ import { sendEmail, sendSms, deliverOutbox } from "@/lib/server/outbox";
 import { purgeAuthOutboxBodies } from "@/lib/server/outbox-privacy";
 import { fmtWhen } from "@/lib/server/consult";
 import { syncAllRss } from "@/lib/server/rss";
-import { syncEtsyProducts } from "@/lib/server/etsy";
+import { syncProducts } from "@/lib/server/listings";
 import { retryDueDeliveries } from "@/lib/server/webhooks";
 import { runDueSequenceSteps } from "@/lib/server/sequences";
 import { dispatchDueSocialPosts, syncSocialFeeds } from "@/lib/server/social";
@@ -47,7 +47,7 @@ const JOB_FNS: Record<Exclude<Job, "all">, () => Promise<Record<string, unknown>
     return { sent };
   },
   async rss() { return { sources: await syncAllRss() }; },
-  async etsy() { return { updated: await syncEtsyProducts() }; },
+  async etsy() { return { updated: await syncProducts() }; }, // every visible listing (Etsy, Amazon, …); the job keeps its original name
   async social() { const dispatched = await dispatchDueSocialPosts(); const feeds = await syncSocialFeeds(); return { dispatched, feeds }; },
   async drips() { return { sent: await runDueSequenceSteps() }; },
   async webhooks() { return { retried: await retryDueDeliveries() }; },

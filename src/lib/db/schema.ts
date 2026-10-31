@@ -459,8 +459,10 @@ export const posts = pgTable("posts", {
 
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
-  etsyUrl: text("etsy_url").notNull(),
+  url: text("etsy_url").notNull(), // listing URL on the retailer (the column keeps its original name; the catalog began Etsy-only)
+  retailer: text("retailer").notNull().default("etsy"), // etsy | amazon | other
   title: text("title").notNull(),
+  description: text("description"),
   price: text("price").notNull().default("$—"),
   imageUrl: text("image_url"),
   category: text("category").notNull().default("Uncategorized"),

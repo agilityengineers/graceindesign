@@ -40,7 +40,7 @@ Leads, projects, proposals and portal links are now **retained for manual review
 | Site settings | Placeholder footer address lines cleared; credential casing in the footer blurb and default meta description |
 | Services | Aging In Place authority line and plan step 3 (assessment, recommendations, contractor coordination); "hundreds of…" claims removed; Project Management rewritten as owner-side coordination; Commercial hero scene "open office" → "workspace"; Model Home "20+ years" → "25+ years" (matches Grace's bio); model-home testimonial placeholder cleared |
 | Pages and blocks | Hero CTA "Get Started — It's Free" → "Book a Free 15-Minute Call"; Project Management card blurb; AIP Products header without admin instructions; News badge; unique meta descriptions; "Aging In Place" casing in prose, "Certified Aging-in-Place Specialist (CAPS)" for the credential |
-| Products | Seven invented listings deleted; the Home Readiness Assessment is kept but hidden, with the invented price and review count cleared, until the listing URL and price are confirmed in Admin → Etsy products |
+| Products | Seven invented listings deleted; the Home Readiness Assessment is kept but hidden, with the invented price and review count cleared, until the listing URL and price are confirmed in Admin → Products |
 | Caribbean events | All eight prototype events deleted (four named GID as host or partner) |
 | Posts | Six invented regional headlines attributed to real publishers deleted; the eleven prototype articles set to draft with the "placeholder" paragraph removed (any that were rewritten in the admin stay published) |
 | RSS sources | Faked "last synced" time and item counts cleared where a source never actually synced |
@@ -63,7 +63,7 @@ The script applies sensible defaults; each of these is a one-field edit in the a
 
 1. Free 15-minute consultation: the hero now says "Book a Free 15-Minute Call" and the form rail says "Free · No obligation". If the call is not free, change the CTA in Hero editor → Homepage and the rail text in `src/components/site/ConsultForm.tsx`.
 2. Footer service-area line: the address fields are empty. Type an approved line (for example "Serving Metro Atlanta") into Site settings → Contact & footer → Address.
-3. Products: confirm the Home Readiness Assessment listing URL and price in Admin → Etsy products, press "Refresh from Etsy", then show it. Paste further listing URLs to add them.
+3. Products: confirm the Home Readiness Assessment listing URL and price in Admin → Products, press "Refresh from Etsy", then show it. Paste further listing URLs to add them.
 4. Events and directory: add genuine events; verify the nine curated directory organizations.
 5. Articles: the eleven drafts are topic ideas, not published pieces. Publish only what Grace writes. Confirm the RSS feed URLs in Admin → RSS feeds and Caribbean Connection → Sources, then "Sync now" each one.
 6. Home Health Series episodes and WELLness guides are prototype content typed into code (`src/lib/seed-data/demo.ts`: `EPISODES`, `WELLNESS_GROUPS`) with no real videos or downloads behind them. Either supply the real episodes and guides or unpublish those two pages in Content → Pages until they exist.
