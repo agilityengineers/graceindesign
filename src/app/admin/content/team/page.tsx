@@ -2,6 +2,7 @@ import { asc } from "drizzle-orm";
 import { requireArea } from "@/lib/auth/session";
 import { db, teamMembers } from "@/lib/db";
 import { getMediaMap, resolveImg } from "@/lib/data/media";
+import ImagePicker from "@/components/admin/ImagePicker";
 import AdminShell from "@/components/admin/AdminShell";
 import { Card } from "@/components/admin/ui";
 import Toast from "@/components/admin/Toast";
@@ -19,9 +20,7 @@ export default async function TeamAdmin() {
     <form action={saveTeamMember} encType="multipart/form-data" style={{ display: "grid", gridTemplateColumns: "160px 1fr 1fr", gap: 12 }}>
       {m && <input type="hidden" name="memberId" value={m.id} />}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <div style={{ width: 160, height: 200, borderRadius: 12, overflow: "hidden", background: "#f2f4f7" }}>{m?.photoUrl && <img src={resolveImg(map, m.photoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }} />}</div>
-        <label className="link-btn" style={{ cursor: "pointer" }}>Replace photo<input type="file" name="photo_file" accept="image/*" hidden /></label>
-        <input type="hidden" name="photoUrl" value={m?.photoUrl || ""} />
+        <ImagePicker name="photoUrl" fileName="photo_file" defaultValue={m?.photoUrl || ""} preview={m?.photoUrl ? resolveImg(map, m.photoUrl) : undefined} layout="stack" width={160} height={200} objectPosition="center 20%" />
       </div>
       <label className="label label-caps">Name<input name="name" defaultValue={m?.name || ""} className="admin-input admin-input-sm" required /></label>
       <label className="label label-caps">Title<input name="title" defaultValue={m?.title || ""} className="admin-input admin-input-sm" placeholder="Founder & Principal Designer" /></label>

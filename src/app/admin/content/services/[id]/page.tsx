@@ -4,6 +4,7 @@ import { asc } from "drizzle-orm";
 import { requireArea } from "@/lib/auth/session";
 import { db, services, paths } from "@/lib/db";
 import { getMediaMap, resolveImg } from "@/lib/data/media";
+import ImagePicker from "@/components/admin/ImagePicker";
 import AdminShell from "@/components/admin/AdminShell";
 import { Card } from "@/components/admin/ui";
 import Toast from "@/components/admin/Toast";
@@ -63,9 +64,8 @@ export default async function ServiceEdit({ params }: { params: Promise<{ id: st
         <Card title="Images & SEO">
           <div className="g2" style={{ gap: 12 }}>
             {(["img", "img2"] as const).map((k) => (
-              <div key={k} style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <div style={{ width: 120, height: 80, borderRadius: 10, overflow: "hidden", background: "#f2f4f7", flex: "none" }}>{s?.[k] && <img src={resolveImg(map, s[k])} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}><F label={k === "img" ? "Primary photo" : "Secondary photo"} name={k} value={s?.[k]} hint="media://slot or URL" /><input type="file" name={`${k}_file`} accept="image/*" style={{ fontSize: 11 }} /></div>
+              <div key={k}>
+                <ImagePicker label={k === "img" ? "Primary photo" : "Secondary photo"} name={k} fileName={`${k}_file`} defaultValue={s?.[k] || ""} preview={s?.[k] ? resolveImg(map, s[k]) : undefined} showUrl />
               </div>))}
             <F label="Meta title" name="seoTitle" value={s?.seoTitle} />
             <F label="Meta description" name="seoDescription" value={s?.seoDescription} />

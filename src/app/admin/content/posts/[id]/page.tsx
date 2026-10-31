@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { requireArea } from "@/lib/auth/session";
 import { db, posts } from "@/lib/db";
 import { getMediaMap, resolveImg } from "@/lib/data/media";
+import ImagePicker from "@/components/admin/ImagePicker";
 import AdminShell from "@/components/admin/AdminShell";
 import { Card } from "@/components/admin/ui";
 import Toast from "@/components/admin/Toast";
@@ -44,9 +45,7 @@ export default async function PostEdit({ params }: { params: Promise<{ id: strin
             <Link href="/admin/content/posts" style={{ fontSize: 12, color: "#6b7486" }}>← Back to posts</Link>
           </Card>
           <Card title="Cover image">
-            <div style={{ height: 150, borderRadius: 10, overflow: "hidden", background: "#f2f4f7" }}>{p?.imageUrl && <img src={resolveImg(map, p.imageUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}</div>
-            <label className="label label-caps">Image URL or media://slot<input name="imageUrl" defaultValue={p?.imageUrl || ""} className="admin-input admin-input-sm" /></label>
-            <label className="label label-caps">Upload<input type="file" name="image_file" accept="image/*" className="admin-input admin-input-sm" style={{ paddingTop: 6 }} /></label>
+            <ImagePicker name="imageUrl" fileName="image_file" defaultValue={p?.imageUrl || ""} preview={p?.imageUrl ? resolveImg(map, p.imageUrl) : undefined} showUrl layout="stack" width="100%" height={150} />
           </Card>
           {p?.origin === "rss" && <Card title="Source"><a href={p.sourceUrl || "#"} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: "#3f9ad9", wordBreak: "break-all" }}>{p.sourceUrl}</a><span style={{ fontSize: 12, color: "#6b7486" }}>RSS imports link out to the original article. Add a body to turn this into a full post.</span></Card>}
         </div>

@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, socialAccounts, socialPosts } from "@/lib/db";
 import { adminAction, backTo } from "./_util";
 import { str, strOrNull, parseNum } from "@/lib/utils";
+import { getMediaMap, resolveImg } from "@/lib/data/media";
 import { uploadToMedia } from "@/lib/server/media-upload";
 import { publishSocialPost, syncSocialFeeds, NETWORKS, type Network } from "@/lib/server/social";
 import { etDate } from "@/lib/server/consult";
@@ -17,6 +18,8 @@ export async function createSocialPost(formData: FormData) {
     if (!networks.length && intent !== "draft") throw new Error("Pick at least one network");
     let imageUrl = strOrNull(formData.get("imageUrl")); const f = formData.get("image_file");
     if (f instanceof File && f.size > 0) imageUrl = (await uploadToMedia(f, { folder: "social", usedOn: ["Social"], userId: user.id })).url;
+    // Networks need a real URL, so library picks (media://slot) are resolved to the current file.
+    else if (imageUrl?.startsWith("media://")) imageUrl = resolveImg(await getMediaMap(), imageUrl);
     let scheduledAt: Date | null = null;
     if (intent === "schedule") { const d = str(formData.get("date")); const t = str(formData.get("time")); if (!d || !t) throw new Error("Pick a date and time"); scheduledAt = etDate(d, t); if (scheduledAt.getTime() < Date.now() - 60000) throw new Error("That time is in the past"); }
     const [row] = await db.insert(socialPosts).values({ body, imageUrl, linkUrl: strOrNull(formData.get("linkUrl")), networks, scheduledAt, status: intent === "draft" ? "draft" : "scheduled", createdBy: user.id }).returning();
