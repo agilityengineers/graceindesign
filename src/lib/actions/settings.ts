@@ -14,6 +14,13 @@ import { revokeCftLaunchLinks } from "@/lib/server/cft-links";
 const BACK = "/admin/content/settings";
 const REVAL = [BACK, "/", "/contact", "/about"];
 
+export async function saveAmazonSettings(formData: FormData) {
+  await adminAction("pages", "setting", "update", async () => {
+    const a = await getSetting("amazon");
+    await setSetting("amazon", { ...a, associateTag: str(formData.get("associateTag")).replace(/\s+/g, ""), cartButtons: bool(formData.get("cartButtons")) });
+    return "amazon";
+  }, { back: BACK, ok: "Amazon shop settings saved", entityId: (k) => k, revalidate: [...REVAL, "/healthy-home-resources/aip-products", "/healthy-home-resources"] });
+}
 export async function saveContactSettings(formData: FormData) {
   await adminAction("pages", "setting", "update", async () => {
     const c = await getSetting("contact"); const f = await getSetting("footer"); const seo = await getSetting("seo");
@@ -85,19 +92,20 @@ export async function integrationAction(formData: FormData) {
     const row = await db.query.integrations.findFirst({ where: eq(integrations.key, key) }); if (!row) throw new Error("Unknown integration");
     if (op === "config") { const cfg = tryJson<Record<string, unknown>>(str(formData.get("config")) || "{}", {}); await db.update(integrations).set({ config: { ...row.config, ...cfg }, updatedAt: new Date() }).where(eq(integrations.key, key)); }
     else if (op === "status") await db.update(integrations).set({ status: ["connected", "not_connected", "planned", "error"].includes(str(formData.get("status"))) ? str(formData.get("status")) : row.status, lastCheckedAt: new Date(), updatedAt: new Date() }).where(eq(integrations.key, key));
-    else if (op === "check") { const s = liveStatus(key); await db.update(integrations).set({ status: s, lastCheckedAt: new Date(), updatedAt: new Date() }).where(eq(integrations.key, key)); }
+    else if (op === "check") { const s = await liveStatus(key); await db.update(integrations).set({ status: s, lastCheckedAt: new Date(), updatedAt: new Date() }).where(eq(integrations.key, key)); }
     return key;
   }, { back: BACK, ok: "Integration updated", entityId: (k) => k, revalidate: [BACK] });
 }
 /** Whether the required secrets for an integration are present in the environment. */
 export async function integrationLiveStatus(key: string) { return liveStatus(key); }
-function liveStatus(key: string): string {
+async function liveStatus(key: string): Promise<string> {
   switch (key) {
     case "sendgrid": return env.sendgridApiKey ? "connected" : "not_connected";
     case "twilio": return cftSmsConfigured() || (env.twilio.sid && env.twilio.token && env.twilio.from) ? "connected" : "not_connected";
     case "cft": return env.cft.webhookSecret || env.cft.ssoSecret || env.cft.masterSecret ? "connected" : "not_connected";
     case "slack": return slackConfigured() ? "connected" : "not_connected";
     case "etsy": case "rss": return "connected";
+    case "amazon": return (await getSetting("amazon")).associateTag || env.amazon.partnerTag || (env.amazon.accessKey && env.amazon.secretKey) ? "connected" : "not_connected";
     case "magnific": return env.magnificApiKey ? "connected" : "not_connected";
     case "meta": return env.social.meta.id && env.social.meta.secret ? "connected" : "not_connected";
     case "linkedin": return env.social.linkedin.id ? "connected" : "not_connected";

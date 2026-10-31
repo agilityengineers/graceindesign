@@ -7,16 +7,17 @@ import { Card, Avatar, StatusPill } from "@/components/admin/ui";
 import Toast from "@/components/admin/Toast";
 import ConfirmButton from "@/components/admin/Confirm";
 import ContentTabs from "@/components/admin/ContentTabs";
-import { saveContactSettings, saveSocialLinks, removeSocialLink, inviteUser, updateUser, integrationAction, integrationLiveStatus } from "@/lib/actions/settings";
+import { saveContactSettings, saveSocialLinks, removeSocialLink, inviteUser, updateUser, integrationAction, integrationLiveStatus, saveAmazonSettings } from "@/lib/actions/settings";
+import { env } from "@/lib/env";
 import { relativeDay } from "@/lib/utils";
 
 export const metadata = { title: "Site settings" };
 export const dynamic = "force-dynamic";
-const ENV_HINTS: Record<string, string> = { sendgrid: "SENDGRID_API_KEY, EMAIL_FROM_NOREPLY / _SUPPORT / _CONSULTATION / _NEWSLETTER", twilio: "via Call Flow Tracker: CFT_URL, CFT_MASTER_DASHBOARD_SECRET, CFT_SMS_FROM — or direct: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER", cft: "CFT_URL, CFT_MASTER_DASHBOARD_SECRET (sign-in + SMS), CFT_WEBHOOK_SECRET (events), CFT_SSO_SECRET (CFT → here)", slack: "SLACK_WEBHOOK_URL (Slack → Apps → Incoming Webhooks)", etsy: "none — listings are read from public pages (ETSY_API_KEY optional)", rss: "none", magnific: "MAGNIFIC_API_KEY", meta: "META_APP_ID, META_APP_SECRET + connect under Social media", linkedin: "LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET", pinterest: "PINTEREST_APP_ID, PINTEREST_APP_SECRET", youtube: "YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET", stripe: "STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET", esign: "built-in click-to-sign; DROPBOX_SIGN_API_KEY optional", hubspot: "HUBSPOT_ACCESS_TOKEN" };
+const ENV_HINTS: Record<string, string> = { sendgrid: "SENDGRID_API_KEY, EMAIL_FROM_NOREPLY / _SUPPORT / _CONSULTATION / _NEWSLETTER", twilio: "via Call Flow Tracker: CFT_URL, CFT_MASTER_DASHBOARD_SECRET, CFT_SMS_FROM — or direct: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER", cft: "CFT_URL, CFT_MASTER_DASHBOARD_SECRET (sign-in + SMS), CFT_WEBHOOK_SECRET (events), CFT_SSO_SECRET (CFT → here)", slack: "SLACK_WEBHOOK_URL (Slack → Apps → Incoming Webhooks)", etsy: "none — listings are read from public pages (ETSY_API_KEY optional)", amazon: "AMAZON_ASSOCIATE_TAG (or Site settings → Amazon shop); AMAZON_PAAPI_ACCESS_KEY + AMAZON_PAAPI_SECRET_KEY for Amazon search and live prices", rss: "none", magnific: "MAGNIFIC_API_KEY", meta: "META_APP_ID, META_APP_SECRET + connect under Social media", linkedin: "LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET", pinterest: "PINTEREST_APP_ID, PINTEREST_APP_SECRET", youtube: "YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET", stripe: "STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET", esign: "built-in click-to-sign; DROPBOX_SIGN_API_KEY optional", hubspot: "HUBSPOT_ACCESS_TOKEN" };
 
 export default async function SettingsAdmin() {
   const user = await requireArea("pages");
-  const [s, team, ints] = await Promise.all([getSettings(["contact", "footer", "social_links", "seo"]), db.select().from(users).orderBy(asc(users.name)), db.select().from(integrations).orderBy(asc(integrations.phase), asc(integrations.id))]);
+  const [s, team, ints] = await Promise.all([getSettings(["contact", "footer", "social_links", "seo", "amazon"]), db.select().from(users).orderBy(asc(users.name)), db.select().from(integrations).orderBy(asc(integrations.phase), asc(integrations.id))]);
   const live = await Promise.all(ints.map((i) => integrationLiveStatus(i.key)));
   const manageUsers = can(user, "users");
   return (
@@ -48,6 +49,14 @@ export default async function SettingsAdmin() {
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>{s.social_links.map((l, i) => <form key={i} action={removeSocialLink}><input type="hidden" name="index" value={i} /><ConfirmButton message={`Remove ${l.name}?`}>Remove {l.name}</ConfirmButton></form>)}</div>
         </Card>
       </div>
+      <Card title="Amazon shop" sub="Your Associates tracking id goes on every Amazon product link and powers the “Add to Amazon cart” buttons on product cards. Product shelves can be placed on any page in Content → Pages.">
+        <form action={saveAmazonSettings} style={{ display: "grid", gridTemplateColumns: "minmax(0, 320px) auto auto", gap: 14, alignItems: "end" }}>
+          <label className="label label-caps">Associates tracking id<input name="associateTag" defaultValue={s.amazon.associateTag} placeholder={env.amazon.partnerTag || "e.g. graceindesign-20"} className="admin-input admin-input-sm" /></label>
+          <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, height: 34 }}><input type="checkbox" name="cartButtons" defaultChecked={s.amazon.cartButtons} />Show “Add to Amazon cart” buttons</label>
+          <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8 }}>Save</button>
+        </form>
+        <p style={{ fontSize: 12, color: "#6b7486", margin: 0 }}>{env.amazon.accessKey && env.amazon.secretKey ? "Product Advertising API keys are set: Admin → Products can search Amazon, and prices and ratings refresh through the API." : "Searching Amazon from the admin and live prices need the Product Advertising API keys in Replit → Secrets (see Integrations). Pasting product links works without them."}</p>
+      </Card>
       <Card title="Users & roles" sub="Owner — everything · Editor — CMS only · Sales — leads & calendar · Social manager — social & posts">
         {team.map((u) => (
           <div key={u.id} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "10px 0", borderBottom: "1px solid #f2f4f7", opacity: u.isActive ? 1 : .55 }}>

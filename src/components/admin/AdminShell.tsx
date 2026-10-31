@@ -12,7 +12,7 @@ export const ADMIN_NAV: { key: string; label: string; href: string; area: Area }
   { key: "forms", label: "Form builder", href: "/admin/forms", area: "forms" },
   { key: "cms", label: "Content (CMS)", href: "/admin/content", area: "pages" },
   { key: "hero", label: "Hero editor", href: "/admin/hero", area: "hero" },
-  { key: "products", label: "Etsy products", href: "/admin/products", area: "products" },
+  { key: "products", label: "Products", href: "/admin/products", area: "products" },
   { key: "rss", label: "RSS feeds", href: "/admin/rss", area: "rss" },
   { key: "caribbean", label: "Caribbean Connection", href: "/admin/caribbean", area: "caribbean" },
   { key: "social", label: "Social media", href: "/admin/social", area: "social" },

@@ -68,7 +68,7 @@ export const PAGES: SeedPage[] = [
         { name: "Mind", word: "calm", line: "Uncluttered, restorative rooms that lower stress the moment you walk in.", img: m("int.minimal-green-art") },
       ] } },
       { type: "hhr_cards", content: { cards: [
-        { kicker: "Shop", title: "AIP Products", body: "Checklists, planners and essentials for Aging In Place — from our Etsy shop.", cta: "Browse products", href: "/healthy-home-resources/aip-products", img: m("aip.shower-grab-bar") },
+        { kicker: "Shop", title: "AIP Products", body: "Home-safety essentials our specialists recommend, with links to buy on Amazon.", cta: "Browse products", href: "/healthy-home-resources/aip-products", img: m("aip.shower-grab-bar") },
         { kicker: "Learn", title: "WELLness Resources", body: "Guides and downloads on light, air, water and materials for a healthier home.", cta: "Explore resources", href: "/healthy-home-resources/wellness", img: m("int.minimal-green-art") },
         { kicker: "Watch & read", title: "Home Health Series", body: "Short episodes on the small changes that make a home safer and calmer.", cta: "Start the series", href: "/healthy-home-resources/home-health-series", img: m("brand.couple-hammock") },
         { kicker: "Partner", title: "AIP Partners", body: "Contractors, therapists and realtors — join our Aging In Place network.", cta: "Become a partner", href: "/healthy-home-resources/aip-partners", img: m("brand.aip-planning") },
@@ -77,11 +77,12 @@ export const PAGES: SeedPage[] = [
     ],
   },
   {
-    key: "aip-products", slug: "/healthy-home-resources/aip-products", title: "AIP Products", navLabel: "Healthy Home Resources · AIP Products", parentKey: "hhr", sort: 4, seoDescription: "Aging In Place checklists, planners and home-safety essentials from the Grace In Design Etsy shop.",
+    key: "aip-products", slug: "/healthy-home-resources/aip-products", title: "AIP Products", navLabel: "Healthy Home Resources · AIP Products", parentKey: "hhr", sort: 4, seoDescription: "Home-safety and Aging In Place products recommended by Grace In Design's Certified Aging-in-Place Specialists, with links to buy on Amazon.",
     blocks: [
-      { type: "page_header", content: { crumb: "Healthy Home Resources · AIP Products", crumbHref: "/healthy-home-resources", title: "Aging In Place essentials, curated by our specialists", body: "Every product links to our Etsy shop, where checkout and delivery are handled securely.", badge: "Sold on Etsy", badgeDot: "#f1641e" } },
+      { type: "page_header", content: { crumb: "Healthy Home Resources · AIP Products", crumbHref: "/healthy-home-resources", title: "Aging In Place essentials, curated by our specialists", body: "Products we recommend to the families we work with, chosen by our Certified Aging-in-Place Specialists. Each one links to the store that sells it, where checkout and delivery are handled securely.", badge: "Available on Amazon", badgeDot: "#ff9900", badgeCount: "products" } },
       { type: "product_carousel", content: { eyebrow: "Featured this month", title: "Specialist picks" } },
-      { type: "product_grid", content: { title: "All products", categories: ["All", "Assessments", "Bathroom", "Kitchen", "Workbooks", "Kits"] } },
+      // Filters come from the products' own categories; `categories` only fixes their order. `disclosure` prints under the grid (e.g. an affiliate note).
+      { type: "product_grid", content: { title: "All products", categories: [], disclosure: "" } },
     ],
   },
   {

@@ -10,6 +10,15 @@ import { getMediaMap, resolveDeep } from "@/lib/data/media";
 import { WELLNESS_GROUPS, EPISODES } from "@/lib/seed-data/demo";
 import { fmtDate } from "@/lib/utils";
 import { env } from "@/lib/env";
+import { retailerLabel, asinFromUrl, amazonCartUrl, withAssociateTag } from "@/lib/retailers";
+import { getAmazonShop, type AmazonShop } from "@/lib/server/amazon";
+
+type ProductRow = Awaited<ReturnType<typeof getProducts>>[number];
+/** Public-facing link fields for a product: the store link with the tracking id and, for Amazon items with an ASIN, the add-to-cart link. */
+function shopFields(p: ProductRow, shop: AmazonShop) {
+  const asin = p.retailer === "amazon" ? asinFromUrl(p.url) : null;
+  return { url: withAssociateTag(p.url, shop.tag), asin, cartUrl: asin && shop.tag && shop.cartButtons ? amazonCartUrl([asin], shop.tag, shop.marketplace) : "" };
+}
 import CaribbeanForms, { NewsletterForm, SuggestResourceForm, SubmitEventForm, LeadMagnetForm } from "./CaribbeanForms";
 import dynamic from "next/dynamic";
 
@@ -68,7 +77,29 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
           {(c.cards as [string, string][]).map(([t, d]) => <div key={t} style={{ display: "flex", flexDirection: "column", gap: 10, padding: 28, borderRadius: 16, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)" }}><span className="display" style={{ fontSize: 22, fontWeight: 600 }}>{t}</span><span style={{ fontSize: 13.5, lineHeight: 1.6, color: "#c6cbd6" }}>{d}</span></div>)}
         </div>
       </section>);
-    case "featured_products": { const products = (await getProducts(true)).slice(0, c.count || 4); if (products.length === 0) return null; return (
+    case "product_shelf": {
+      const shop = await getAmazonShop();
+      let all = await getProducts(!!c.featuredOnly);
+      const cats: string[] = Array.isArray(c.categories) ? c.categories.filter(Boolean) : [];
+      if (cats.length) all = all.filter((p) => cats.includes(p.category));
+      if (Number(c.limit) > 0) all = all.slice(0, Number(c.limit));
+      if (all.length === 0) return null;
+      const cards = all.map((p) => ({ ...p, ...shopFields(p, shop) }));
+      const asins = cards.map((p) => p.asin).filter((a): a is string => !!a);
+      const cartAll = c.cartAll !== false && shop.cartButtons && shop.tag && asins.length > 1 ? amazonCartUrl(asins, shop.tag, shop.marketplace) : "";
+      return (
+      <section className="gx" style={{ paddingTop: 96, paddingBottom: 96, background: c.tone === "white" ? "#fff" : "#f7f8fa", display: "flex", flexDirection: "column", gap: 40 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 40, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 640 }}>{c.eyebrow && <span className="eyebrow">{c.eyebrow}</span>}<h2 className="h2">{c.title}</h2>{c.body && <p style={{ fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>{c.body}</p>}</div>
+          <div style={{ display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
+            {cartAll && <a href={cartAll} target="_blank" rel="noreferrer sponsored" className="btn btn-navy">{c.cartAllLabel || "Add all to your Amazon cart"}</a>}
+            {c.linkHref && c.linkLabel && <Link href={c.linkHref} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, borderBottom: "1.5px solid #1a2238", paddingBottom: 2 }}>{c.linkLabel} <ArrowUpRight /></Link>}
+          </div>
+        </div>
+        <div className="g4" style={{ gap: 24 }}>{cards.map((p) => <ProductCard key={p.id} p={p} />)}</div>
+        {c.disclosure && <p style={{ maxWidth: 760, fontSize: 12.5, lineHeight: 1.65, color: "#8c95a8" }}>{c.disclosure}</p>}
+      </section>); }
+    case "featured_products": { const shop = await getAmazonShop(); const products = (await getProducts(true)).slice(0, c.count || 4).map((p) => ({ ...p, ...shopFields(p, shop) })); if (products.length === 0) return null; return (
       <section className="gx" style={{ paddingTop: 104, paddingBottom: 104, background: "#f7f8fa", display: "flex", flexDirection: "column", gap: 48 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 40, flexWrap: "wrap" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 600 }}><span className="eyebrow">{c.eyebrow}</span><h2 className="h2">{c.title}</h2></div>
@@ -152,17 +183,17 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
         <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 640 }}><h2 className="h2" style={{ fontSize: 40, color: "#fff" }}>{c.title}</h2><p style={{ fontSize: 15, lineHeight: 1.7, color: "#c6cbd6" }}>{c.body}</p></div>
         <ConsultButton sourceKey="aging-in-place" className="btn btn-sky btn-md" style={{ boxShadow: "none" }}>{c.cta}</ConsultButton>
       </section>);
-    case "page_header": return (
+    case "page_header": { const nProducts = c.badgeCount === "products" || c.badge === "Sold on Etsy" ? (await getProducts()).length : 0; return (
       <section className="gx" style={{ padding: c.compact ? "88px var(--gutter) 64px" : "88px var(--gutter) 56px", background: "#f7f8fa", display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 40, flexWrap: "wrap" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 860 }}>
           {c.crumb ? <Link href={c.crumbHref || "#"} className="eyebrow">{c.crumb}</Link> : <span className="eyebrow">{c.eyebrow}</span>}
           <h1 className="h1" style={{ fontSize: 60 }}>{c.title}</h1>
           {c.body && <p style={{ maxWidth: 620, fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>{c.body}</p>}
         </div>
-        {c.badge && <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderRadius: 12, background: "#fff", border: "1px solid #e9ecf1", fontSize: 13, color: "#6b7486", whiteSpace: "nowrap" }} className="badge-box">{c.badgeRss ? <Rss /> : <span style={{ width: 8, height: 8, borderRadius: "50%", background: c.badgeDot || "#6cb6e6" }} />}{c.badge}{c.badge === "Sold on Etsy" && (await getProducts()).length > 0 && <> · <strong style={{ color: "#1a2238" }}>{(await getProducts()).length} listings</strong></>}</div>}
-      </section>);
-    case "product_carousel": { const all = await getProducts(); if (all.length === 0) return null; return <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={306} count={all.length}>{all.map((p) => <ProductCard key={p.id} p={p} compact />)}</Carousel>; }
-    case "product_grid": { const all = await getProducts(); const ProductGrid = (await import("./ProductGrid")).default; return <ProductGrid title={c.title} categories={c.categories} products={all.map((p) => ({ id: p.id, title: p.title, category: p.category, price: p.price, reviews: p.reviews, synced: !!p.lastSyncedAt, type: p.type, tag: p.tag || "", img: p.imageUrl || "", url: p.etsyUrl }))} shopUrl={env.etsyShopUrl} />; }
+        {c.badge && <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderRadius: 12, background: "#fff", border: "1px solid #e9ecf1", fontSize: 13, color: "#6b7486", whiteSpace: "nowrap" }} className="badge-box">{c.badgeRss ? <Rss /> : <span style={{ width: 8, height: 8, borderRadius: "50%", background: c.badgeDot || "#6cb6e6" }} />}{c.badge}{nProducts > 0 && <> · <strong style={{ color: "#1a2238" }}>{nProducts} {nProducts === 1 ? "listing" : "listings"}</strong></>}</div>}
+      </section>); }
+    case "product_carousel": { const shop = await getAmazonShop(); const all = await getProducts(); if (all.length === 0) return null; return <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={306} count={all.length}>{all.map((p) => <ProductCard key={p.id} p={{ ...p, ...shopFields(p, shop) }} compact />)}</Carousel>; }
+    case "product_grid": { const shop = await getAmazonShop(); const all = await getProducts(); const ProductGrid = (await import("./ProductGrid")).default; return <ProductGrid title={c.title} categories={c.categories} disclosure={c.disclosure} shop={shop} products={all.map((p) => { const f = shopFields(p, shop); return { id: p.id, title: p.title, description: p.description || "", category: p.category, price: p.price, reviews: p.reviews, synced: !!p.lastSyncedAt, type: p.type, tag: p.tag || "", img: p.imageUrl || "", url: f.url, asin: f.asin, cartUrl: f.cartUrl, retailer: p.retailer, retailerLabel: retailerLabel(p.retailer) }; })} shopUrl={env.etsyShopUrl} />; }
     case "guide_carousel": { const map = await getMediaMap(); const items = WELLNESS_GROUPS.flatMap((g) => g.items.map((r) => ({ concept: g.title, kind: r[0], title: r[1], desc: r[2], img: resolveDeep(map, r[3]) }))).slice(0, 6); return (
       <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={416} count={items.length}>{items.map((r, k) => (
         <a key={k} href="#guides" className="card-hover" style={{ display: "flex", flexDirection: "column", borderRadius: 16, overflow: "hidden", border: "1px solid #e9ecf1", color: "#1a2238" }}>
@@ -308,20 +339,27 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
   }
 }
 
-export function ProductCard({ p, compact }: { p: { id: number; title: string; price: string; reviews: string; type: string; tag: string | null; imageUrl: string | null; etsyUrl: string; lastSyncedAt?: Date | null }; compact?: boolean }) {
+/** A product card: photo and title link to the store; "Add to Amazon cart" appears for Amazon items when the tracking id is set. */
+export function ProductCard({ p, compact }: { p: { id: number; title: string; price: string; reviews: string; type: string; tag: string | null; imageUrl: string | null; url: string; retailer: string; cartUrl?: string; lastSyncedAt?: Date | null }; compact?: boolean }) {
+  const amazon = p.retailer === "amazon"; const hasPrice = !!p.price && p.price !== "$—"; const rel = amazon ? "noreferrer sponsored" : "noreferrer"; const on = retailerLabel(p.retailer);
   return (
-    <a href={p.etsyUrl} target="_blank" rel="noreferrer" className="card-hover" style={{ display: "flex", flexDirection: "column", background: "#fff", borderRadius: 14, overflow: "hidden", border: "1px solid #e9ecf1", color: "#1a2238" }}>
-      <div style={{ position: "relative", aspectRatio: "1/1" }}>
-        <img src={p.imageUrl || ""} alt={p.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+    <article className="card-hover" style={{ display: "flex", flexDirection: "column", background: "#fff", borderRadius: 14, overflow: "hidden", border: "1px solid #e9ecf1", color: "#1a2238" }}>
+      <a href={p.url} target="_blank" rel={rel} style={{ position: "relative", display: "block", aspectRatio: "1/1", background: "#f7f8fa" }} aria-label={`${p.title} on ${on}`}>
+        <img src={p.imageUrl || `/api/placeholder?label=${encodeURIComponent(p.title)}`} alt={p.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: amazon ? "contain" : "cover", padding: amazon ? 18 : 0 }} loading="lazy" />
         {p.tag && <span style={{ position: "absolute", top: 12, left: 12, padding: "5px 10px", borderRadius: 999, background: "#fff", fontSize: 11, fontWeight: 600 }}>{p.tag}</span>}
         {!compact && <span style={{ position: "absolute", top: 10, right: 10, width: 34, height: 34, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}><Heart /></span>}
+      </a>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "16px 18px 18px", flex: 1 }}>
+        <a href={p.url} target="_blank" rel={rel} style={{ fontSize: 14.5, fontWeight: 500, lineHeight: 1.4 }}>{p.title}</a>
+        {p.lastSyncedAt && p.reviews && p.reviews !== "(0)" && <span style={{ fontSize: 12, color: "#6b7486" }}>{p.reviews.replace(/[()]/g, "")} reviews on {on}</span>}
+        {(hasPrice || p.type) && <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginTop: 2 }}><span style={{ fontSize: 18, fontWeight: 700 }}>{hasPrice ? p.price : ""}</span><span style={{ fontSize: 11, fontWeight: 600, color: "#3f9ad9", textAlign: "right" }}>{p.type}</span></div>}
+        <div style={{ display: "flex", gap: 8, marginTop: "auto", paddingTop: 6 }}>
+          {p.cartUrl
+            ? <><a href={p.cartUrl} target="_blank" rel={rel} className="btn btn-navy" style={{ flex: 1, height: 38, padding: "0 14px", fontSize: 12.5 }}>Add to Amazon cart</a><a href={p.url} target="_blank" rel={rel} className="btn btn-outline" style={{ height: 38, padding: "0 14px", fontSize: 12.5 }} aria-label={`View on ${on}`}>View <ArrowUpRight size={12} /></a></>
+            : <a href={p.url} target="_blank" rel={rel} className="btn btn-outline" style={{ flex: 1, height: 38, fontSize: 12.5 }}>View on {on} <ArrowUpRight size={12} /></a>}
+        </div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "16px 18px 18px" }}>
-        <span style={{ fontSize: 14.5, fontWeight: 500, lineHeight: 1.4 }}>{p.title}</span>
-        {p.lastSyncedAt && p.reviews && p.reviews !== "(0)" && <span style={{ fontSize: 12, color: "#6b7486" }}>{p.reviews.replace(/[()]/g, "")} reviews on Etsy</span>}
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginTop: 2 }}><span style={{ fontSize: 18, fontWeight: 700 }}>{p.price}</span><span style={{ fontSize: 11, fontWeight: 600, color: "#3f9ad9" }}>{p.type}</span></div>
-      </div>
-    </a>
+    </article>
   );
 }
 

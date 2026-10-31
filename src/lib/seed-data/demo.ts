@@ -112,13 +112,7 @@ export const POSTS: readonly SeedPost[] = [
 /** No seeded regional headlines: regional news comes only from the RSS sources once they sync (Caribbean Connection → Sources). */
 export const CC_REGIONAL_NEWS: readonly (readonly [title: string, source: string, daysAgo: number, image: string])[] = [];
 
-// title, category, price, reviews, featured, image, tag, type
-// Only Grace's confirmed listing is seeded, and it is seeded hidden (isActive=false in scripts/seed.ts): confirm the price and listing URL in
-// Admin → Etsy products, press "Refresh from Etsy", then show it. Add further listings there by pasting their Etsy URLs.
-export const PRODUCTS = [
-  ["GID Home Readiness Assessment — Aging In Place Checklist (PDF)", "Assessments", "$—", "(0)", true, m("int.small-bath"), null, "Digital download"],
-] as const;
-export const ETSY_LISTING = "https://www.etsy.com/listing/4548113647/gid-home-readiness-assessment-aging-in";
+// Products (Amazon picks + Grace's Etsy download) live in src/lib/seed-data/products.ts.
 
 /** No seeded testimonials: add real, approved client quotes in Admin → Content → Testimonials. */
 export const TESTIMONIALS: readonly (readonly [quote: string, who: string, where: string, serviceSlug: string])[] = [];
@@ -139,6 +133,7 @@ export const INTEGRATIONS = [
   ["cft", "Call Flow Tracker", "Call events → leads, sign-in both ways, texts from Grace's number", 1],
   ["slack", "Slack", "New requests and calls posted to a channel", 1],
   ["etsy", "Etsy", "Product listings", 2],
+  ["amazon", "Amazon (Associates + Product Advertising API)", "Tracking id on product links, “Add to cart” buttons, live search and prices", 2],
   ["rss", "RSS", "News imports", 2],
   ["magnific", "Magnific", "Generate imagery into the media library", 2],
   ["meta", "Meta (Facebook + Instagram)", "Social publishing + on-site feed", 3],
