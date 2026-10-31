@@ -46,6 +46,10 @@ Choices made where the design handoff (`docs/handoff/README.md`) left something 
 23. **Auto sign-in into Call Flow Tracker is a revocable link, not a long-lived CFT token.** The texted link (`/go/cft/<token>`) is a random token stored hashed with a 24h expiry (`CFT_LAUNCH_LINK_HOURS`), bound to the notification user, audited on every tap and revoked when that person is deactivated. Each tap mints a fresh two-minute CFT token (CFT burns the `jti`, so re-taps still work). The same token format is reused for an "Open in Call Flow Tracker" button in the lead drawer, which signs in the *current* team member. CFT lands on its dashboard after SSO; deep-linking to `/calls` would need CFT to honour a `?next=` on `/sso/launch`.
 24. **Slack via a single Incoming Webhook.** One `SLACK_WEBHOOK_URL`, Block Kit messages with action buttons, posted for consultation requests, other public forms and CFT call events, each a toggle in the admin. The auto sign-in link is included in Slack posts by default (toggle `cftLinkInSlack`), so the channel should be private.
 
+## Caribbean Connection
+
+25. **Community events stay listed through the end of their date, then leave at midnight in the event's own time zone.** An event row stores a start instant (noon on the chosen date) and a time zone, not an end time, so "its date is today or later" is the fairest reading of "still worth seeing": a workshop that began at 10 am is still relevant at 3 pm, and yesterday's is not relevant at 9 am. The rule is `isUpcomingEvent` in `src/lib/cc-events.ts`, shared by the public page and the admin count, and `npm run test:cc-events` pins it down. The public page renders per request, so nothing has to be cleared from a cache for an event to disappear. To cut off at the start time instead, change that one function; to honour a real end time, add an `ends_at` column first.
+
 ## Open items from the handoff (placeholders the admin can edit)
 
 - Model Home tier pricing and a developer testimonial → `services` row `model-home` (Content → Services).

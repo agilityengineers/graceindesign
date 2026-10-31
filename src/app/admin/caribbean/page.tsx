@@ -8,6 +8,7 @@ import Toast from "@/components/admin/Toast";
 import ConfirmButton from "@/components/admin/Confirm";
 import { resourceAction, addResource, eventAction, addEvent, countryAction, subscriberAction, composeIssue, addRssSource, rssSourceAction } from "@/lib/actions/catalog";
 import { fmtDate, relativeDay } from "@/lib/utils";
+import { isUpcomingEvent } from "@/lib/cc-events";
 
 export const metadata = { title: "Caribbean Connection" };
 export const dynamic = "force-dynamic";
@@ -40,7 +41,7 @@ export default async function CaribbeanAdmin({ searchParams }: { searchParams: P
       <div className="g4" style={{ gap: 16 }}>
         <Stat label="Awaiting review" value={Number(resPending.n) + Number(evPending.n)} delta={`${resPending.n} resources · ${evPending.n} events`} deltaColor={Number(resPending.n) + Number(evPending.n) ? "#9a3c1e" : "#6b7486"} />
         <Stat label="Published resources" value={resources.filter((r) => r.status === "published").length} delta={`${countries.filter((c) => c.status === "live").map((c) => c.name).join(", ") || "no live countries"}`} />
-        <Stat label="Upcoming events" value={events.filter((e) => e.status === "published" && e.startsAt >= new Date()).length} delta="listed publicly" />
+        <Stat label="Upcoming events" value={events.filter((e) => e.status === "published" && isUpcomingEvent(e)).length} delta="listed publicly" />
         <Stat label="Newsletter subscribers" value={subs.filter((s) => !s.unsubscribedAt).length} delta={`${segments.length} segments`} />
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{TABS.map(([k, l]) => <Link key={k} href={`/admin/caribbean?tab=${k}`} className={`pill${tab === k ? " is-on" : ""}`}>{l}{k === "resources" && Number(resPending.n) ? ` · ${resPending.n}` : k === "events" && Number(evPending.n) ? ` · ${evPending.n}` : ""}</Link>)}</div>
@@ -90,15 +91,15 @@ export default async function CaribbeanAdmin({ searchParams }: { searchParams: P
       </>)}
 
       {tab === "events" && (<>
-        <Card title="Community events" sub="Public submissions and GID events. Approve to list; past events drop off the public page automatically." action={<Filters />}>
+        <Card title="Community events" sub="Public submissions and GID events. Approve to list; an event leaves the public page by itself at midnight (its own time zone) once its date has passed." action={<Filters />}>
           {byStatus(events).map((e) => (
             <details key={e.id} style={{ borderBottom: "1px solid #f2f4f7", padding: "8px 0" }}>
               <summary style={{ display: "grid", gridTemplateColumns: "54px minmax(0, 2fr) 160px 120px 100px auto", gap: 12, alignItems: "center", fontSize: 13, cursor: "pointer", listStyle: "none" }}>
-                <div style={{ textAlign: "center", borderRadius: 8, background: "#e6f3fc", padding: "4px 0" }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>{fmtDate(e.startsAt, { month: "short" }, "America/Jamaica")}</div><div style={{ fontSize: 18, fontWeight: 700 }}>{fmtDate(e.startsAt, { day: "numeric" }, "America/Jamaica")}</div></div>
+                <div style={{ textAlign: "center", borderRadius: 8, background: "#e6f3fc", padding: "4px 0" }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>{fmtDate(e.startsAt, { month: "short" }, e.tz)}</div><div style={{ fontSize: 18, fontWeight: 700 }}>{fmtDate(e.startsAt, { day: "numeric" }, e.tz)}</div></div>
                 <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}><span style={{ fontWeight: 600 }}>{e.title}</span><span style={{ fontSize: 12, color: "#6b7486" }}>{e.whereLabel} · {e.format.replace("_", " ")}{e.timeLabel ? ` · ${e.timeLabel}` : ""}</span></div>
                 <span style={{ fontSize: 12 }}>{e.host}</span>
                 <span style={{ fontSize: 12, color: "#6b7486" }}>{e.submittedByEmail || "GID"}<br /><span style={{ fontSize: 11 }}>{relativeDay(e.createdAt)}</span></span>
-                <StatusPill status={e.status} />
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 3 }}><StatusPill status={e.status} />{!isUpcomingEvent(e) && <span title="Past events are not shown on the public page" style={{ fontSize: 10, color: "#8c95a8", whiteSpace: "nowrap" }}>Past · not shown</span>}</div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
                   {e.status === "pending" && <form action={eventAction}><Hidden id={e.id} name="eventId" /><input type="hidden" name="op" value="approve" /><button type="submit" className="link-btn">Approve</button></form>}
                   {e.status !== "rejected" && <form action={eventAction} style={{ display: "flex", gap: 4 }}><Hidden id={e.id} name="eventId" /><input type="hidden" name="op" value="reject" /><input name="note" placeholder="Reason" className="admin-input admin-input-sm" style={{ width: 110, height: 28 }} /><button type="submit" className="link-btn link-muted">Reject</button></form>}

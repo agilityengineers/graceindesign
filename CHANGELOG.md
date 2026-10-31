@@ -6,6 +6,11 @@
 - Admin → Products: a WELLness-Products box on "Fetch & add" and on the Amazon search results (ticked by default), an "Add to / Remove from WELLness-Products" link and badge on every card, the shelf count in the header, and a status strip that says what is on the shelf and links to the page and to the block's copy in Content → Pages.
 - `npm run content:products` adds the section to an existing database's Healthy Home Resources page and stocks the shelf with the catalog's Amazon listings the first time (never again once something is on it); seeded Amazon picks start on the shelf. `npm run test:shelves` covers the helpers and the seed.
 
+## Unreleased — Caribbean Connection: past events leave the public page
+- A published event now stays in **Community Events** through the end of its own date (midnight in the event's time zone) and is gone the next morning. Before, an event stayed for 24 hours after its start instant, so yesterday's noon event was still listed until noon today.
+- The rule lives in one place (`src/lib/cc-events.ts`) and is shared by the public page and Admin → Caribbean Connection, where the **Upcoming events** count now uses it and past events in the list are marked "Past · not shown".
+- `npm run test:cc-events` pins the rule down without a database: yesterday hidden, today listed all day, midnight cut-off in the event's zone, and the query's look-back window wide enough to never cut off an event the rule would still show.
+
 ## Unreleased — AIP Products: Amazon picks (any store), not Etsy-only
 - The product catalog links to whichever store sells the item. Each listing records its store (`retailer`: Amazon, Etsy or other) and an optional description; cards read "View on Amazon" / "View on Etsy", Amazon photos sit on a light background, review counts name the store, and the page header counts listings beside an "Available on Amazon" badge. Migration `drizzle/0003_products_retailers.sql`.
 - Admin → Products (was "Etsy products"): paste an Amazon or Etsy link and the listing page is read for title, photo, price and rating (Amazon may decline, so every field is editable, including the link, store and description). "Refresh" re-reads the store page; the scheduled `etsy` job keeps its name but refreshes prices, ratings and un-replaced photos for every store and never overwrites titles, descriptions or uploaded photos.

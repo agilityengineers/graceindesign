@@ -35,6 +35,7 @@ Sign in at `/login` with `info@graceindesign.net` or `emailme@clarencewilliams.c
 | `npm run test:notifications` | Unit tests for sender routing, Call Flow Tracker tokens and Slack payloads |
 | `npm run test:amazon` | Unit tests for Amazon link/ASIN/cart helpers and the Product Advertising API request signing |
 | `npm run test:shelves` | Unit tests for the named product shelves (WELLness-Products) and the Healthy Home Resources seed |
+| `npm run test:cc-events` | Unit tests for the Community Events rule: a past event leaves the public page at midnight in its own time zone |
 | `node tests/smoke.mjs` | Funnel and route smoke test against a running server (writes a test lead) |
 | `npm run test:launch-content` | Read-only crawl of the public pages: no prototype/admin text, unique titles and descriptions, robots, sitemap, favicon, noindex, redirects |
 | `node tests/shot.mjs --login <owner email> /route …` | Full-page screenshots (dev helper) |
