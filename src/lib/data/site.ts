@@ -4,6 +4,7 @@ import { and, asc, desc, eq, gte, inArray, isNull, or, sql } from "drizzle-orm";
 import { db, pages, pageBlocks, services, posts, products, testimonials, teamMembers, ccResources, ccEvents, ccCountries, rssSources, socialFeedItems, type Service } from "@/lib/db";
 import { getSettings } from "@/lib/server/settings";
 import { getMediaMap, resolveDeep } from "./media";
+import { UPCOMING_EVENTS_LOOKBACK_MS, upcomingEvents } from "@/lib/cc-events";
 
 export const getSiteChrome = cache(async () => {
   const [settings, svc] = await Promise.all([
@@ -81,7 +82,8 @@ export const getCaribbeanData = cache(async () => {
   const countryFilter = (col: any) => or(inArray(col, liveNames.length ? [...liveNames, "Regional", "Diaspora", "Regional / Diaspora"] : ["Jamaica", "Regional", "Diaspora"]), sql`${col} is null`);
   const [resources, events, regional, gidPosts, feeds] = await Promise.all([
     db.select().from(ccResources).where(and(eq(ccResources.status, "published"), countryFilter(ccResources.country))).orderBy(asc(ccResources.sort), asc(ccResources.name)),
-    db.select().from(ccEvents).where(and(eq(ccEvents.status, "published"), gte(ccEvents.startsAt, new Date(Date.now() - 86400000)))).orderBy(asc(ccEvents.startsAt)).limit(8),
+    // Published events through the end of their own date (midnight in the event's time zone). The query only narrows; src/lib/cc-events.ts has the rule and its test.
+    db.select().from(ccEvents).where(and(eq(ccEvents.status, "published"), gte(ccEvents.startsAt, new Date(Date.now() - UPCOMING_EVENTS_LOOKBACK_MS)))).orderBy(asc(ccEvents.startsAt)).then((rows) => upcomingEvents(rows, new Date(), 8)),
     getPublishedPosts("caribbean", 20).then((rows) => rows.filter((p) => p.origin === "rss").slice(0, 6)),
     getPublishedPosts("caribbean", 20).then((rows) => rows.filter((p) => p.origin !== "rss").slice(0, 3)),
     db.select().from(rssSources).where(and(eq(rssSources.scope, "caribbean"), eq(rssSources.isActive, true))),
