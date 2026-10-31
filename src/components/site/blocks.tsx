@@ -4,7 +4,7 @@ import { HomeClassicHero } from "./ClassicHero";
 import Carousel from "./Carousel";
 import Reveal from "./Reveal";
 import { ConsultButton } from "./ConsultContext";
-import { ArrowRight, ArrowUpRight, Heart, Rss, Play, Globe } from "@/components/ui/Icons";
+import { ArrowRight, ArrowUpRight, Heart, Rss, Play, Globe, Check } from "@/components/ui/Icons";
 import { getProducts, getPublishedPosts, getFounder, getServiceList, getCaribbeanData } from "@/lib/data/site";
 import { getMediaMap, resolveDeep } from "@/lib/data/media";
 import { WELLNESS_GROUPS, EPISODES } from "@/lib/seed-data/demo";
@@ -231,7 +231,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
     case "rich_text": return <section className="gx section" style={{ maxWidth: 860 }}><h1 className="h1" style={{ marginBottom: 28 }}>{c.title}</h1><div className="prose" style={{ fontSize: 16, lineHeight: 1.75, color: "#4b5569" }} dangerouslySetInnerHTML={{ __html: c.body }} /></section>;
     case "cc_why": { const { countries } = await getCaribbeanData(); return (
       <section className="gx section g2 g2-stack-md" style={{ gap: 80, alignItems: "start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}><span className="eyebrow">{c.eyebrow}</span><h2 className="h2">{c.title}</h2></div>
+        <div className="sticky-md-off" style={{ display: "flex", flexDirection: "column", gap: 18, position: "sticky", top: 24 }}><span className="eyebrow">{c.eyebrow}</span><h2 className="h2">{c.title}</h2></div>
         <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 40 }}>
           <p style={{ fontSize: 17, lineHeight: 1.7, color: "#4b5569" }}>{c.body}</p>
           <div style={{ display: "flex", gap: 16, alignItems: "flex-start", padding: "24px 28px", borderRadius: 16, background: "#e6f3fc" }}><div style={{ width: 40, height: 40, flex: "none", borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}><Globe /></div><p style={{ fontSize: 15, lineHeight: 1.65 }}><strong>{c.calloutBold}</strong> {c.callout}</p></div>
@@ -257,21 +257,21 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
             </Link>}
             <div className="g2 g2-stack-sm" style={{ gap: 24 }}>{more.map((g) => <Link key={g.id} href={`/news/${g.slug}`} style={{ display: "flex", flexDirection: "column", gap: 12, color: "#1a2238" }}><div style={{ position: "relative", height: 180, borderRadius: 14, overflow: "hidden" }}><img src={g.imageUrl || ""} alt={g.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div><span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".1em" }}>{g.category} · {fmtDate(g.publishedAt, { month: "short", day: "numeric", year: "numeric" })}</span><h3 className="display" style={{ fontSize: 24, fontWeight: 600, lineHeight: 1.2 }}>{g.title}</h3><p style={{ fontSize: 13.5, lineHeight: 1.6, color: "#6b7486" }}>{g.excerpt}</p></Link>)}</div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <aside className="sticky-md-off" style={{ display: "flex", flexDirection: "column", gap: 14, position: "sticky", top: 24 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><span className="eyebrow eyebrow-sm" style={{ color: "#6b7486" }}>{c.regionalLabel}</span>{lastSync && <span style={{ fontSize: 11, color: "#8c95a8" }}>Updated {fmtDate(lastSync, { month: "short", day: "numeric" })}</span>}</div>
             {regional.length === 0 && <span style={{ fontSize: 14, color: "#6b7486", lineHeight: 1.6 }}>Regional headlines will appear here as our curated sources are confirmed.</span>}
             {regional.map((r) => <a key={r.id} href={r.sourceUrl && r.sourceUrl !== "#" ? r.sourceUrl : `/news/${r.slug}`} target={r.sourceUrl && r.sourceUrl !== "#" ? "_blank" : undefined} rel="noreferrer" style={{ display: "grid", gridTemplateColumns: "72px 1fr", gap: 14, padding: 14, borderRadius: 14, background: "#fff", border: "1px solid #e9ecf1", color: "#1a2238" }}><div style={{ position: "relative", width: 72, height: 60, borderRadius: 8, overflow: "hidden" }}><img src={r.imageUrl || ""} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div><div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}><span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.35 }}>{r.title}</span><span style={{ fontSize: 11, color: "#6b7486" }}>{r.sourceName} · {fmtDate(r.publishedAt)}</span></div></a>)}
             <span style={{ fontSize: 12, color: "#8c95a8", lineHeight: 1.6 }}>{c.regionalNote}</span>
-          </div>
+          </aside>
         </div>
       </section>); }
     case "cc_directory": { const { resources } = await getCaribbeanData(); const Dir = (await import("./CaribbeanDirectory")).default; return (
       <section id="directory" className="gx" style={{ paddingTop: 104, paddingBottom: 104, display: "flex", flexDirection: "column", gap: 40 }}>
         <Dir eyebrow={c.eyebrow} title={c.title} categories={c.categories} resources={resources.map((r) => ({ id: r.id, name: r.name, category: r.category, where: r.area ? `${r.country} · ${r.area}`.replace(/ · National$/, "") : r.country, type: r.type || "", description: r.description, url: r.url || "" }))} />
-        <div id="suggest-resource" className="g2 g2-stack-md panel" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1.3fr)", gap: 40, padding: "36px 40px", borderRadius: 20, background: "#f7f8fa", border: "1px solid #e9ecf1" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div id="suggest-resource" className="g2 g2-stack-md panel" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1.3fr)", gap: 40, alignItems: "start", padding: "36px 40px", borderRadius: 20, background: "#f7f8fa", border: "1px solid #e9ecf1" }}>
+          <div className="sticky-md-off" style={{ display: "flex", flexDirection: "column", gap: 14, position: "sticky", top: 24 }}>
             <span className="eyebrow">{c.formEyebrow}</span><h3 className="display" style={{ fontSize: 32, fontWeight: 500, lineHeight: 1.1 }}>{c.formTitle}</h3><p style={{ fontSize: 14, lineHeight: 1.65, color: "#4b5569" }}>{c.formBody}</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13, color: "#6b7486" }}>{(c.bullets as string[]).map((b) => <span key={b} style={{ display: "flex", gap: 8, alignItems: "center" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6cb6e6" }} />{b}</span>)}</div>
+            {(c.bullets as string[])?.length > 0 && <ul style={{ listStyle: "none", margin: "6px 0 0", padding: "6px 20px", display: "flex", flexDirection: "column", borderRadius: 14, background: "#fff", border: "1px solid #e9ecf1" }}>{(c.bullets as string[]).map((b, k) => <li key={b} style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 0", borderTop: k ? "1px solid #eef0f4" : 0, fontSize: 13.5, color: "#4b5569" }}><span style={{ width: 28, height: 28, flex: "none", borderRadius: "50%", background: "#e6f3fc", color: "#1a2238", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={14} /></span>{b}</li>)}</ul>}
           </div>
           <SuggestResourceForm />
         </div>
