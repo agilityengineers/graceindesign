@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { saveBlock } from "@/lib/actions/content";
+import ImagePicker from "./ImagePicker";
 
 type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
 const isImageKey = (k: string) => /img|photo|image|logo|avatar|thumb|poster/i.test(k);
@@ -41,9 +42,8 @@ function Field({ k, v, path, update }: { k: string; v: Json; path: (string | num
   if (v === null || typeof v === "string") {
     const s = v ?? "";
     if (isImageKey(String(k)) || isImageVal(s)) return (
-      <div style={{ ...full, display: "flex", gap: 12, alignItems: "center", padding: 8, borderRadius: 10, background: "#fff", border: "1px solid #eef0f4" }}>
-        <div style={{ width: 96, height: 64, borderRadius: 8, overflow: "hidden", background: "#f2f4f7", flex: "none" }}>{s && <img src={s.startsWith("media://") ? `/api/placeholder?label=${encodeURIComponent(s.slice(8))}` : s} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}><label className="label label-caps">{label}<input value={s} onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm" placeholder="media://slot or https://…" /></label><input type="file" name={`file::${name}`} accept="image/*" style={{ fontSize: 11 }} /></div>
+      <div style={{ ...full, padding: 8, borderRadius: 10, background: "#fff", border: "1px solid #eef0f4" }}>
+        <ImagePicker label={label} fileName={`file::${name}`} value={s} onChange={(next) => update(path, next)} showUrl width={96} height={64} />
       </div>);
     if (isLong(String(k), s)) return <label className="label label-caps" style={full}>{label}<textarea value={s} rows={Math.min(10, Math.max(2, Math.ceil(s.length / 90)))} onChange={(e) => update(path, e.target.value)} className="admin-input" /></label>;
     return <label className="label label-caps">{label}<input value={s} onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm" /></label>;

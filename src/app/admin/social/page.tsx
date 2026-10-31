@@ -10,6 +10,7 @@ import AdminShell from "@/components/admin/AdminShell";
 import { Card, Stat, StatusPill } from "@/components/admin/ui";
 import Toast from "@/components/admin/Toast";
 import ConfirmButton from "@/components/admin/Confirm";
+import ImagePicker from "@/components/admin/ImagePicker";
 import { createSocialPost, socialPostAction, disconnectSocial, syncFeedsNow } from "@/lib/actions/social";
 import { saveSocialSettings } from "@/lib/actions/settings";
 import { fmtDateTime } from "@/lib/utils";
@@ -110,8 +111,7 @@ export default async function SocialAdmin({ searchParams }: { searchParams: Prom
               <form action={createSocialPost} encType="multipart/form-data" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <textarea name="body" rows={5} placeholder="What's new at Grace In Design?" className="admin-input" required />
                 <input name="linkUrl" placeholder="Link (optional)" className="admin-input admin-input-sm" />
-                <label className="label label-caps">Image<input type="file" name="image_file" accept="image/*" className="admin-input admin-input-sm" style={{ paddingTop: 6 }} /></label>
-                <input name="imageUrl" placeholder="…or image URL / media://slot" className="admin-input admin-input-sm" />
+                <ImagePicker label="Image (optional)" name="imageUrl" fileName="image_file" showUrl width={96} height={64} />
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>{NETWORKS.map((n) => <label key={n} style={{ fontSize: 12, display: "flex", gap: 4, alignItems: "center" }}><input type="checkbox" name="networks" value={n} defaultChecked={["facebook", "linkedin"].includes(n)} />{NETWORK_LABELS[n]}</label>)}</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}><label className="label label-caps">Date<input name="date" type="date" defaultValue={addDays(today, 1)} className="admin-input admin-input-sm" /></label><label className="label label-caps">Time (ET)<input name="time" type="time" defaultValue="10:00" className="admin-input admin-input-sm" /></label></div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><button type="submit" name="intent" value="schedule" className="btn btn-navy btn-xs" style={{ borderRadius: 8 }}>Schedule</button><button type="submit" name="intent" value="now" className="btn btn-ghost btn-xs" style={{ borderRadius: 8 }}>Publish now</button><button type="submit" name="intent" value="draft" className="btn btn-ghost btn-xs" style={{ borderRadius: 8 }}>Save draft</button></div>

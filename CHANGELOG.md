@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — image picker in the admin
+- Every admin image field now offers **Upload from computer** or **Choose from library** (new `ImagePicker` component + `GET /api/admin/media`): page blocks, hero editor (scenes, classic photo, before/after), service photos, news/insights cover, team photos and social posts.
+- Library picks are stored as `media://slot` when the image fills a slot, so swapping that image in the Media library still updates every page that uses it. Social posts resolve the pick to a real URL because networks need one.
+- Hero editor: the classic photo can now be changed for services too (previously the upload was ignored for service heroes).
+
 ## 0.2.1 — pre-launch review (October 2026)
 - Removed prototype/demo content from the public site: invented products, ratings and review counts, Caribbean events, regional headlines attributed to real publishers, placeholder article bodies, the model-home testimonial placeholder, and every admin-facing instruction visible to visitors (before/after note, lead-source pills, form-builder notes).
 - Corrected claims: no unsupported volume claims ("hundreds of…"), Aging In Place wording describes assessment, recommendations and contractor coordination (not installation), Project Management describes owner-side coordination without outcome guarantees, Commercial hero reads "A workspace…".
