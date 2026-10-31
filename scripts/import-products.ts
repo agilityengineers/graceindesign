@@ -1,15 +1,18 @@
 /**
- * Product catalog import — adds the seeded listings (src/lib/seed-data/products.ts) to an ALREADY-SEEDED database and moves the
- * AIP Products page copy from "our Etsy shop" to store-neutral wording, without touching anything edited in the admin.
+ * Product catalog import — adds the seeded listings (src/lib/seed-data/products.ts) to an ALREADY-SEEDED database, moves the
+ * AIP Products page copy from "our Etsy shop" to store-neutral wording, and adds the WELLness-Products section (a `product_shelf`
+ * block on the "wellness" shelf) to the bottom of Healthy Home Resources, without touching anything edited in the admin.
  *
  *   npm run content:products -- --dry-run     # print every change, write nothing
  *   npm run content:products                  # add missing listings + page copy
  *   npm run content:products -- --images      # also copy each new listing's remote photo into the media store (self-hosted)
  *   npm run content:products -- --refresh     # also read price, photo and rating from the store page for each new listing
  *
- * Run `npm run db:migrate` first (adds products.retailer and products.description). Safe to run repeatedly: listings are matched
- * by URL and only inserted when missing; page text changes only where the current value still equals the earlier seeded wording.
- * Run it once against the workspace database and once with DATABASE_URL pointed at production (see docs/products.md).
+ * Run `npm run db:migrate` first (adds products.retailer, products.description and products.shelves). Safe to run repeatedly: listings
+ * are matched by URL and only inserted when missing; page text changes only where the current value still equals the earlier seeded
+ * wording; the WELLness-Products block is added once, and the shelf is stocked with the catalog's Amazon listings only while nothing is
+ * on it yet (after that the admin decides). Run it once against the workspace database and once with DATABASE_URL pointed at
+ * production (see docs/products.md).
  */
 import "dotenv/config";
 import { eq, sql } from "drizzle-orm";
@@ -20,6 +23,7 @@ import { PAGES } from "../src/lib/seed-data/pages";
 import { fetchListing, refreshedFields } from "../src/lib/server/listings";
 import { putObject } from "../src/lib/server/storage";
 import { slugify } from "../src/lib/utils";
+import { WELLNESS_SHELF, onShelf, toggleShelf } from "../src/lib/shelves";
 
 const args = process.argv.slice(2);
 const DRY = args.includes("--dry-run"), IMAGES = args.includes("--images"), REFRESH = args.includes("--refresh");
@@ -116,6 +120,43 @@ async function listings() {
   return added;
 }
 
+/** The shelves column arrives with migration 0004; stop early with a clear message instead of a column-does-not-exist error. */
+async function requireMigration() {
+  const { rows } = await pool.query(`select 1 from information_schema.columns where table_name = 'products' and column_name = 'shelves'`);
+  if (rows.length) return;
+  console.error("products.shelves is missing — run `npm run db:migrate` first (migration 0004_product_shelves), then run this again.");
+  await pool.end(); process.exit(1);
+}
+/** True when at least one listing sits on the shelf. */
+async function shelfStocked(key: string) { const rows = await db.select({ shelves: S.products.shelves }).from(S.products); return rows.some((p) => onShelf(p.shelves, key)); }
+
+/**
+ * WELLness-Products: the product section at the bottom of Healthy Home Resources. Two parts: the `product_shelf` block on the page
+ * (added once, after the page's last block) and the listings on the "wellness" shelf. `stock` is true when nothing was on the shelf
+ * before this run; then every Amazon listing in the catalog goes on it so the section starts full. The admin takes over from there.
+ */
+async function wellnessShelf(stock: boolean) {
+  const shelf = WELLNESS_SHELF;
+  const page = await db.query.pages.findFirst({ where: eq(S.pages.key, shelf.pageKey) });
+  if (!page) console.warn(`pages.${shelf.pageKey}: not found (${shelf.name} block skipped)`);
+  else {
+    const blocks = await db.select().from(S.pageBlocks).where(eq(S.pageBlocks.pageId, page.id));
+    const isShelf = (c: unknown) => !!c && typeof c === "object" && (c as Content).shelf === shelf.key;
+    if (blocks.some((b) => b.type === "product_shelf" && (isShelf(b.content) || isShelf(b.draftContent)))) console.log(`page_blocks.${shelf.pageKey}: ${shelf.name} is already on the page`);
+    else {
+      const seed = seedPage(shelf.pageKey)?.blocks.find((b) => b.type === "product_shelf" && isShelf(b.content));
+      if (!seed) throw new Error(`seed page "${shelf.pageKey}" has no product_shelf block for the "${shelf.key}" shelf`);
+      const sort = blocks.reduce((m, b) => Math.max(m, b.sort), -1) + 1;
+      await write(`page_blocks.${shelf.pageKey}: add the ${shelf.name} section at the bottom of the page`, () => db.insert(S.pageBlocks).values({ pageId: page.id, type: "product_shelf", sort, content: seed.content, visible: true }));
+    }
+  }
+  if (!stock) { console.log(`products: ${shelf.name} already has listings on it (left as the admin set it)`); return; }
+  const rows = await db.select({ id: S.products.id, title: S.products.title, retailer: S.products.retailer, shelves: S.products.shelves }).from(S.products);
+  const amazon = rows.filter((p) => p.retailer === "amazon" && !onShelf(p.shelves, shelf.key));
+  if (!amazon.length) { console.log(`products: no Amazon listings to put on ${shelf.name} yet — add them in Admin → Products`); return; }
+  for (const p of amazon) await write(`products: put "${p.title}" on ${shelf.name}`, () => db.update(S.products).set({ shelves: toggleShelf(p.shelves, shelf.key, true), updatedAt: new Date() }).where(eq(S.products.id, p.id)));
+}
+
 /** The Amazon row on the admin's Integrations panel (fresh seeds carry it; existing databases get it here). */
 async function integrationRow() {
   const row = await db.query.integrations.findFirst({ where: eq(S.integrations.key, "amazon") });
@@ -125,11 +166,14 @@ async function integrationRow() {
 
 async function main() {
   console.log(DRY ? "Dry run — nothing will be written.\n" : "Applying product catalog changes…\n");
+  await requireMigration();
+  const shelfWasEmpty = !(await shelfStocked(WELLNESS_SHELF.key)); // decided before new listings arrive (seeded Amazon picks start on the shelf)
   const added = await listings();
   await pages();
+  await wellnessShelf(shelfWasEmpty);
   await integrationRow();
   console.log(`\n${changes.length} change(s) ${DRY ? "would be applied" : "applied"}; ${added} listing(s) ${DRY ? "to add" : "added"}.`);
-  if (!DRY && added) console.log("Next: open Admin → Products to check photos, prices and descriptions, then reorder or feature listings as needed.");
+  if (!DRY && changes.length) console.log(`Next: open Admin → Products to check photos, prices and descriptions, reorder or feature listings, and tick which ones belong on ${WELLNESS_SHELF.name} (${WELLNESS_SHELF.href}#${WELLNESS_SHELF.key}).`);
   await pool.end();
 }
 main().catch(async (e) => { console.error(e); await pool.end(); process.exit(1); });

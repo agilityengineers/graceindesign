@@ -5,6 +5,7 @@ import { db, products } from "@/lib/db";
 import { getMediaMap, resolveImg } from "@/lib/data/media";
 import { env } from "@/lib/env";
 import { RETAILERS, asRetailer, retailerLabel, asinFromUrl } from "@/lib/retailers";
+import { SHELVES, SHELF_KEYS, onShelf } from "@/lib/shelves";
 import { paapiReady, getAmazonShop, searchAmazon, type AmazonItem } from "@/lib/server/amazon";
 import AdminShell from "@/components/admin/AdminShell";
 import { Card } from "@/components/admin/ui";
@@ -29,8 +30,11 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
   const visible = rows.filter((p) => p.isActive).length;
   const categories = Array.from(new Set([...rows.map((r) => r.category), ...DEFAULT_CATEGORIES])).filter(Boolean);
   const counts = rows.reduce<Record<string, number>>((acc, p) => { const k = asRetailer(p.retailer); acc[k] = (acc[k] || 0) + 1; return acc; }, {});
-  const subtitle = [`${rows.length} listing${rows.length === 1 ? "" : "s"} (${visible} shown)`, ...Object.entries(counts).map(([k, n]) => `${n} on ${RETAILERS[asRetailer(k)].name}`), `${featured} featured on the homepage`].join(" · ");
+  // Named shelves (src/lib/shelves.ts): WELLness-Products at the bottom of Healthy Home Resources shows the visible listings on the "wellness" shelf.
+  const shelfCounts = SHELF_KEYS.map((k) => ({ shelf: SHELVES[k], n: rows.filter((p) => p.isActive && onShelf(p.shelves, k)).length }));
+  const subtitle = [`${rows.length} listing${rows.length === 1 ? "" : "s"} (${visible} shown)`, ...Object.entries(counts).map(([k, n]) => `${n} on ${RETAILERS[asRetailer(k)].name}`), `${featured} featured on the homepage`, ...shelfCounts.map(({ shelf, n }) => `${n} on ${shelf.name}`)].join(" · ");
   const cartOn = !!shop.tag && shop.cartButtons;
+  const addCols = `minmax(0, 2fr) 180px ${"auto ".repeat(SHELF_KEYS.length + 2).trim()}`;
   return (
     <AdminShell user={user} active="products" title="Products" subtitle={subtitle} actions={<form action={syncProductsNow}><button type="submit" className="btn btn-ghost btn-sm" style={{ height: 40, borderRadius: 10 }}>Refresh prices & photos</button></form>}>
       <Toast />
@@ -39,11 +43,18 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
         {shop.tag ? <span>Amazon links carry your tracking id <strong>{shop.tag}</strong> · “Add to Amazon cart” buttons are <strong>{shop.cartButtons ? "on" : "off"}</strong> · {paapi ? "Product Advertising API connected" : "Product Advertising API not set (links still work)"}.</span> : <span>No Associates tracking id yet, so Amazon links are plain and the “Add to Amazon cart” buttons stay hidden.</span>}
         <Link href="/admin/content/settings" className="link-btn" style={{ marginLeft: "auto", whiteSpace: "nowrap" }}>Amazon shop settings →</Link>
       </div>
-      <Card title="Add a product" sub={<>Paste an Amazon or Etsy product link. We read the title, photo, price and rating from the listing{paapi ? " (through the Amazon API for Amazon links)" : ""}; Amazon sometimes declines automated requests, so check the card and fill in anything missing. Toggle <strong>Featured</strong> to show it on the homepage row. Etsy shop: <a href={env.etsyShopUrl} target="_blank" rel="noreferrer" style={{ color: "#3f9ad9" }}>{env.etsyShopUrl}</a></>}>
-        <form action={addProduct} style={{ display: "grid", gridTemplateColumns: "minmax(0, 2fr) 180px auto auto", gap: 8, alignItems: "center" }}>
+      {shelfCounts.map(({ shelf, n }) => (
+        <div key={shelf.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, background: "#eef6fc", border: "1px solid #cfe3f3", fontSize: 12.5, color: "#1a2238" }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: n ? "#3f9ad9" : "#d98e04", flex: "none" }} />
+          <span><strong>{shelf.name}</strong> is the product section at {shelf.where}: {n ? <>{n} listing{n === 1 ? "" : "s"} on it now</> : <>nothing on it yet, so the section stays hidden</>}. New products go on it unless you untick the box; “Remove from {shelf.name}” on a card takes one off.</span>
+          <span style={{ marginLeft: "auto", display: "flex", gap: 14, whiteSpace: "nowrap" }}><Link href={`${shelf.href}#${shelf.key}`} target="_blank" className="link-btn">View the page ↗</Link><Link href={`/admin/content?page=${shelf.pageKey}`} className="link-btn">Edit heading &amp; intro →</Link></span>
+        </div>))}
+      <Card title="Add a product" sub={<>Paste an Amazon or Etsy product link. We read the title, photo, price and rating from the listing{paapi ? " (through the Amazon API for Amazon links)" : ""}; Amazon sometimes declines automated requests, so check the card and fill in anything missing. Toggle <strong>Featured</strong> to show it on the homepage row; leave <strong>{SHELVES.wellness.name}</strong> ticked to show it at {SHELVES.wellness.where}. Etsy shop: <a href={env.etsyShopUrl} target="_blank" rel="noreferrer" style={{ color: "#3f9ad9" }}>{env.etsyShopUrl}</a></>}>
+        <form action={addProduct} style={{ display: "grid", gridTemplateColumns: addCols, gap: 8, alignItems: "center" }}>
           <input name="url" placeholder="Paste an Amazon or Etsy product link…" className="admin-input admin-input-sm" required />
           <input name="category" list="pcats" placeholder="Category" className="admin-input admin-input-sm" /><datalist id="pcats">{categories.map((c) => <option key={c} value={c} />)}</datalist>
           <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12 }}><input type="checkbox" name="featured" />Featured</label>
+          {SHELF_KEYS.map((k) => <label key={k} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12 }}><input type="checkbox" name="shelves" value={k} defaultChecked />{SHELVES[k].name}</label>)}
           <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8 }}>Fetch & add</button>
         </form>
       </Card>
@@ -69,12 +80,13 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
                     <input type="hidden" name="asin" value={it.asin} />
                     <input name="category" list="pcats" placeholder="Category" className="admin-input admin-input-sm" style={{ width: 150 }} />
                     <label style={{ display: "flex", gap: 4, alignItems: "center", fontSize: 11 }}><input type="checkbox" name="featured" />Featured</label>
+                    {SHELF_KEYS.map((k) => <label key={k} style={{ display: "flex", gap: 4, alignItems: "center", fontSize: 11 }}><input type="checkbox" name="shelves" value={k} defaultChecked />{SHELVES[k].name}</label>)}
                     <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8 }}>Add</button>
                   </form>)}
               </div>); })}
           </div>)}
       </Card>
-      <Card title="Catalog" sub="Drag to reorder the AIP Products page. Titles and descriptions you type here are kept; the scheduled refresh only updates prices, ratings and photos you haven't replaced.">
+      <Card title="Catalog" sub={`Drag to reorder; the AIP Products page and ${SHELVES.wellness.name} follow this order. Titles and descriptions you type here are kept; the scheduled refresh only updates prices, ratings and photos you haven't replaced.`}>
         <div className="th" style={{ display: "grid", gridTemplateColumns: COLS, gap: 12, padding: "0 0 8px" }}><span /><span>Product</span><span>Category</span><span>Price</span><span>Rating</span><span>Featured</span><span /></div>
         <Sortable ids={rows.map((r) => r.id)} onReorder={reorderProducts}>
           {rows.map((p) => { const r = asRetailer(p.retailer); const asin = r === "amazon" ? asinFromUrl(p.url) : null; return (
@@ -86,6 +98,7 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
                   <input name="title" defaultValue={p.title} className="admin-input admin-input-sm" aria-label="Title" />
                   <span style={{ fontSize: 11, color: "#8c95a8", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 8px", borderRadius: 999, background: "#f2f4f7", color: "#1a2238", fontWeight: 600 }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: RETAILERS[r].dot }} />{RETAILERS[r].name}</span>
+                    {SHELF_KEYS.filter((k) => onShelf(p.shelves, k)).map((k) => <span key={k} style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 999, background: "#e6f3fc", color: "#1a2238", fontWeight: 600 }}>{SHELVES[k].name}</span>)}
                     <a href={p.url} target="_blank" rel="noreferrer" style={{ color: "#3f9ad9" }}>View on {retailerLabel(r)} ↗</a>
                     {r === "amazon" && (asin ? <span>ASIN {asin}{cartOn ? " · cart button on" : ""}</span> : <span style={{ color: "#b45309" }}>no ASIN in this link — paste the full product link (…/dp/…) to get the cart button</span>)}
                     <span>{p.lastSyncedAt ? `synced ${relativeDay(p.lastSyncedAt)}` : "not synced"}</span>
@@ -105,6 +118,7 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
               </form>
               <div style={{ display: "flex", gap: 14, justifyContent: "flex-end", fontSize: 11 }}>
                 <form action={productAction}><input type="hidden" name="productId" value={p.id} /><input type="hidden" name="op" value="feature" /><button type="submit" className="link-btn">{p.featured ? "Remove from homepage" : "Feature on homepage"}</button></form>
+                {SHELF_KEYS.map((k) => { const on = onShelf(p.shelves, k); return <form key={k} action={productAction}><input type="hidden" name="productId" value={p.id} /><input type="hidden" name="op" value="shelf" /><input type="hidden" name="shelf" value={k} /><input type="hidden" name="on" value={on ? "0" : "1"} /><button type="submit" className="link-btn">{on ? `Remove from ${SHELVES[k].name}` : `Add to ${SHELVES[k].name}`}</button></form>; })}
                 <form action={productAction}><input type="hidden" name="productId" value={p.id} /><input type="hidden" name="op" value="refresh" /><button type="submit" className="link-btn link-muted">Refresh from {r === "other" ? "the store" : RETAILERS[r].name}</button></form>
                 <form action={productAction}><input type="hidden" name="productId" value={p.id} /><input type="hidden" name="op" value="active" /><button type="submit" className="link-btn link-muted">{p.isActive ? "Hide" : "Show"}</button></form>
                 <form action={productAction}><input type="hidden" name="productId" value={p.id} /><input type="hidden" name="op" value="delete" /><ConfirmButton message={`Remove “${p.title}” from the catalog?`}>Remove</ConfirmButton></form>

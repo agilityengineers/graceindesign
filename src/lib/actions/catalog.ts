@@ -9,6 +9,7 @@ import { adminAction, backTo } from "./_util";
 import { str, strOrNull, parseNum, bool } from "@/lib/utils";
 import { fetchListing, syncProducts, refreshedFields, retailerFor, retailerLabel, isListingUrl, asRetailer, defaultType, asinFromUrl } from "@/lib/server/listings";
 import { getAmazonItems } from "@/lib/server/amazon";
+import { SHELVES, SHELF_KEYS, isShelfKey, parseShelves, toggleShelf } from "@/lib/shelves";
 import { syncRssSource, syncAllRss } from "@/lib/server/rss";
 import { getSetting, setSetting } from "@/lib/server/settings";
 import { sendEmail } from "@/lib/server/outbox";
@@ -17,7 +18,7 @@ import { uploadToMedia } from "@/lib/server/media-upload";
 import { env } from "@/lib/env";
 
 // --- Products (links to Amazon, Etsy or any other store) ------------------------
-const PREVAL = ["/admin/products", "/", "/healthy-home-resources/aip-products", "/healthy-home-resources"];
+const PREVAL = Array.from(new Set(["/admin/products", "/", "/healthy-home-resources/aip-products", "/healthy-home-resources", ...SHELF_KEYS.map((k) => SHELVES[k].href)]));
 export async function addProduct(formData: FormData) {
   await adminAction("products", "product", "create", async () => {
     const url = str(formData.get("url")); if (!isListingUrl(url)) throw new Error("Paste the full product link (an Amazon or Etsy listing URL)");
@@ -25,7 +26,7 @@ export async function addProduct(formData: FormData) {
     const retailer = retailerFor(url);
     const d = await fetchListing(url);
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(products);
-    const [p] = await db.insert(products).values({ url, retailer, title: str(formData.get("title")) || d?.title || `New ${retailerLabel(retailer)} listing (edit title)`, description: strOrNull(formData.get("description")) ?? d?.description ?? null, price: d?.price || "$—", imageUrl: d?.image || null, reviews: d?.reviews || "(0)", type: defaultType(retailer), category: str(formData.get("category")) || "Uncategorized", featured: bool(formData.get("featured")), sort: Number(n), lastSyncedAt: d ? new Date() : null }).returning();
+    const [p] = await db.insert(products).values({ url, retailer, title: str(formData.get("title")) || d?.title || `New ${retailerLabel(retailer)} listing (edit title)`, description: strOrNull(formData.get("description")) ?? d?.description ?? null, price: d?.price || "$—", imageUrl: d?.image || null, reviews: d?.reviews || "(0)", type: defaultType(retailer), category: str(formData.get("category")) || "Uncategorized", featured: bool(formData.get("featured")), shelves: parseShelves(formData.getAll("shelves")), sort: Number(n), lastSyncedAt: d ? new Date() : null }).returning();
     return p;
   }, { back: "/admin/products", ok: "Listing added — check the title, photo and price on its card", entityId: (p) => p.id, revalidate: PREVAL });
 }
@@ -37,16 +38,19 @@ export async function addAmazonItem(formData: FormData) {
     if (existing) throw new Error("That product is already in the catalog");
     const [it] = await getAmazonItems([asin]); if (!it) throw new Error("Amazon didn't return that product — try again in a moment");
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(products);
-    const [p] = await db.insert(products).values({ url: it.url, retailer: "amazon", title: it.title, description: it.description, price: it.price, imageUrl: it.image, reviews: it.reviews, rating: it.rating || "—", type: "", category: str(formData.get("category")) || "Uncategorized", featured: bool(formData.get("featured")), sort: Number(n), lastSyncedAt: new Date() }).returning();
+    const [p] = await db.insert(products).values({ url: it.url, retailer: "amazon", title: it.title, description: it.description, price: it.price, imageUrl: it.image, reviews: it.reviews, rating: it.rating || "—", type: "", category: str(formData.get("category")) || "Uncategorized", featured: bool(formData.get("featured")), shelves: parseShelves(formData.getAll("shelves")), sort: Number(n), lastSyncedAt: new Date() }).returning();
     return p;
   }, { back: "/admin/products", ok: "Product added from Amazon", entityId: (p) => p.id, revalidate: PREVAL });
 }
 export async function productAction(formData: FormData) {
   const id = parseNum(formData.get("productId")); const op = str(formData.get("op"));
+  // "shelf": put the listing on a named shelf (on=1) or take it off (on=0), e.g. WELLness-Products at the bottom of Healthy Home Resources.
+  const shelfKey = str(formData.get("shelf")); const shelfOn = bool(formData.get("on")); const shelfName = isShelfKey(shelfKey) ? SHELVES[shelfKey].name : "shelf";
   await adminAction("products", "product", op, async (user) => {
     const p = await db.query.products.findFirst({ where: eq(products.id, id) }); if (!p) throw new Error("Product not found");
     if (op === "delete") await db.delete(products).where(eq(products.id, id));
     else if (op === "feature") await db.update(products).set({ featured: !p.featured, updatedAt: new Date() }).where(eq(products.id, id));
+    else if (op === "shelf") { if (!isShelfKey(shelfKey)) throw new Error("Unknown shelf"); await db.update(products).set({ shelves: toggleShelf(p.shelves, shelfKey, shelfOn), updatedAt: new Date() }).where(eq(products.id, id)); }
     else if (op === "active") await db.update(products).set({ isActive: !p.isActive, updatedAt: new Date() }).where(eq(products.id, id));
     else if (op === "refresh") { const d = await fetchListing(p.url); if (!d) throw new Error(`${retailerLabel(p.retailer)} didn't return listing details — try again later, or fill the card in by hand`); await db.update(products).set({ ...refreshedFields(p, d), updatedAt: new Date() }).where(eq(products.id, id)); }
     else if (op === "update") {
@@ -56,7 +60,7 @@ export async function productAction(formData: FormData) {
       await db.update(products).set({ url: nextUrl, retailer, title: str(formData.get("title")) || p.title, description: strOrNull(formData.get("description")), price: str(formData.get("price")) || p.price, category: str(formData.get("category")) || p.category, tag: strOrNull(formData.get("tag")), type: str(formData.get("type")), rating: str(formData.get("rating")) || p.rating, reviews: str(formData.get("reviews")) || p.reviews, imageUrl, updatedAt: new Date() }).where(eq(products.id, id));
     }
     return id;
-  }, { back: "/admin/products", ok: { delete: "Listing removed", feature: "Featured updated", active: "Visibility updated", refresh: "Refreshed from the store page", update: "Product saved" }[op] || "Done", entityId: () => id, revalidate: PREVAL });
+  }, { back: "/admin/products", ok: { delete: "Listing removed", feature: "Featured updated", shelf: shelfOn ? `Added to ${shelfName}` : `Removed from ${shelfName}`, active: "Visibility updated", refresh: "Refreshed from the store page", update: "Product saved" }[op] || "Done", entityId: () => id, revalidate: PREVAL });
 }
 export async function syncProductsNow() {
   await adminAction("products", "product", "sync", async () => syncProducts(), { back: "/admin/products", ok: "Prices, ratings and photos refreshed", revalidate: PREVAL });

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — WELLness-Products on Healthy Home Resources
+- A **WELLness-Products** section at the bottom of Healthy Home Resources (`/healthy-home-resources#wellness`): a `product_shelf` block showing the catalog listings on the new `wellness` shelf, with "Add to Amazon cart" per item and "Add all to your Amazon cart" once the tracking id is set. The section hides itself while the shelf is empty.
+- Named shelves: `products.shelves` (migration `drizzle/0004_product_shelves.sql`) and a registry in `src/lib/shelves.ts`. A listing stays on the AIP Products page and can sit on any number of shelves; `product_shelf` blocks take a `shelf` field and shelf sections get an `id` anchor.
+- Admin → Products: a WELLness-Products box on "Fetch & add" and on the Amazon search results (ticked by default), an "Add to / Remove from WELLness-Products" link and badge on every card, the shelf count in the header, and a status strip that says what is on the shelf and links to the page and to the block's copy in Content → Pages.
+- `npm run content:products` adds the section to an existing database's Healthy Home Resources page and stocks the shelf with the catalog's Amazon listings the first time (never again once something is on it); seeded Amazon picks start on the shelf. `npm run test:shelves` covers the helpers and the seed.
+
 ## Unreleased — AIP Products: Amazon picks (any store), not Etsy-only
 - The product catalog links to whichever store sells the item. Each listing records its store (`retailer`: Amazon, Etsy or other) and an optional description; cards read "View on Amazon" / "View on Etsy", Amazon photos sit on a light background, review counts name the store, and the page header counts listings beside an "Available on Amazon" badge. Migration `drizzle/0003_products_retailers.sql`.
 - Admin → Products (was "Etsy products"): paste an Amazon or Etsy link and the listing page is read for title, photo, price and rating (Amazon may decline, so every field is editable, including the link, store and description). "Refresh" re-reads the store page; the scheduled `etsy` job keeps its name but refreshes prices, ratings and un-replaced photos for every store and never overwrites titles, descriptions or uploaded photos.
