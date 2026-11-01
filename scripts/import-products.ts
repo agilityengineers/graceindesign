@@ -128,13 +128,13 @@ async function listings() {
 async function requireMigration() {
   const { rows } = await pool.query(`select 1 from information_schema.columns where table_name = 'products' and column_name = 'shelves'`);
   if (rows.length) return;
-  console.error("products.shelves is missing — run `npm run db:migrate` first (migrations 0004_product_shelves and 0005_products_aip_shelf), then run this again.");
+  console.error("products.shelves is missing — run `npm run db:migrate` first (migrations 0004_product_shelves and 0006_products_aip_shelf), then run this again.");
   await pool.end(); process.exit(1);
 }
 /** True when at least one listing sits on the shelf. */
 async function shelfStocked(key: string) { const rows = await db.select({ shelves: S.products.shelves }).from(S.products); return rows.some((p) => onShelf(p.shelves, key)); }
 
-/** Every listing belongs on the AIP Products shelf unless the admin took it off; migration 0005 does this too, so normally nothing is left to do. */
+/** Every listing belongs on the AIP Products shelf unless the admin took it off; migration 0006 does this too, so normally nothing is left to do. */
 async function aipShelf() {
   const rows = await db.select({ id: S.products.id, title: S.products.title, shelves: S.products.shelves }).from(S.products);
   const missing = rows.filter((p) => !onShelf(p.shelves, AIP_SHELF.key));

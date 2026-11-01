@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { sql, eq, and } from "drizzle-orm";
-import { db, leads, ccResources, ccEvents, type User } from "@/lib/db";
+import { sql, eq, and, inArray } from "drizzle-orm";
+import { db, leads, ccResources, ccEvents, ccSubscribers, newsletterSubscribers, type User } from "@/lib/db";
 import { can, type Area } from "@/lib/auth/session";
 import AdminNav from "./AdminNav";
 
@@ -15,17 +15,21 @@ export const ADMIN_NAV: { key: string; label: string; href: string; area: Area }
   { key: "products", label: "Products", href: "/admin/products", area: "products" },
   { key: "rss", label: "RSS feeds", href: "/admin/rss", area: "rss" },
   { key: "caribbean", label: "Caribbean Connection", href: "/admin/caribbean", area: "caribbean" },
+  { key: "newsletter", label: "Newsletter", href: "/admin/newsletter", area: "newsletter" },
   { key: "social", label: "Social media", href: "/admin/social", area: "social" },
   { key: "ops", label: "Client ops", href: "/admin/ops", area: "ops" },
 ];
 
 export default async function AdminShell({ user, active, title, subtitle, children, actions }: { user: User; active: string; title: string; subtitle?: string; children: React.ReactNode; actions?: React.ReactNode }) {
-  const [[nl], [cr], [ce]] = await Promise.all([
+  const [[nl], [cr], [ce], [ns1], [ns2]] = await Promise.all([
     db.select({ n: sql<number>`count(*)` }).from(leads).where(and(eq(leads.stage, "new"), eq(leads.archived, false))),
     db.select({ n: sql<number>`count(*)` }).from(ccResources).where(eq(ccResources.status, "pending")),
     db.select({ n: sql<number>`count(*)` }).from(ccEvents).where(eq(ccEvents.status, "pending")),
+    // Sign-ups that have not reached Insta-Newsletter: a push that failed, or one waiting for a retry.
+    db.select({ n: sql<number>`count(*)` }).from(ccSubscribers).where(inArray(ccSubscribers.instaStatus, ["queued", "failed"])),
+    db.select({ n: sql<number>`count(*)` }).from(newsletterSubscribers).where(inArray(newsletterSubscribers.instaStatus, ["queued", "failed"])),
   ]);
-  const badges: Record<string, number> = { leads: Number(nl.n), caribbean: Number(cr.n) + Number(ce.n) };
+  const badges: Record<string, number> = { leads: Number(nl.n), caribbean: Number(cr.n) + Number(ce.n), newsletter: Number(ns1.n) + Number(ns2.n) };
   const items = ADMIN_NAV.filter((n) => can(user, n.area)).map((n) => ({ ...n, badge: badges[n.key] || 0 }));
   return (
     <div className="admin-shell">

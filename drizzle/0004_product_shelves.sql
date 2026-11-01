@@ -1,1 +1,1 @@
-ALTER TABLE "products" ADD COLUMN "shelves" text[] DEFAULT '{}'::text[] NOT NULL;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "shelves" text[] DEFAULT '{}'::text[] NOT NULL;

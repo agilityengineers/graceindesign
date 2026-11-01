@@ -1,5 +1,5 @@
 {
-  "id": "60627724-13f9-40b9-8ff1-22d5ef9a84f3",
+  "id": "7581c217-e6e8-40b0-a44e-a0246922c34a",
   "prevId": "695bfd4c-fd89-4497-92ac-731e3634c627",
   "version": "7",
   "dialect": "postgresql",
@@ -768,6 +768,42 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "insta_status": {
+          "name": "insta_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insta_contact_id": {
+          "name": "insta_contact_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insta_synced_at": {
+          "name": "insta_synced_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insta_error": {
+          "name": "insta_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "consent_ip": {
+          "name": "consent_ip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_page": {
+          "name": "source_page",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -2308,6 +2344,42 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        },
+        "insta_status": {
+          "name": "insta_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insta_contact_id": {
+          "name": "insta_contact_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insta_synced_at": {
+          "name": "insta_synced_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insta_error": {
+          "name": "insta_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "consent_ip": {
+          "name": "consent_ip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_page": {
+          "name": "source_page",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -3109,7 +3181,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'$—'"
+          "default": "'$\u2014'"
         },
         "image_url": {
           "name": "image_url",

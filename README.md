@@ -29,13 +29,14 @@ Sign in at `/login` with `info@graceindesign.net` or `emailme@clarencewilliams.c
 | `npm run content:launch [-- --dry-run | --ops]` | Apply the October 2026 pre-launch content corrections to an already-seeded database without wiping it (dry-run prints the changes; ops also removes sample operations data). See `docs/launch-content.md` |
 | `npm run content:products [-- --dry-run | --images | --refresh]` | Add the seeded product listings (`src/lib/seed-data/products.ts`), the store-neutral AIP Products wording and the WELLness-Products section on Healthy Home Resources to an already-seeded database, matched by URL so admin edits survive. See `docs/products.md` |
 | `npm run db:reset` | Drop everything |
-| `npm run cron -- <job>` | Run a scheduled job (`reminders`, `rss`, `etsy`, `social`, `drips`, `webhooks`, `outbox`, `hubspot`, `all`) |
+| `npm run cron -- <job>` | Run a scheduled job (`reminders`, `rss`, `etsy`, `social`, `drips`, `webhooks`, `outbox`, `hubspot`, `newsletter`, `all`) |
 | `npm run media:fetch` | Download generated/stock imagery into `public/media/` |
 | `npm run verify` | Typecheck + lint + production build |
 | `npm run test:notifications` | Unit tests for sender routing, Call Flow Tracker tokens and Slack payloads |
 | `npm run test:amazon` | Unit tests for Amazon link/ASIN/cart helpers and the Product Advertising API request signing |
 | `npm run test:shelves` | Unit tests for the named product shelves (WELLness-Products) and the Healthy Home Resources seed |
 | `npm run test:cc-events` | Unit tests for the Community Events rule: a past event leaves the public page at midnight in its own time zone |
+| `npm run test:newsletter` | Unit tests for the newsletter hand-off to Insta-Newsletter: request body, status vocabulary, filters, CSV export |
 | `node tests/smoke.mjs` | Funnel and route smoke test against a running server (writes a test lead) |
 | `npm run test:launch-content` | Read-only crawl of the public pages: no prototype/admin text, unique titles and descriptions, robots, sitemap, favicon, noindex, redirects |
 | `node tests/shot.mjs --login <owner email> /route …` | Full-page screenshots (dev helper) |

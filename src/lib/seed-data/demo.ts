@@ -135,6 +135,7 @@ export const INTEGRATIONS = [
   ["etsy", "Etsy", "Product listings", 2],
   ["amazon", "Amazon (Associates + Product Advertising API)", "Tracking id on product links, “Add to cart” buttons, live search and prices", 2],
   ["rss", "RSS", "News imports", 2],
+  ["insta_newsletter", "Insta-Newsletter", "The newsletter system: audiences, newsletters and sends. Website sign-ups flow in through its API", 2],
   ["magnific", "Magnific", "Generate imagery into the media library", 2],
   ["meta", "Meta (Facebook + Instagram)", "Social publishing + on-site feed", 3],
   ["linkedin", "LinkedIn", "Social publishing", 3],

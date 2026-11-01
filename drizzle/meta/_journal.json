@@ -40,8 +40,15 @@
     {
       "idx": 5,
       "version": "7",
-      "when": 1793552749452,
-      "tag": "0005_products_aip_shelf",
+      "when": 1793550380295,
+      "tag": "0005_newsletter_insta",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793557532302,
+      "tag": "0006_products_aip_shelf",
       "breakpoints": true
     }
   ]

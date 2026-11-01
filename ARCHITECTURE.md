@@ -12,6 +12,7 @@ Think of the app as one house with three doors: the **public site** visitors wal
 | Storage | Replit Object Storage (`@replit/object-storage`) with local `./.data/uploads` fallback; served through `/api/media/[...key]` |
 | Email / SMS / Slack | SendGrid (four verified senders, `src/lib/email-senders.ts`), SMS through Call Flow Tracker's Twilio (fallback: direct Twilio), Slack incoming webhook — all through the `outbox` table / `src/lib/server/notify.ts` |
 | PDFs / calendar | `pdf-lib` (checklist, proposals), server-generated `.ics` |
+| Newsletter | Insta-Newsletter is the list of record and the sender. The website captures sign-ups (two public forms) and pushes each one to Insta-Newsletter's v1 API (`src/lib/server/insta-newsletter.ts`, key from `INSTA_NEWSLETTER_*` secrets or pasted in Admin → Newsletter); the `newsletter` cron job retries. See `docs/insta-newsletter-integration.md` |
 | Products | Catalog in Postgres linking out to Amazon (Associates tracking id, add-to-cart links, optional Product Advertising API 5 in `src/lib/server/amazon.ts`) or Etsy; details read from the store page otherwise (`src/lib/server/listings.ts`). Named shelves (`src/lib/shelves.ts`) put curated listings on pages, e.g. WELLness-Products at the bottom of Healthy Home Resources. See `docs/products.md` |
 | Auth | Magic links + DB sessions + signed cookie; roles owner/editor/sales/social, super admin flag |
 | Hosting | Replit Autoscale (`.replit`), port 5000 → 80 |
@@ -39,11 +40,11 @@ tests/                 smoke test and screenshot helper
 - **Public pages** are server components. They read from the database through cached loaders in `src/lib/data/site.ts`, resolve `media://` slots through `src/lib/data/media.ts`, and render blocks with `src/components/site/blocks.tsx`. `?preview=1` shows draft content to signed-in team members only.
 - **Consultation funnel**: the modal / `/contact` form fetches `/api/consult/schema?from=<page>` and `/api/consult/slots`, then POSTs `/api/consult/submit`. `submitConsultation()` creates the lead (+ booking), sends the confirmation (email + `.ics` + checklist PDF, optional SMS), notifies the admin, emits `lead.created` / `booking.created` webhooks and enrols drip sequences.
 - **Admin** pages call `requireArea("<area>")` and render forms whose `action` is a server action in `src/lib/actions/*`. Every action runs through `adminAction()` (auth → work → audit log → revalidate → redirect with `?ok=` / `?err=` toast). Drag and drop calls small actions directly (`moveLeadStage`, `moveProjectStage`, `reorder*`).
-- **Permissions** (`src/lib/auth/session.ts`): owner → everything; editor → pages, services, posts, media, hero, rss, products; sales → leads, calendar, projects, ops; social → social, posts, media. `requireOwner()` guards users & roles. Super admins are owners who can manage other super admins.
+- **Permissions** (`src/lib/auth/session.ts`): owner → everything; editor → pages, services, posts, media, hero, rss, products, caribbean, newsletter; sales → leads, calendar, projects, ops; social → social, posts, media. `requireOwner()` guards users & roles. Super admins are owners who can manage other super admins.
 
 ## Scheduled work
 
-`/api/cron/<job>` (bearer `CRON_SECRET`) or `npm run cron -- <job>` runs: `reminders` (24h booking reminders), `rss`, `etsy`, `social` (publish due posts, sync feeds), `drips`, `webhooks` (retry deliveries), `outbox` (retry queued mail/SMS), `hubspot`, or `all`. Each run is logged in `cron_runs`. On Replit, create a Scheduled Deployment that runs `npm run cron -- all` every 15 minutes (plus `rss` hourly if you prefer a separate cadence).
+`/api/cron/<job>` (bearer `CRON_SECRET`) or `npm run cron -- <job>` runs: `reminders` (24h booking reminders), `rss`, `etsy`, `social` (publish due posts, sync feeds), `drips`, `webhooks` (retry deliveries), `outbox` (retry queued mail/SMS), `hubspot`, `newsletter` (push website sign-ups that have not reached Insta-Newsletter yet), or `all`. Each run is logged in `cron_runs`. On Replit, create a Scheduled Deployment that runs `npm run cron -- all` every 15 minutes (plus `rss` hourly if you prefer a separate cadence).
 
 ## Call Flow Tracker integration (switched on after launch)
 
@@ -61,7 +62,7 @@ Set `CFT_URL` so the login page can link back to CFT, register this app's launch
 
 ## Team notifications
 
-`src/lib/server/notify.ts` is the switchboard. A consultation request fans out to: email to the sales inbox (`consultation@`, from `noreply@` with Reply-To the visitor), a Slack post (`src/lib/server/slack.ts`, Block Kit with "Open in admin" / "Open Call Flow Tracker" buttons), and a text to Grace that carries a `/go/cft/<token>` auto sign-in link. Caribbean Connection submissions and newsletter sign-ups go to the support inbox + Slack; events CFT reports through `/api/webhooks/cft` go to Slack. Toggles live in Admin → Form builder → Notifications; every channel is best-effort and logged on the lead's activity.
+`src/lib/server/notify.ts` is the switchboard. A consultation request fans out to: email to the sales inbox (`consultation@`, from `noreply@` with Reply-To the visitor), a Slack post (`src/lib/server/slack.ts`, Block Kit with "Open in admin" / "Open Call Flow Tracker" buttons), and a text to Grace that carries a `/go/cft/<token>` auto sign-in link. Caribbean Connection submissions go to the support inbox + Slack; newsletter sign-ups post to Slack and are handed to Insta-Newsletter (Admin → Newsletter shows whether each one arrived); events CFT reports through `/api/webhooks/cft` go to Slack. Toggles live in Admin → Form builder → Notifications; every channel is best-effort and logged on the lead's activity.
 
 ## Replit runbook
 

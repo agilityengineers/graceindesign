@@ -64,6 +64,15 @@ export const env = {
   stripe: { secret: process.env.STRIPE_SECRET_KEY || "", webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "" },
   dropboxSignKey: process.env.DROPBOX_SIGN_API_KEY || "",
   hubspotToken: process.env.HUBSPOT_ACCESS_TOKEN || "",
+  /**
+   * Insta-Newsletter, the newsletter system: website sign-ups are pushed to it through its v1 API.
+   * Either set these two secrets, or paste the URL and key under Admin → Newsletter → Insta-Newsletter
+   * (stored encrypted). Secrets win when both are present.
+   */
+  instaNewsletter: {
+    url: (process.env.INSTA_NEWSLETTER_URL || "").trim().replace(/\/+$/, "").replace(/\/v1$/, ""),
+    apiKey: (process.env.INSTA_NEWSLETTER_API_KEY || "").trim(),
+  },
   social: {
     meta: { id: process.env.META_APP_ID || "", secret: process.env.META_APP_SECRET || "" },
     linkedin: { id: process.env.LINKEDIN_CLIENT_ID || "", secret: process.env.LINKEDIN_CLIENT_SECRET || "" },

@@ -48,7 +48,7 @@ The previous site listed its Amazon products at https://graceindesign.funnelpage
 ## Rolling out to an existing database
 
 ```bash
-npm run db:migrate                                  # 0003 retailer + description, 0004 products.shelves, 0005 every listing onto the AIP Products shelf
+npm run db:migrate                                  # 0003 retailer + description, 0004 products.shelves, 0006 every listing onto the AIP Products shelf
 npm run content:products -- --dry-run               # preview: every listing it would add, every text change, the shelf steps
 npm run content:products -- --images                # add the listings, self-host their photos, update the page wording, point the AIP blocks at the shelf, add WELLness-Products
 
@@ -58,7 +58,7 @@ DATABASE_URL='postgresql://…' npm run content:products -- --dry-run
 DATABASE_URL='postgresql://…' npm run content:products -- --images
 ```
 
-The import is idempotent: listings are matched by URL and only added when missing; the header, badge, filters, Healthy Home Resources card and meta description change only where they still carry the old "our Etsy shop" wording; the AIP Products grid and carousel get `shelf: "aip"` only when they have no `shelf` yet; every listing is put on the AIP Products shelf if migration 0005 somehow left one off; the WELLness-Products block is added to the bottom of Healthy Home Resources once (skipped when a `product_shelf` block on the `wellness` shelf is already there); and that shelf is stocked with every Amazon listing in the catalog only when nothing is on it yet, so the admin's choices survive a rerun. Add `--refresh` to read the live price, photo and rating from each store page as the listings are added. The script stops with a clear message if migrations 0004/0005 have not been applied.
+The import is idempotent: listings are matched by URL and only added when missing; the header, badge, filters, Healthy Home Resources card and meta description change only where they still carry the old "our Etsy shop" wording; the AIP Products grid and carousel get `shelf: "aip"` only when they have no `shelf` yet; every listing is put on the AIP Products shelf if migration 0006 somehow left one off; the WELLness-Products block is added to the bottom of Healthy Home Resources once (skipped when a `product_shelf` block on the `wellness` shelf is already there); and that shelf is stocked with every Amazon listing in the catalog only when nothing is on it yet, so the admin's choices survive a rerun. Add `--refresh` to read the live price, photo and rating from each store page as the listings are added. The script stops with a clear message if migrations 0004/0006 have not been applied.
 
 Afterwards, open Admin → Products: check photos and prices, drag to order the pages, and use the **Shows on** boxes to decide where each listing appears.
 

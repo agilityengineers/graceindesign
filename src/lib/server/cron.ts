@@ -12,8 +12,9 @@ import { retryDueDeliveries } from "@/lib/server/webhooks";
 import { runDueSequenceSteps } from "@/lib/server/sequences";
 import { dispatchDueSocialPosts, syncSocialFeeds } from "@/lib/server/social";
 import { runHubspotSync } from "@/lib/server/hubspot";
+import { syncPendingSubscribers } from "@/lib/server/insta-newsletter";
 
-export const JOBS = ["reminders", "rss", "etsy", "social", "drips", "webhooks", "outbox", "hubspot", "all"] as const;
+export const JOBS = ["reminders", "rss", "etsy", "social", "drips", "webhooks", "outbox", "hubspot", "newsletter", "all"] as const;
 export type Job = (typeof JOBS)[number];
 
 export async function runJob(job: Job): Promise<Record<string, unknown>> {
@@ -61,5 +62,7 @@ const JOB_FNS: Record<Exclude<Job, "all">, () => Promise<Record<string, unknown>
     return { retried: queued.length + failed.length };
   },
   async hubspot() { return await runHubspotSync(); },
+  // Website sign-ups that did not reach Insta-Newsletter on the spot (outage, rate limit, key fixed later).
+  async newsletter() { return await syncPendingSubscribers(); },
 };
 export { socialPosts };
