@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { asinFromUrl, amazonCartUrl, withAssociateTag, retailerFor } from "../src/lib/retailers";
+import { asinFromUrl, amazonCartUrl, withAssociateTag, retailerFor, amazonImageUrl, isRetailer, asRetailer } from "../src/lib/retailers";
 import { signingKey, signRequest } from "../src/lib/server/amazon";
 
 test("ASINs are read from the common Amazon link shapes and from nothing else", () => {
@@ -46,4 +46,15 @@ test("a Product Advertising API request is signed the way an independent impleme
   assert.equal(h["content-encoding"], "amz-1.0");
   assert.equal(h.host, "webservices.amazon.com");
   assert.equal(h.authorization, "AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20260102/us-east-1/ProductAdvertisingAPI/aws4_request, SignedHeaders=content-encoding;content-type;host;x-amz-date;x-amz-target, Signature=fcf1ec44deebb07769cc8c20e142612f5a3c02d07042844581cc5e5cecf0b258");
+});
+
+test("the image-by-ASIN address is upper-cased and sized; store keys are checked strictly", () => {
+  assert.equal(amazonImageUrl("b0cxyz1234"), "https://images-na.ssl-images-amazon.com/images/P/B0CXYZ1234.01._SL500_.jpg");
+  assert.equal(amazonImageUrl("B0CXYZ1234", 160), "https://images-na.ssl-images-amazon.com/images/P/B0CXYZ1234.01._SL160_.jpg");
+  assert.equal(isRetailer("amazon"), true);
+  assert.equal(isRetailer("etsy"), true);
+  assert.equal(isRetailer("other"), true);
+  assert.equal(isRetailer(""), false); // "Detect from the link" on the add form
+  assert.equal(isRetailer("walmart"), false);
+  assert.equal(asRetailer("walmart"), "other");
 });

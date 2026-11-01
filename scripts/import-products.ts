@@ -1,18 +1,20 @@
 /**
  * Product catalog import — adds the seeded listings (src/lib/seed-data/products.ts) to an ALREADY-SEEDED database, moves the
- * AIP Products page copy from "our Etsy shop" to store-neutral wording, and adds the WELLness-Products section (a `product_shelf`
- * block on the "wellness" shelf) to the bottom of Healthy Home Resources, without touching anything edited in the admin.
+ * AIP Products page copy from "our Etsy shop" to store-neutral wording, points the AIP Products grid and carousel at the "aip" shelf,
+ * and adds the WELLness-Products section (a `product_shelf` block on the "wellness" shelf) to the bottom of Healthy Home Resources,
+ * without touching anything edited in the admin.
  *
  *   npm run content:products -- --dry-run     # print every change, write nothing
  *   npm run content:products                  # add missing listings + page copy
  *   npm run content:products -- --images      # also copy each new listing's remote photo into the media store (self-hosted)
  *   npm run content:products -- --refresh     # also read price, photo and rating from the store page for each new listing
  *
- * Run `npm run db:migrate` first (adds products.retailer, products.description and products.shelves). Safe to run repeatedly: listings
- * are matched by URL and only inserted when missing; page text changes only where the current value still equals the earlier seeded
- * wording; the WELLness-Products block is added once, and the shelf is stocked with the catalog's Amazon listings only while nothing is
- * on it yet (after that the admin decides). Run it once against the workspace database and once with DATABASE_URL pointed at
- * production (see docs/products.md).
+ * Run `npm run db:migrate` first (adds products.retailer, products.description and products.shelves, and puts every listing on the
+ * AIP Products shelf). Safe to run repeatedly: listings are matched by URL and only inserted when missing; page text changes only where
+ * the current value still equals the earlier seeded wording; the AIP blocks get `shelf: "aip"` only when they have no `shelf` yet; the
+ * WELLness-Products block is added once, and that shelf is stocked with the catalog's Amazon listings only while nothing is on it yet
+ * (after that the admin decides). Run it once against the workspace database and once with DATABASE_URL pointed at production
+ * (see docs/products.md).
  */
 import "dotenv/config";
 import { eq, sql } from "drizzle-orm";
@@ -23,7 +25,7 @@ import { PAGES } from "../src/lib/seed-data/pages";
 import { fetchListing, refreshedFields } from "../src/lib/server/listings";
 import { putObject } from "../src/lib/server/storage";
 import { slugify } from "../src/lib/utils";
-import { WELLNESS_SHELF, onShelf, toggleShelf } from "../src/lib/shelves";
+import { AIP_SHELF, WELLNESS_SHELF, onShelf, toggleShelf } from "../src/lib/shelves";
 
 const args = process.argv.slice(2);
 const DRY = args.includes("--dry-run"), IMAGES = args.includes("--images"), REFRESH = args.includes("--refresh");
@@ -60,6 +62,8 @@ function patch(pageKey: string, type: string, c: Content): Content {
     if (same(c.categories, OLD_CATEGORIES)) next.categories = [];
     if (!("disclosure" in c)) next.disclosure = "";
   }
+  // The AIP Products grid and carousel show the "aip" shelf (Admin → Products → "Shows on"); older blocks showed the whole catalog.
+  if (pageKey === "aip-products" && (type === "product_grid" || type === "product_carousel") && !("shelf" in c)) next.shelf = AIP_SHELF.key;
   if (pageKey === "hhr" && type === "hhr_cards" && Array.isArray(c.cards)) {
     const fresh = (seedBlock("hhr", "hhr_cards").cards as Content[] | undefined)?.find((x) => x.title === "AIP Products");
     next.cards = (c.cards as Content[]).map((card) => (card.title === "AIP Products" && card.body === OLD_CARD_BODY && fresh ? { ...card, body: fresh.body } : card));
@@ -124,11 +128,19 @@ async function listings() {
 async function requireMigration() {
   const { rows } = await pool.query(`select 1 from information_schema.columns where table_name = 'products' and column_name = 'shelves'`);
   if (rows.length) return;
-  console.error("products.shelves is missing — run `npm run db:migrate` first (migration 0004_product_shelves), then run this again.");
+  console.error("products.shelves is missing — run `npm run db:migrate` first (migrations 0004_product_shelves and 0005_products_aip_shelf), then run this again.");
   await pool.end(); process.exit(1);
 }
 /** True when at least one listing sits on the shelf. */
 async function shelfStocked(key: string) { const rows = await db.select({ shelves: S.products.shelves }).from(S.products); return rows.some((p) => onShelf(p.shelves, key)); }
+
+/** Every listing belongs on the AIP Products shelf unless the admin took it off; migration 0005 does this too, so normally nothing is left to do. */
+async function aipShelf() {
+  const rows = await db.select({ id: S.products.id, title: S.products.title, shelves: S.products.shelves }).from(S.products);
+  const missing = rows.filter((p) => !onShelf(p.shelves, AIP_SHELF.key));
+  if (!missing.length) { console.log(`products: every listing is on ${AIP_SHELF.name}`); return; }
+  for (const p of missing) await write(`products: put "${p.title}" on ${AIP_SHELF.name}`, () => db.update(S.products).set({ shelves: toggleShelf(p.shelves, AIP_SHELF.key, true), updatedAt: new Date() }).where(eq(S.products.id, p.id)));
+}
 
 /**
  * WELLness-Products: the product section at the bottom of Healthy Home Resources. Two parts: the `product_shelf` block on the page
@@ -170,10 +182,11 @@ async function main() {
   const shelfWasEmpty = !(await shelfStocked(WELLNESS_SHELF.key)); // decided before new listings arrive (seeded Amazon picks start on the shelf)
   const added = await listings();
   await pages();
+  await aipShelf();
   await wellnessShelf(shelfWasEmpty);
   await integrationRow();
   console.log(`\n${changes.length} change(s) ${DRY ? "would be applied" : "applied"}; ${added} listing(s) ${DRY ? "to add" : "added"}.`);
-  if (!DRY && changes.length) console.log(`Next: open Admin → Products to check photos, prices and descriptions, reorder or feature listings, and tick which ones belong on ${WELLNESS_SHELF.name} (${WELLNESS_SHELF.href}#${WELLNESS_SHELF.key}).`);
+  if (!DRY && changes.length) console.log(`Next: open Admin → Products to check photos, prices and descriptions, reorder listings, and tick where each one shows under "Shows on" (${AIP_SHELF.name}, ${WELLNESS_SHELF.name}, the homepage row).`);
   await pool.end();
 }
 main().catch(async (e) => { console.error(e); await pool.end(); process.exit(1); });

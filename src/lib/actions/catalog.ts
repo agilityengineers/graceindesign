@@ -7,7 +7,7 @@ import { requireArea } from "@/lib/auth/session";
 import { audit } from "@/lib/server/audit";
 import { adminAction, backTo } from "./_util";
 import { str, strOrNull, parseNum, bool } from "@/lib/utils";
-import { fetchListing, syncProducts, refreshedFields, retailerFor, retailerLabel, isListingUrl, asRetailer, defaultType, asinFromUrl } from "@/lib/server/listings";
+import { fetchListing, syncProducts, refreshedFields, retailerFor, retailerLabel, isListingUrl, asRetailer, isRetailer, isOwnImage, defaultType, asinFromUrl } from "@/lib/server/listings";
 import { getAmazonItems } from "@/lib/server/amazon";
 import { SHELVES, SHELF_KEYS, isShelfKey, parseShelves, toggleShelf } from "@/lib/shelves";
 import { syncRssSource, syncAllRss } from "@/lib/server/rss";
@@ -19,14 +19,22 @@ import { env } from "@/lib/env";
 
 // --- Products (links to Amazon, Etsy or any other store) ------------------------
 const PREVAL = Array.from(new Set(["/admin/products", "/", "/healthy-home-resources/aip-products", "/healthy-home-resources", ...SHELF_KEYS.map((k) => SHELVES[k].href)]));
+/** Where a listing shows, from the "Shows on" checkboxes: the named shelves plus the homepage featured row. */
+const placements = (formData: FormData) => ({ shelves: parseShelves(formData.getAll("shelves")), featured: bool(formData.get("featured")) });
+/** A photo chosen on the form ("Upload from computer"), stored in the media library; null when none was chosen. */
+async function uploadedPhoto(formData: FormData, userId: number) {
+  const f = formData.get("image_file");
+  return f instanceof File && f.size > 0 ? (await uploadToMedia(f, { folder: "products", usedOn: ["AIP Products"], userId })).url : null;
+}
 export async function addProduct(formData: FormData) {
-  await adminAction("products", "product", "create", async () => {
+  await adminAction("products", "product", "create", async (user) => {
     const url = str(formData.get("url")); if (!isListingUrl(url)) throw new Error("Paste the full product link (an Amazon or Etsy listing URL)");
     if (await db.query.products.findFirst({ where: eq(products.url, url) })) throw new Error("That listing is already in the catalog");
-    const retailer = retailerFor(url);
-    const d = await fetchListing(url);
+    const picked = str(formData.get("retailer")); const retailer = isRetailer(picked) ? picked : retailerFor(url); // "Store" on the form, else read from the link
+    const d = await fetchListing(url); // title, photo, price, rating from the store (the Amazon API when configured, else the public page)
+    const photo = await uploadedPhoto(formData, user.id); // an uploaded photo wins over the store's
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(products);
-    const [p] = await db.insert(products).values({ url, retailer, title: str(formData.get("title")) || d?.title || `New ${retailerLabel(retailer)} listing (edit title)`, description: strOrNull(formData.get("description")) ?? d?.description ?? null, price: d?.price || "$—", imageUrl: d?.image || null, reviews: d?.reviews || "(0)", type: defaultType(retailer), category: str(formData.get("category")) || "Uncategorized", featured: bool(formData.get("featured")), shelves: parseShelves(formData.getAll("shelves")), sort: Number(n), lastSyncedAt: d ? new Date() : null }).returning();
+    const [p] = await db.insert(products).values({ url, retailer, title: str(formData.get("title")) || d?.title || `New ${retailerLabel(retailer)} listing (edit title)`, description: strOrNull(formData.get("description")) ?? d?.description ?? null, price: d?.price || "$—", imageUrl: photo || d?.image || null, reviews: d?.reviews || "(0)", rating: d?.rating || "—", type: defaultType(retailer), category: str(formData.get("category")) || "Uncategorized", ...placements(formData), sort: Number(n), lastSyncedAt: d ? new Date() : null }).returning();
     return p;
   }, { back: "/admin/products", ok: "Listing added — check the title, photo and price on its card", entityId: (p) => p.id, revalidate: PREVAL });
 }
@@ -38,7 +46,7 @@ export async function addAmazonItem(formData: FormData) {
     if (existing) throw new Error("That product is already in the catalog");
     const [it] = await getAmazonItems([asin]); if (!it) throw new Error("Amazon didn't return that product — try again in a moment");
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(products);
-    const [p] = await db.insert(products).values({ url: it.url, retailer: "amazon", title: it.title, description: it.description, price: it.price, imageUrl: it.image, reviews: it.reviews, rating: it.rating || "—", type: "", category: str(formData.get("category")) || "Uncategorized", featured: bool(formData.get("featured")), shelves: parseShelves(formData.getAll("shelves")), sort: Number(n), lastSyncedAt: new Date() }).returning();
+    const [p] = await db.insert(products).values({ url: it.url, retailer: "amazon", title: it.title, description: it.description, price: it.price, imageUrl: it.image, reviews: it.reviews, rating: it.rating || "—", type: "", category: str(formData.get("category")) || "Uncategorized", ...placements(formData), sort: Number(n), lastSyncedAt: new Date() }).returning();
     return p;
   }, { back: "/admin/products", ok: "Product added from Amazon", entityId: (p) => p.id, revalidate: PREVAL });
 }
@@ -54,10 +62,15 @@ export async function productAction(formData: FormData) {
     else if (op === "active") await db.update(products).set({ isActive: !p.isActive, updatedAt: new Date() }).where(eq(products.id, id));
     else if (op === "refresh") { const d = await fetchListing(p.url); if (!d) throw new Error(`${retailerLabel(p.retailer)} didn't return listing details — try again later, or fill the card in by hand`); await db.update(products).set({ ...refreshedFields(p, d), updatedAt: new Date() }).where(eq(products.id, id)); }
     else if (op === "update") {
-      let imageUrl = strOrNull(formData.get("imageUrl")) ?? p.imageUrl; const f = formData.get("image_file"); if (f instanceof File && f.size > 0) imageUrl = (await uploadToMedia(f, { folder: "products", usedOn: ["AIP Products"], userId: user.id })).url;
-      const url = str(formData.get("url")); const nextUrl = url && isListingUrl(url) ? url : p.url;
-      const retailer = nextUrl !== p.url ? retailerFor(nextUrl) : asRetailer(str(formData.get("retailer")) || p.retailer);
-      await db.update(products).set({ url: nextUrl, retailer, title: str(formData.get("title")) || p.title, description: strOrNull(formData.get("description")), price: str(formData.get("price")) || p.price, category: str(formData.get("category")) || p.category, tag: strOrNull(formData.get("tag")), type: str(formData.get("type")), rating: str(formData.get("rating")) || p.rating, reviews: str(formData.get("reviews")) || p.reviews, imageUrl, updatedAt: new Date() }).where(eq(products.id, id));
+      // Photo: an upload on the form wins, then the library pick / current value. The store's photo is read only when the link changes,
+      // and never over a photo uploaded or picked here.
+      let imageUrl = (await uploadedPhoto(formData, user.id)) ?? strOrNull(formData.get("imageUrl")) ?? p.imageUrl;
+      const url = str(formData.get("url")); const nextUrl = url && isListingUrl(url) ? url : p.url; const linkChanged = nextUrl !== p.url;
+      const picked = str(formData.get("retailer")); const retailer = linkChanged ? retailerFor(nextUrl) : isRetailer(picked) ? picked : asRetailer(p.retailer);
+      const d = linkChanged ? await fetchListing(nextUrl) : null; // a new link brings its own photo, price and rating; the title and description stay as typed
+      if (d?.image && !isOwnImage(imageUrl)) imageUrl = d.image;
+      const price = str(formData.get("price")), rating = str(formData.get("rating")), reviews = str(formData.get("reviews"));
+      await db.update(products).set({ url: nextUrl, retailer, title: str(formData.get("title")) || p.title, description: strOrNull(formData.get("description")), price: d && d.price !== "$—" ? d.price : price || "$—", category: str(formData.get("category")) || p.category, tag: strOrNull(formData.get("tag")), type: str(formData.get("type")), rating: d?.rating || rating || p.rating, reviews: d && d.reviews !== "(0)" ? d.reviews : reviews || "(0)", imageUrl, ...placements(formData), lastSyncedAt: d ? new Date() : p.lastSyncedAt, updatedAt: new Date() }).where(eq(products.id, id));
     }
     return id;
   }, { back: "/admin/products", ok: { delete: "Listing removed", feature: "Featured updated", shelf: shelfOn ? `Added to ${shelfName}` : `Removed from ${shelfName}`, active: "Visibility updated", refresh: "Refreshed from the store page", update: "Product saved" }[op] || "Done", entityId: () => id, revalidate: PREVAL });

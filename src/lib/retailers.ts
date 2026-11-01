@@ -20,6 +20,8 @@ export function retailerFor(url: string): Retailer {
 }
 
 export function asRetailer(v: string | null | undefined): Retailer { return (RETAILER_KEYS as string[]).includes(v || "") ? (v as Retailer) : "other"; }
+/** True only for a known store key (unlike `asRetailer`, which maps anything unknown to "other"). */
+export function isRetailer(v: unknown): v is Retailer { return typeof v === "string" && (RETAILER_KEYS as string[]).includes(v); }
 
 /** "Amazon" / "Etsy" / "the store", for "View on …" and "… reviews on …". */
 export function retailerLabel(v: string | null | undefined) { return RETAILERS[asRetailer(v)].on; }
@@ -31,6 +33,9 @@ export function defaultType(r: Retailer) { return r === "etsy" ? "Digital downlo
 export function isOwnImage(url: string | null | undefined) { return !!url && !/^https?:\/\//i.test(url); }
 
 export const AMAZON_MARKETPLACE_DEFAULT = "www.amazon.com";
+
+/** Amazon's image-by-ASIN address for a listing's primary photo (no API key). Amazon answers an unknown ASIN with a tiny placeholder, so callers check the response before adopting it. */
+export function amazonImageUrl(asin: string, size = 500) { return `https://images-na.ssl-images-amazon.com/images/P/${asin.toUpperCase()}.01._SL${size}_.jpg`; }
 
 /** ASIN from an Amazon product link (/dp/…, /gp/product/…, /gp/aw/d/…, ?asin=…). Short links (amzn.to, a.co) and search pages carry none. */
 export function asinFromUrl(url: string): string | null {

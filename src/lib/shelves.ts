@@ -1,16 +1,19 @@
 /**
- * Named product shelves. A shelf is a curated set of catalog listings that a `product_shelf` block shows on a page; think of it as a
- * display table in a showroom that the admin stocks from the catalog. Membership lives in `products.shelves` (one listing can sit on
- * several shelves), the admin stocks it from Admin → Products, and the block that shows it carries `shelf: "<key>"`.
+ * Named product shelves. A shelf is a curated set of catalog listings that a page section shows; think of the catalog as the
+ * stockroom and each shelf as one display table the admin stocks from it. Membership lives in `products.shelves` (one listing
+ * can sit on several shelves), the admin ticks shelves under "Shows on" in Admin → Products, and the block that shows a shelf
+ * carries `shelf: "<key>"` (the AIP Products grid and carousel, the WELLness-Products `product_shelf` block).
  * Client-safe: no database, no network.
  */
-export type ShelfKey = "wellness";
-export type Shelf = { key: ShelfKey; name: string; pageKey: string; pageTitle: string; href: string; where: string };
+export type ShelfKey = "aip" | "wellness";
+export type Shelf = { key: ShelfKey; name: string; pageKey: string; pageTitle: string; href: string; where: string; whenEmpty: string };
 
 export const SHELVES: Record<ShelfKey, Shelf> = {
-  wellness: { key: "wellness", name: "WELLness-Products", pageKey: "hhr", pageTitle: "Healthy Home Resources", href: "/healthy-home-resources", where: "the bottom of Healthy Home Resources" },
+  aip: { key: "aip", name: "AIP Products", pageKey: "aip-products", pageTitle: "AIP Products", href: "/healthy-home-resources/aip-products", where: "the AIP Products page", whenEmpty: "the page shows its empty message" },
+  wellness: { key: "wellness", name: "WELLness-Products", pageKey: "hhr", pageTitle: "Healthy Home Resources", href: "/healthy-home-resources", where: "the bottom of Healthy Home Resources", whenEmpty: "the section stays hidden" },
 };
 export const SHELF_KEYS = Object.keys(SHELVES) as ShelfKey[];
+export const AIP_SHELF = SHELVES.aip;
 export const WELLNESS_SHELF = SHELVES.wellness;
 
 export function isShelfKey(v: unknown): v is ShelfKey { return typeof v === "string" && (SHELF_KEYS as string[]).includes(v); }
@@ -32,5 +35,5 @@ export function toggleShelf(shelves: readonly string[] | null | undefined, key: 
   return SHELF_KEYS.filter((k) => next.has(k));
 }
 
-/** Display names of the shelves a listing sits on, e.g. ["WELLness-Products"]. */
+/** Display names of the shelves a listing sits on, e.g. ["AIP Products", "WELLness-Products"]. */
 export function shelfNames(shelves: readonly string[] | null | undefined) { return parseShelves(shelves ?? []).map((k) => SHELVES[k].name); }

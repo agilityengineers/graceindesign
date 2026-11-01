@@ -36,6 +36,13 @@
       "when": 1793484698129,
       "tag": "0004_product_shelves",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793552749452,
+      "tag": "0005_products_aip_shelf",
+      "breakpoints": true
     }
   ]
 }

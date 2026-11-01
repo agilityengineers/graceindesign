@@ -82,9 +82,10 @@ export const PAGES: SeedPage[] = [
     key: "aip-products", slug: "/healthy-home-resources/aip-products", title: "AIP Products", navLabel: "Healthy Home Resources · AIP Products", parentKey: "hhr", sort: 4, seoDescription: "Home-safety and Aging In Place products recommended by Grace In Design's Certified Aging-in-Place Specialists, with links to buy on Amazon.",
     blocks: [
       { type: "page_header", content: { crumb: "Healthy Home Resources · AIP Products", crumbHref: "/healthy-home-resources", title: "Aging In Place essentials, curated by our specialists", body: "Products we recommend to the families we work with, chosen by our Certified Aging-in-Place Specialists. Each one links to the store that sells it, where checkout and delivery are handled securely.", badge: "Available on Amazon", badgeDot: "#ff9900", badgeCount: "products" } },
-      { type: "product_carousel", content: { eyebrow: "Featured this month", title: "Specialist picks" } },
+      // `shelf: "aip"`: the listings ticked for the AIP Products page in Admin → Products (src/lib/shelves.ts).
+      { type: "product_carousel", content: { eyebrow: "Featured this month", title: "Specialist picks", shelf: "aip" } },
       // Filters come from the products' own categories; `categories` only fixes their order. `disclosure` prints under the grid (e.g. an affiliate note).
-      { type: "product_grid", content: { title: "All products", categories: [], disclosure: "" } },
+      { type: "product_grid", content: { title: "All products", shelf: "aip", categories: [], disclosure: "" } },
     ],
   },
   {
