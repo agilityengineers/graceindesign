@@ -11,7 +11,9 @@ import { Card } from "@/components/admin/ui";
 import Toast from "@/components/admin/Toast";
 import ConfirmButton from "@/components/admin/Confirm";
 import Sortable from "@/components/admin/Sortable";
-import { addProduct, addAmazonItem, productAction, syncProductsNow, reorderProducts } from "@/lib/actions/catalog";
+import { addProduct, addAmazonItem, productAction, syncProductsNow, reorderProducts, importSeedProducts } from "@/lib/actions/catalog";
+import { missingSeedProducts } from "@/lib/server/product-import";
+import { PRODUCTS } from "@/lib/seed-data/products";
 import { relativeDay } from "@/lib/utils";
 
 export const metadata = { title: "Products" };
@@ -21,7 +23,7 @@ const COLS = "56px minmax(0, 2fr) 150px 90px 110px 70px auto";
 
 export default async function ProductsAdmin({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const user = await requireArea("products");
-  const [rows, map, paapi, shop, sp] = await Promise.all([db.select().from(products).orderBy(asc(products.sort), asc(products.id)), getMediaMap(), paapiReady(), getAmazonShop(), searchParams]);
+  const [rows, map, paapi, shop, sp, missing] = await Promise.all([db.select().from(products).orderBy(asc(products.sort), asc(products.id)), getMediaMap(), paapiReady(), getAmazonShop(), searchParams, missingSeedProducts()]);
   const q = (sp.q || "").trim();
   let search: { items: AmazonItem[]; total: number } | null = null; let searchError = "";
   if (paapi && q) { try { search = await searchAmazon(q); } catch (e) { searchError = (e as Error).message; } }
@@ -39,6 +41,13 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
         {shop.tag ? <span>Amazon links carry your tracking id <strong>{shop.tag}</strong> · “Add to Amazon cart” buttons are <strong>{shop.cartButtons ? "on" : "off"}</strong> · {paapi ? "Product Advertising API connected" : "Product Advertising API not set (links still work)"}.</span> : <span>No Associates tracking id yet, so Amazon links are plain and the “Add to Amazon cart” buttons stay hidden.</span>}
         <Link href="/admin/content/settings" className="link-btn" style={{ marginLeft: "auto", whiteSpace: "nowrap" }}>Amazon shop settings →</Link>
       </div>
+      {missing.length > 0 && (
+        <Card title="Previous site's product list" sub={`${missing.length} of the ${PRODUCTS.length} listings carried over from the previous site (${PRODUCTS.filter((p) => p.active !== false).length} shown on the page, the rest kept hidden) are not in this catalog yet.`}>
+          <form action={importSeedProducts} style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+            <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8 }}>Import {missing.length} product{missing.length === 1 ? "" : "s"}</button>
+            <span style={{ fontSize: 12, color: "#6b7486" }}>Adds them in order with their descriptions and categories; nothing already in the catalog changes. Afterwards press “Refresh prices & photos” to pull photos, prices and ratings from Amazon.</span>
+          </form>
+        </Card>)}
       <Card title="Add a product" sub={<>Paste an Amazon or Etsy product link. We read the title, photo, price and rating from the listing{paapi ? " (through the Amazon API for Amazon links)" : ""}; Amazon sometimes declines automated requests, so check the card and fill in anything missing. Toggle <strong>Featured</strong> to show it on the homepage row. Etsy shop: <a href={env.etsyShopUrl} target="_blank" rel="noreferrer" style={{ color: "#3f9ad9" }}>{env.etsyShopUrl}</a></>}>
         <form action={addProduct} style={{ display: "grid", gridTemplateColumns: "minmax(0, 2fr) 180px auto auto", gap: 8, alignItems: "center" }}>
           <input name="url" placeholder="Paste an Amazon or Etsy product link…" className="admin-input admin-input-sm" required />

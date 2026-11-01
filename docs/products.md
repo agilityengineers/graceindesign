@@ -2,6 +2,20 @@
 
 `/healthy-home-resources/aip-products` lists products Grace recommends. Each card links to the store that sells it (Amazon for the curated home-safety picks, Etsy for her own downloads); checkout never happens on the site. Think of the page as a curated shelf in a showroom: the site shows the pick, the store rings it up.
 
+## The process: from merge to products on the page
+
+Think of it as three doors, each opened once. Nothing shows on the live site until all three are open.
+
+1. **Merge the pull request.** Replit's post-merge hook installs dependencies and runs `db:setup --if-empty`, which applies migration 0003 (the two new product columns) to the workspace database.
+2. **Publish.** The publish flow builds the app and carries the schema change to the production database (this project does not run migrations in the production build; see `replit.md`).
+3. **Import the list.** Open Admin → Products on the published site. A card at the top says how many of the previous site's listings are missing; press **Import**. The listings appear on `/healthy-home-resources/aip-products` immediately, with the affiliate disclosure under the grid. Then press **Refresh prices & photos** to pull each product's photo, price and rating from Amazon (Amazon occasionally declines automated requests; press again later or upload a photo on the card).
+
+Do the same in the workspace to see it there. The terminal route (`npm run content:products`) does exactly what the button does.
+
+**Adding or changing products afterwards** never needs a deploy: Admin → Products → paste an Amazon link (or search Amazon once the API keys are set) → the card appears on the page. Drag to reorder, "Feature on homepage" for the homepage row, "Hide" to take one off the page.
+
+**Tracking id.** Enter the Associates tracking id once in Site settings → Amazon shop. From then on every Amazon link carries it and the "Add to Amazon cart" buttons appear on every listing whose link contains an ASIN (all fifteen).
+
 ## Where the content lives
 
 | Piece | Where | Edited in |
@@ -12,12 +26,11 @@
 
 The homepage "featured" row shows the listings marked **Featured** (up to four); the AIP Products carousel shows every visible listing; the grid filters by the categories the listings actually use.
 
-## Bringing over the previous site's products
+## The previous site's list
 
-The previous site listed its Amazon products at https://graceindesign.funnelpages.com/products. Two ways to carry them across:
+The previous site's "Recommended Products" page (graceindesign.funnelpages.com/products) is carried in `src/lib/seed-data/products.ts`: fifteen Amazon listings in the original order (night lights, grab bars, a transfer bench, a bed rail, a fire blanket, a weather radio, a companion plush and two books), each with a condensed description, a category and the Amazon product page with its ASIN. Fourteen links point at the exact product page; the hand-crank radio links to the closest match (several near-identical listings exist), so swap the link on its card if a different one was meant. The affiliate disclosure from that page is the grid's `disclosure` text. The four fitness items sent during the migration (water bottle, two resistance band sets, Amazfit watch) are in the seed too but hidden; "Show" on their cards puts them on the page.
 
-1. **In the admin** (a few products): Admin → Products → paste each Amazon link → "Fetch & add". Amazon sometimes declines automated requests; when it does, type the title, price and description and upload a photo on the card.
-2. **In code** (the whole list at once): add each product to `PRODUCTS` in `src/lib/seed-data/products.ts` (`url`, `title`, `description`, `category`, `image`, optional `tag`/`price`), then run the import below. Fresh databases pick the list up from `npm run db:seed`.
+Fresh databases get the list from `npm run db:seed`; existing ones from the Import button or `npm run content:products`.
 
 ## Rolling out to an existing database
 

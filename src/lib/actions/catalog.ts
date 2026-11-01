@@ -9,6 +9,7 @@ import { adminAction, backTo } from "./_util";
 import { str, strOrNull, parseNum, bool } from "@/lib/utils";
 import { fetchListing, syncProducts, refreshedFields, retailerFor, retailerLabel, isListingUrl, asRetailer, defaultType, asinFromUrl } from "@/lib/server/listings";
 import { getAmazonItems } from "@/lib/server/amazon";
+import { importProducts } from "@/lib/server/product-import";
 import { syncRssSource, syncAllRss } from "@/lib/server/rss";
 import { getSetting, setSetting } from "@/lib/server/settings";
 import { sendEmail } from "@/lib/server/outbox";
@@ -57,6 +58,10 @@ export async function productAction(formData: FormData) {
     }
     return id;
   }, { back: "/admin/products", ok: { delete: "Listing removed", feature: "Featured updated", active: "Visibility updated", refresh: "Refreshed from the store page", update: "Product saved" }[op] || "Done", entityId: () => id, revalidate: PREVAL });
+}
+/** One click in Admin → Products: add the seeded product list (previous site's recommended products) to this database. */
+export async function importSeedProducts() {
+  await adminAction("products", "product", "import_seed", async () => (await importProducts({ images: true })).added, { back: "/admin/products", ok: "Previous site's products imported — press “Refresh prices & photos” to pull their photos from Amazon", entityId: (n) => n, revalidate: PREVAL });
 }
 export async function syncProductsNow() {
   await adminAction("products", "product", "sync", async () => syncProducts(), { back: "/admin/products", ok: "Prices, ratings and photos refreshed", revalidate: PREVAL });

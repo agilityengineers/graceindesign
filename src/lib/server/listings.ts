@@ -67,11 +67,13 @@ export async function syncProducts() {
     catch (e) { console.warn("Amazon API:", (e as Error).message); }
   }
   let updated = 0;
-  for (const p of rows) {
-    const d = viaApi.get(p.id) ?? (await fetchListing(p.url, { viaApi: false }));
-    if (!d) continue;
-    await db.update(products).set({ price: d.price !== "$—" ? d.price : p.price, imageUrl: isOwnImage(p.imageUrl) ? p.imageUrl : d.image || p.imageUrl, reviews: d.reviews !== "(0)" ? d.reviews : p.reviews, rating: d.rating || p.rating, description: p.description || d.description, lastSyncedAt: new Date() }).where(eq(products.id, p.id));
-    updated++;
+  for (let i = 0; i < rows.length; i += 4) { // four store pages at a time keeps a 20-item catalog under a minute
+    await Promise.all(rows.slice(i, i + 4).map(async (p) => {
+      const d = viaApi.get(p.id) ?? (await fetchListing(p.url, { viaApi: false }));
+      if (!d) return;
+      await db.update(products).set({ price: d.price !== "$—" ? d.price : p.price, imageUrl: isOwnImage(p.imageUrl) ? p.imageUrl : d.image || p.imageUrl, reviews: d.reviews !== "(0)" ? d.reviews : p.reviews, rating: d.rating || p.rating, description: p.description || d.description, lastSyncedAt: new Date() }).where(eq(products.id, p.id));
+      updated++;
+    }));
   }
   return updated;
 }

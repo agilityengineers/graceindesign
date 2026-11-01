@@ -1,5 +1,6 @@
 /** Page + block seeds. Copy is verbatim from the design/*.dc.html prototypes. */
 import { mediaRef as m } from "./media";
+import { AFFILIATE_DISCLOSURE } from "./products";
 
 export type SeedBlock = { type: string; content: Record<string, unknown> };
 export type SeedPage = { key: string; slug: string; title: string; navLabel: string; heroStyle?: "classic" | "cinematic"; seoTitle?: string; seoDescription?: string; parentKey?: string; sort: number; status?: "draft" | "published"; blocks: SeedBlock[] };
@@ -81,8 +82,8 @@ export const PAGES: SeedPage[] = [
     blocks: [
       { type: "page_header", content: { crumb: "Healthy Home Resources · AIP Products", crumbHref: "/healthy-home-resources", title: "Aging In Place essentials, curated by our specialists", body: "Products we recommend to the families we work with, chosen by our Certified Aging-in-Place Specialists. Each one links to the store that sells it, where checkout and delivery are handled securely.", badge: "Available on Amazon", badgeDot: "#ff9900", badgeCount: "products" } },
       { type: "product_carousel", content: { eyebrow: "Featured this month", title: "Specialist picks" } },
-      // Filters come from the products' own categories; `categories` only fixes their order. `disclosure` prints under the grid (e.g. an affiliate note).
-      { type: "product_grid", content: { title: "All products", categories: [], disclosure: "" } },
+      // Filters come from the products' own categories; `categories` only fixes their order. `disclosure` prints under the grid.
+      { type: "product_grid", content: { title: "Recommended products", categories: ["Bathroom safety", "Lighting", "Bedroom", "Emergency preparedness", "Comfort & companionship", "Books & planning"], disclosure: AFFILIATE_DISCLOSURE } },
     ],
   },
   {
