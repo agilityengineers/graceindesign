@@ -23,14 +23,15 @@ const DEFAULT_CATEGORIES = ["Bathroom safety", "Bedroom", "Kitchen", "Lighting",
 const hasPrice = (p: string) => !!p && p !== "$—" && p !== "—";
 const strip: CSSProperties = { display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, fontSize: 12.5, color: "#1a2238" };
 
-/** "Shows on" checkboxes: every named shelf (src/lib/shelves.ts) plus the homepage featured row. `shelves`/`featured` are the boxes ticked at first. */
-function ShowsOn({ shelves, featured, size = 12 }: { shelves: readonly string[]; featured: boolean; size?: number }) {
+/** "Shows on" checkboxes: every named shelf (src/lib/shelves.ts) plus the homepage featured row. `shelves`/`featured` are the boxes ticked at first; `hint` spells out where each box puts the product. */
+function ShowsOn({ shelves, featured, size = 12, hint = false }: { shelves: readonly string[]; featured: boolean; size?: number; hint?: boolean }) {
   const box: CSSProperties = { display: "flex", gap: 6, alignItems: "center", fontSize: size, whiteSpace: "nowrap", cursor: "pointer" };
   return (
     <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
       <span className="label-caps">Shows on</span>
-      {SHELF_KEYS.map((k) => <label key={k} style={box}><input type="checkbox" name="shelves" value={k} defaultChecked={onShelf(shelves, k)} />{SHELVES[k].name}</label>)}
-      <label style={box}><input type="checkbox" name="featured" defaultChecked={featured} />Homepage (featured row)</label>
+      {SHELF_KEYS.map((k) => <label key={k} style={box} title={`Shows on ${SHELVES[k].where}`}><input type="checkbox" name="shelves" value={k} defaultChecked={onShelf(shelves, k)} />{SHELVES[k].name}</label>)}
+      <label style={box} title="Shows in the featured row on the homepage"><input type="checkbox" name="featured" defaultChecked={featured} />Homepage (featured row)</label>
+      {hint && <span style={{ flexBasis: "100%", fontSize: 11, color: "#8c95a8" }}>Tick where this product should appear: {SHELF_KEYS.map((k) => `${SHELVES[k].name} = ${SHELVES[k].where}`).join(" · ")} · Homepage = the featured row. You can change this any time on the product's card.</span>}
     </div>
   );
 }
@@ -63,7 +64,7 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
             <strong>{shelf.name}</strong><span style={{ color: "#4b5569" }}>{n ? `${n} listing${n === 1 ? "" : "s"}` : `empty — ${shelf.whenEmpty}`}</span>
             <Link href={`${shelf.href}#${shelf.key}`} target="_blank" className="link-btn">page ↗</Link><Link href={`/admin/content?page=${shelf.pageKey}`} className="link-btn link-muted">copy →</Link>
           </span>))}
-        <span style={{ color: "#4b5569" }}>Tick the boxes under <strong>Shows on</strong> when you add a product or on its card. The homepage row shows the listings marked featured.</span>
+        <span style={{ color: "#4b5569" }}>Tick the boxes under <strong>Shows on</strong> when you add a product or on its card. To show one of these sections on another page (say, WELLness Resources): Content → Pages → that page → Add block → “{SHELVES.wellness.name} section”.</span>
       </div>
 
       <Card title="Add a product" sub={<>Paste a product link. We read the title, photo, price and rating from the store{paapi ? " (through the Amazon API for Amazon links)" : ""}; Amazon sometimes declines automated requests, so check the card afterwards and fill in anything missing. Choose your own photo here, or on the card later, when you'd rather not use the store's. Etsy shop: <a href={env.etsyShopUrl} target="_blank" rel="noreferrer" style={{ color: "#3f9ad9" }}>{env.etsyShopUrl}</a></>}>
@@ -75,7 +76,7 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
           </div>
           <datalist id="pcats">{categories.map((c) => <option key={c} value={c} />)}</datalist>
           <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
-            <ShowsOn shelves={SHELF_KEYS} featured={false} />
+            <ShowsOn shelves={SHELF_KEYS} featured={false} hint />
             <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 11, color: "#4b5569" }}><span className="label-caps">Photo</span><input type="file" name="image_file" accept="image/*" style={{ fontSize: 11, maxWidth: 220 }} /><span>optional — read from the store when empty</span></label>
             <button type="submit" className="btn btn-navy btn-xs" style={{ marginLeft: "auto", borderRadius: 8 }}>Fetch & add</button>
           </div>

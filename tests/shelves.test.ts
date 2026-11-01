@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { SHELVES, SHELF_KEYS, AIP_SHELF, WELLNESS_SHELF, isShelfKey, parseShelves, toggleShelf, onShelf, shelfNames } from "../src/lib/shelves";
+import { SHELVES, SHELF_KEYS, AIP_SHELF, WELLNESS_SHELF, isShelfKey, parseShelves, toggleShelf, onShelf, shelfNames, shelfSection } from "../src/lib/shelves";
 import { PRODUCTS, productRow, defaultShelves } from "../src/lib/seed-data/products";
 import { PAGES } from "../src/lib/seed-data/pages";
 
@@ -77,4 +77,18 @@ test("the Healthy Home Resources seed ends with the WELLness-Products section on
   assert.equal(last.content.linkHref, "/healthy-home-resources/aip-products");
   // The same block is what scripts/import-products.ts adds to an existing database, so there must be exactly one.
   assert.equal(hhr.blocks.filter((b) => b.type === "product_shelf" && b.content.shelf === "wellness").length, 1);
+});
+
+test("the ready-made shelf section is the seeded block, and every shelf has one for the Add block menu", () => {
+  const hhr = PAGES.find((p) => p.key === "hhr");
+  assert.ok(hhr);
+  assert.deepEqual(hhr.blocks[hhr.blocks.length - 1].content, shelfSection("wellness"));
+  for (const k of SHELF_KEYS) {
+    const c = shelfSection(k);
+    assert.equal(c.shelf, k);
+    assert.equal(c.title, SHELVES[k].name);
+    assert.equal(c.limit, 0);
+    assert.equal(c.linkHref, AIP_SHELF.href);
+    assert.ok(typeof c.body === "string" && c.body.length > 20);
+  }
 });

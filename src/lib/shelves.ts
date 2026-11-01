@@ -35,5 +35,18 @@ export function toggleShelf(shelves: readonly string[] | null | undefined, key: 
   return SHELF_KEYS.filter((k) => next.has(k));
 }
 
+/**
+ * Content for a `product_shelf` block that shows a shelf: what the seed puts on the shelf's home page, and what Content → Pages →
+ * "Add block" → "<shelf> section" pre-fills on any other page. Headings and copy are the admin's to edit afterwards.
+ */
+export function shelfSection(key: ShelfKey): Record<string, unknown> {
+  const copy: Record<ShelfKey, { eyebrow: string; title: string; body: string }> = {
+    aip: { eyebrow: "Shop", title: "AIP Products", body: "Home-safety essentials our Certified Aging-in-Place Specialists recommend, with links to buy from the store that sells each one." },
+    wellness: { eyebrow: "Shop", title: "WELLness-Products", body: "Everyday wellness picks our specialists recommend — hydration, movement, health tracking and home safety — with links to buy on Amazon." },
+  };
+  // `limit: 0` shows everything on the shelf; the section hides itself while the shelf is empty.
+  return { ...copy[key], shelf: key, categories: [], featuredOnly: false, limit: 0, linkLabel: "Browse all AIP Products", linkHref: AIP_SHELF.href, cartAll: true, cartAllLabel: "Add all to your Amazon cart", disclosure: "", tone: "" };
+}
+
 /** Display names of the shelves a listing sits on, e.g. ["AIP Products", "WELLness-Products"]. */
 export function shelfNames(shelves: readonly string[] | null | undefined) { return parseShelves(shelves ?? []).map((k) => SHELVES[k].name); }

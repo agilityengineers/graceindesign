@@ -1,5 +1,6 @@
 /** Page + block seeds. Copy is verbatim from the design/*.dc.html prototypes. */
 import { mediaRef as m } from "./media";
+import { shelfSection } from "../shelves";
 
 export type SeedBlock = { type: string; content: Record<string, unknown> };
 export type SeedPage = { key: string; slug: string; title: string; navLabel: string; heroStyle?: "classic" | "cinematic"; seoTitle?: string; seoDescription?: string; parentKey?: string; sort: number; status?: "draft" | "published"; blocks: SeedBlock[] };
@@ -74,8 +75,8 @@ export const PAGES: SeedPage[] = [
         { kicker: "Partner", title: "AIP Partners", body: "Contractors, therapists and realtors — join our Aging In Place network.", cta: "Become a partner", href: "/healthy-home-resources/aip-partners", img: m("brand.aip-planning") },
       ] } },
       { type: "assessment_cta", content: { title: "Not sure where to start? Begin with a home assessment.", body: "A room-by-room review of safety, access and comfort — the foundation of every Healthy Home Resources plan.", cta: "Request an Assessment", ctaHref: "/contact?from=aging-in-place" } },
-      // WELLness-Products: the catalog listings on the "wellness" shelf (stocked from Admin → Products). `limit: 0` shows them all; the section hides itself while the shelf is empty.
-      { type: "product_shelf", content: { eyebrow: "Shop", title: "WELLness-Products", body: "Everyday wellness picks our specialists recommend — hydration, movement, health tracking and home safety — with links to buy on Amazon.", shelf: "wellness", categories: [], featuredOnly: false, limit: 0, linkLabel: "Browse all AIP Products", linkHref: "/healthy-home-resources/aip-products", cartAll: true, cartAllLabel: "Add all to your Amazon cart", disclosure: "", tone: "" } },
+      // WELLness-Products: the catalog listings ticked for the "wellness" shelf in Admin → Products. The same block can be added to any other page from Content → Pages → Add block.
+      { type: "product_shelf", content: shelfSection("wellness") },
     ],
   },
   {
