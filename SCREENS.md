@@ -29,7 +29,8 @@ Every design file in `design/` mapped to what was built. "Deviation" lists anyth
 | `Admin.dc.html` — Hero editor | `/admin/hero?page=<key or service slug>` | Done | — |
 | `Admin.dc.html` — Products | `/admin/products` | Done | Paste an Amazon or Etsy link; details read from the public listing page; inline edits for title, description, link, store, category, tag, price, rating. WELLness-Products box when adding (ticked by default) and "Add to / Remove from WELLness-Products" on each card. |
 | `Admin.dc.html` — RSS feeds | `/admin/rss` | Done | — |
-| `Admin.dc.html` — Caribbean Connection | `/admin/caribbean?tab=resources|events|sources|countries|subscribers` | Done | "Compose issue" queues the newsletter through the outbox (no external ESP). |
+| `Admin.dc.html` — Caribbean Connection | `/admin/caribbean?tab=resources|events|sources|countries` | Done | Newsletter subscribers moved to Admin → Newsletter (`?tab=subscribers` redirects there); no newsletter sending here. |
+| (not in prototype) Newsletter | `/admin/newsletter?tab=subscribers|insta|settings` | Added | Both website lists in one table with filters and per-person Insta-Newsletter status; connect Insta-Newsletter (API key), check, send everything waiting; welcome-email and double opt-in settings. Newsletters themselves are written and sent in Insta-Newsletter. |
 | `Admin.dc.html` — Social media | `/admin/social` | Done | Engagement numbers come from stored post metrics; zero until networks are connected. |
 | (not in prototype) Client ops | `/admin/ops?tab=sequences|sms|proposals|invoices|approvals|webhooks|outbox|jobs` | Added | Phase 4 screens the prototype did not include: drips, SMS templates, proposals, invoices, approvals, webhooks + Call Flow Tracker status, outbox, scheduled jobs + HubSpot. |
 | (not in prototype) Search | `/admin/search?q=` | Added | Header search box from the prototype now returns results. |

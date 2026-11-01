@@ -577,6 +577,22 @@ export const ccEvents = pgTable("cc_events", {
   ...timestamps,
 });
 
+/**
+ * Insta-Newsletter is the newsletter system (audiences, campaigns, sends). The website only captures
+ * sign-ups and hands each one to Insta-Newsletter through its v1 API; these columns remember how that
+ * hand-off went so Admin → Newsletter can show it. See src/lib/newsletter.ts for the status vocabulary.
+ */
+const instaSync = {
+  /** null = not sent yet · queued · confirming · synced · suppressed · removed · failed */
+  instaStatus: text("insta_status"),
+  instaContactId: text("insta_contact_id"),
+  instaSyncedAt: timestamp("insta_synced_at", { withTimezone: true }),
+  instaError: text("insta_error"),
+  /** Consent evidence passed along to Insta-Newsletter: the visitor's IP and the page they signed up on. */
+  consentIp: text("consent_ip"),
+  sourcePage: text("source_page"),
+};
+
 export const ccSubscribers = pgTable("cc_subscribers", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
@@ -586,6 +602,7 @@ export const ccSubscribers = pgTable("cc_subscribers", {
   consentedAt: timestamp("consented_at", { withTimezone: true }).defaultNow().notNull(),
   unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  ...instaSync,
 });
 
 export const newsletterSubscribers = pgTable("newsletter_subscribers", {
@@ -594,6 +611,7 @@ export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   source: text("source").notNull().default("wellness"),
   consentedAt: timestamp("consented_at", { withTimezone: true }).defaultNow().notNull(),
   unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+  ...instaSync,
 });
 
 // ---------------------------------------------------------------------------

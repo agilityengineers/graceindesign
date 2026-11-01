@@ -32,6 +32,30 @@ export type ConsultSettings = { mode: "wizard" | "single"; allowVisitorToggle: b
 export type CftRoleMap = Record<string, "owner" | "editor" | "sales" | "social">;
 /** Amazon shop: the Associates tracking id goes on every Amazon link and powers the "Add to Amazon cart" buttons. */
 export type AmazonSettings = { associateTag: string; cartButtons: boolean };
+/**
+ * Newsletter: Insta-Newsletter is the list of record and the sender; the website captures sign-ups and
+ * pushes them through Insta-Newsletter's v1 API (docs/insta-newsletter-integration.md).
+ */
+export type NewsletterSettings = {
+  /** Insta-Newsletter's address, e.g. https://insta-newsletter.com (links in the admin and the API base). */
+  instaUrl: string;
+  /** The API key pasted in the admin, AES-encrypted at rest (src/lib/server/crypto.ts). Empty when INSTA_NEWSLETTER_API_KEY is used. */
+  instaApiKeyEnc: string;
+  /** First characters of the key, so the admin can tell which key is connected. */
+  instaApiKeyPrefix: string;
+  /** Insta-Newsletter audience id for each website list (src/lib/newsletter.ts AUDIENCES). */
+  audienceIds: Record<string, string>;
+  /** What /v1/me said when the connection was last checked. */
+  instaAccountName: string;
+  instaPlan: { name: string; cap: number; used: number; remaining: number } | null;
+  connectedAt: string | null;
+  lastCheckedAt: string | null;
+  lastCheckError: string | null;
+  /** Ask Insta-Newsletter to email a confirmation link and add the person only when they click it. */
+  doubleOptIn: boolean;
+  /** The website's own welcome email on a Caribbean Connection sign-up (off when Insta-Newsletter sends one). */
+  sendWelcomeEmail: boolean;
+};
 
 export const SETTINGS_DEFAULTS = {
   contact: { phone: "(770) 691-1600", email: "support@graceindesign.net", hours: "Mon–Fri · 9:00am–5:00pm", address: "", addressLine2: "", utilityLabel: "Certified Aging-in-Place Specialists", consultationsNote: "Consultations by appointment" } as ContactSettings,
@@ -53,6 +77,7 @@ export const SETTINGS_DEFAULTS = {
   seo: { siteName: "Grace In Design", defaultDescription: "Interior design, Aging In Place and project management in Atlanta." },
   hero_defaults: { slideSeconds: 5 },
   amazon: { associateTag: "", cartButtons: true } as AmazonSettings,
+  newsletter: { instaUrl: "", instaApiKeyEnc: "", instaApiKeyPrefix: "", audienceIds: {}, instaAccountName: "", instaPlan: null, connectedAt: null, lastCheckedAt: null, lastCheckError: null, doubleOptIn: false, sendWelcomeEmail: true } as NewsletterSettings,
 };
 export type SettingKey = keyof typeof SETTINGS_DEFAULTS;
 

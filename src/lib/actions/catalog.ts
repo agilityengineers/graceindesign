@@ -1,8 +1,8 @@
 "use server";
 /** Products (Amazon, Etsy, other stores), RSS feeds and Caribbean Connection moderation. */
-import { and, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { db, products, rssSources, posts, ccResources, ccEvents, ccCountries, ccSubscribers, newsletterSubscribers, outbox } from "@/lib/db";
+import { db, products, rssSources, posts, ccResources, ccEvents, ccCountries } from "@/lib/db";
 import { requireArea } from "@/lib/auth/session";
 import { audit } from "@/lib/server/audit";
 import { adminAction, backTo } from "./_util";
@@ -163,26 +163,4 @@ export async function countryAction(formData: FormData) {
     else if (op === "delete") { const c = await db.query.ccCountries.findFirst({ where: eq(ccCountries.id, id) }); if (c?.name === "Jamaica") throw new Error("Jamaica is the launch country and can't be removed"); await db.delete(ccCountries).where(eq(ccCountries.id, id)); }
     return id;
   }, { back: "/admin/caribbean?tab=countries", ok: op === "add" ? "Country added" : op === "delete" ? "Country removed" : "Country updated", entityId: (k) => k, revalidate: CREVAL });
-}
-export async function subscriberAction(formData: FormData) {
-  const op = str(formData.get("op")); const list = str(formData.get("list")) === "newsletter" ? "newsletter" : "cc";
-  const id = parseNum(formData.get("subscriberId"));
-  await adminAction("caribbean", list === "cc" ? "cc_subscriber" : "newsletter_subscriber", op, async () => {
-    if (list === "cc") { if (op === "delete") await db.delete(ccSubscribers).where(eq(ccSubscribers.id, id)); else if (op === "unsubscribe") await db.update(ccSubscribers).set({ unsubscribedAt: new Date() }).where(eq(ccSubscribers.id, id)); else if (op === "resubscribe") await db.update(ccSubscribers).set({ unsubscribedAt: null }).where(eq(ccSubscribers.id, id)); }
-    else { if (op === "delete") await db.delete(newsletterSubscribers).where(eq(newsletterSubscribers.id, id)); else if (op === "unsubscribe") await db.update(newsletterSubscribers).set({ unsubscribedAt: new Date() }).where(eq(newsletterSubscribers.id, id)); else if (op === "resubscribe") await db.update(newsletterSubscribers).set({ unsubscribedAt: null }).where(eq(newsletterSubscribers.id, id)); }
-    return id;
-  }, { back: backTo(formData, "/admin/caribbean?tab=subscribers"), ok: op === "delete" ? "Subscriber deleted" : "Subscriber updated", entityId: () => id, revalidate: CREVAL });
-}
-/** "Compose issue": queue one email per active subscriber (optionally one segment). Delivery runs through the outbox. */
-export async function composeIssue(formData: FormData) {
-  await adminAction("caribbean", "cc_subscriber", "compose_issue", async () => {
-    const subject = str(formData.get("subject")); const body = str(formData.get("body")); if (!subject || !body) throw new Error("Subject and body are required");
-    const segment = strOrNull(formData.get("segment"));
-    const rows = await db.select({ email: ccSubscribers.email }).from(ccSubscribers).where(and(sql`${ccSubscribers.unsubscribedAt} is null`, segment ? eq(ccSubscribers.segment, segment) : sql`true`));
-    if (!rows.length) throw new Error("No active subscribers in that segment");
-    if (bool(formData.get("test"))) { const to = str(formData.get("testEmail")); if (!to) throw new Error("Enter a test address"); await sendEmail({ to, from: "newsletter", subject: `[TEST] ${subject}`, text: body }); return 1; }
-    let n = 0;
-    for (const r of rows) { await db.insert(outbox).values({ channel: "email", toAddr: r.email, fromAddr: env.senders.newsletter.formatted, subject, bodyText: `${body}\n\n—\nUnsubscribe: ${env.baseUrl}/unsubscribe?e=${encodeURIComponent(r.email)}&list=cc`, relatedType: "cc_issue", status: "queued" }); n++; }
-    return n;
-  }, { back: "/admin/caribbean?tab=subscribers", ok: "Issue queued — the outbox job delivers it", entityId: (n) => n, revalidate: ["/admin/caribbean", "/admin/ops"] });
 }

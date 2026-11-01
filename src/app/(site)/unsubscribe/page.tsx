@@ -1,13 +1,12 @@
-import { eq } from "drizzle-orm";
 import SiteFrame from "@/components/site/SiteFrame";
-import { db, ccSubscribers, newsletterSubscribers } from "@/lib/db";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Unsubscribe", robots: { index: false, follow: false } };
+/** Takes the address off both website lists and tells Insta-Newsletter, the list of record (src/lib/server/insta-newsletter.ts). */
 async function unsubscribe(formData: FormData) {
   "use server";
   const email = String(formData.get("e") || "").trim().toLowerCase(); if (!email) return;
-  await db.update(ccSubscribers).set({ unsubscribedAt: new Date() }).where(eq(ccSubscribers.email, email));
-  await db.update(newsletterSubscribers).set({ unsubscribedAt: new Date() }).where(eq(newsletterSubscribers.email, email));
+  const { unsubscribeEmailEverywhere } = await import("@/lib/server/insta-newsletter");
+  await unsubscribeEmailEverywhere(email);
   const { redirect } = await import("next/navigation"); redirect(`/unsubscribe?done=1&e=${encodeURIComponent(email)}`);
 }
 export default async function UnsubscribePage({ searchParams }: { searchParams: Promise<{ e?: string; done?: string }> }) {

@@ -36,6 +36,13 @@
       "when": 1793484698129,
       "tag": "0004_product_shelves",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793550380295,
+      "tag": "0005_newsletter_insta",
+      "breakpoints": true
     }
   ]
 }
