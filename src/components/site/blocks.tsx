@@ -15,6 +15,8 @@ import { onShelf } from "@/lib/shelves";
 import { getAmazonShop, type AmazonShop } from "@/lib/server/amazon";
 
 type ProductRow = Awaited<ReturnType<typeof getProducts>>[number];
+/** Only the listings on a named shelf when the block names one (`shelf: "aip" | "wellness"`); the whole catalog otherwise. */
+function shelfOnly(rows: ProductRow[], shelf: unknown): ProductRow[] { return typeof shelf === "string" && shelf ? rows.filter((p) => onShelf(p.shelves, shelf)) : rows; }
 /** Public-facing link fields for a product: the store link with the tracking id and, for Amazon items with an ASIN, the add-to-cart link. */
 function shopFields(p: ProductRow, shop: AmazonShop) {
   const asin = p.retailer === "amazon" ? asinFromUrl(p.url) : null;
@@ -81,7 +83,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
     case "product_shelf": {
       const shop = await getAmazonShop();
       let all = await getProducts(!!c.featuredOnly);
-      if (typeof c.shelf === "string" && c.shelf) all = all.filter((p) => onShelf(p.shelves, c.shelf)); // a named shelf (e.g. "wellness"): only the listings the admin put on it
+      all = shelfOnly(all, c.shelf); // a named shelf (e.g. "wellness"): only the listings the admin put on it
       const cats: string[] = Array.isArray(c.categories) ? c.categories.filter(Boolean) : [];
       if (cats.length) all = all.filter((p) => cats.includes(p.category));
       if (Number(c.limit) > 0) all = all.slice(0, Number(c.limit));
@@ -185,7 +187,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
         <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 640 }}><h2 className="h2" style={{ fontSize: 40, color: "#fff" }}>{c.title}</h2><p style={{ fontSize: 15, lineHeight: 1.7, color: "#c6cbd6" }}>{c.body}</p></div>
         <ConsultButton sourceKey="aging-in-place" className="btn btn-sky btn-md" style={{ boxShadow: "none" }}>{c.cta}</ConsultButton>
       </section>);
-    case "page_header": { const nProducts = c.badgeCount === "products" || c.badge === "Sold on Etsy" ? (await getProducts()).length : 0; return (
+    case "page_header": { const nProducts = c.badgeCount === "products" || c.badge === "Sold on Etsy" ? (await getProducts()).filter((p) => onShelf(p.shelves, "aip")).length : 0; return ( // the badge counts the AIP Products shelf (the page this header sits on)
       <section className="gx" style={{ padding: c.compact ? "88px var(--gutter) 64px" : "88px var(--gutter) 56px", background: "#f7f8fa", display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 40, flexWrap: "wrap" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 860 }}>
           {c.crumb ? <Link href={c.crumbHref || "#"} className="eyebrow">{c.crumb}</Link> : <span className="eyebrow">{c.eyebrow}</span>}
@@ -194,8 +196,8 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
         </div>
         {c.badge && <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderRadius: 12, background: "#fff", border: "1px solid #e9ecf1", fontSize: 13, color: "#6b7486", whiteSpace: "nowrap" }} className="badge-box">{c.badgeRss ? <Rss /> : <span style={{ width: 8, height: 8, borderRadius: "50%", background: c.badgeDot || "#6cb6e6" }} />}{c.badge}{nProducts > 0 && <> · <strong style={{ color: "#1a2238" }}>{nProducts} {nProducts === 1 ? "listing" : "listings"}</strong></>}</div>}
       </section>); }
-    case "product_carousel": { const shop = await getAmazonShop(); const all = await getProducts(); if (all.length === 0) return null; return <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={306} count={all.length}>{all.map((p) => <ProductCard key={p.id} p={{ ...p, ...shopFields(p, shop) }} compact />)}</Carousel>; }
-    case "product_grid": { const shop = await getAmazonShop(); const all = await getProducts(); const ProductGrid = (await import("./ProductGrid")).default; return <ProductGrid title={c.title} categories={c.categories} disclosure={c.disclosure} shop={shop} products={all.map((p) => { const f = shopFields(p, shop); return { id: p.id, title: p.title, description: p.description || "", category: p.category, price: p.price, reviews: p.reviews, synced: !!p.lastSyncedAt, type: p.type, tag: p.tag || "", img: p.imageUrl || "", url: f.url, asin: f.asin, cartUrl: f.cartUrl, retailer: p.retailer, retailerLabel: retailerLabel(p.retailer) }; })} shopUrl={env.etsyShopUrl} />; }
+    case "product_carousel": { const shop = await getAmazonShop(); const all = shelfOnly(await getProducts(), c.shelf); if (all.length === 0) return null; return <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={306} count={all.length}>{all.map((p) => <ProductCard key={p.id} p={{ ...p, ...shopFields(p, shop) }} compact />)}</Carousel>; }
+    case "product_grid": { const shop = await getAmazonShop(); const all = shelfOnly(await getProducts(), c.shelf); const ProductGrid = (await import("./ProductGrid")).default; return <ProductGrid title={c.title} categories={c.categories} disclosure={c.disclosure} shop={shop} products={all.map((p) => { const f = shopFields(p, shop); return { id: p.id, title: p.title, description: p.description || "", category: p.category, price: p.price, reviews: p.reviews, synced: !!p.lastSyncedAt, type: p.type, tag: p.tag || "", img: p.imageUrl || "", url: f.url, asin: f.asin, cartUrl: f.cartUrl, retailer: p.retailer, retailerLabel: retailerLabel(p.retailer) }; })} shopUrl={env.etsyShopUrl} />; }
     case "guide_carousel": { const map = await getMediaMap(); const items = WELLNESS_GROUPS.flatMap((g) => g.items.map((r) => ({ concept: g.title, kind: r[0], title: r[1], desc: r[2], img: resolveDeep(map, r[3]) }))).slice(0, 6); return (
       <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={416} count={items.length}>{items.map((r, k) => (
         <a key={k} href="#guides" className="card-hover" style={{ display: "flex", flexDirection: "column", borderRadius: 16, overflow: "hidden", border: "1px solid #e9ecf1", color: "#1a2238" }}>

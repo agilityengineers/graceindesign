@@ -5,7 +5,7 @@
  */
 import { eq } from "drizzle-orm";
 import { db, products } from "@/lib/db";
-import { asinFromUrl, isListingUrl, isOwnImage, retailerFor, RETAILERS } from "@/lib/retailers";
+import { asinFromUrl, amazonImageUrl, isListingUrl, isOwnImage, retailerFor, RETAILERS } from "@/lib/retailers";
 import { getAmazonItems, paapiReady, type AmazonItem } from "@/lib/server/amazon";
 export * from "@/lib/retailers";
 
@@ -17,17 +17,40 @@ const cut = (s: string, n = 400) => (s.length <= n ? s : `${s.slice(0, n).replac
 const UA_BROWSER = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 const UA_BOT = "Mozilla/5.0 (compatible; GraceInDesignBot/1.0)";
 
-/** Title, price, photo, rating and description for a listing: the Product Advertising API for Amazon items when it is configured, otherwise the public page. */
+/**
+ * The primary photo for an Amazon ASIN from Amazon's image-by-ASIN endpoint, used when the product page gave none (Amazon often
+ * declines automated page requests). Adopted only when Amazon answers with a real image: an unknown ASIN gets a tiny placeholder.
+ */
+export async function amazonImageByAsin(asin: string): Promise<string | null> {
+  const url = amazonImageUrl(asin);
+  try {
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(url, { signal: ctrl.signal, headers: { "user-agent": UA_BROWSER, accept: "image/*" } });
+    clearTimeout(t);
+    if (!res.ok || !(res.headers.get("content-type") || "").startsWith("image/")) return null;
+    return (await res.arrayBuffer()).byteLength > 2000 ? url : null;
+  } catch { return null; }
+}
+
+/** Title, price, photo, rating and description for a listing: the Product Advertising API for Amazon items when it is configured, otherwise the public page (and, for Amazon, the image-by-ASIN endpoint when the page gave no photo). */
 export async function fetchListing(url: string, opts: { viaApi?: boolean } = {}): Promise<ListingDetails | null> {
   if (!isListingUrl(url)) return null;
   const retailer = retailerFor(url);
-  if (retailer === "amazon") {
-    const asin = asinFromUrl(url);
-    if (asin && opts.viaApi !== false && (await paapiReady())) {
-      try { const [it] = await getAmazonItems([asin]); if (it) return fromAmazon(it); } catch (e) { console.warn("Amazon API:", (e as Error).message); }
-    }
-    if (/^\/s\/?$/.test(new URL(url).pathname)) return null; // a search page, not a listing: nothing reliable to read
+  if (retailer !== "amazon") return fetchPage(url, retailer);
+  const asin = asinFromUrl(url);
+  if (asin && opts.viaApi !== false && (await paapiReady())) {
+    try { const [it] = await getAmazonItems([asin]); if (it) return fromAmazon(it); } catch (e) { console.warn("Amazon API:", (e as Error).message); }
   }
+  if (/^\/s\/?$/.test(new URL(url).pathname)) return null; // a search page, not a listing: nothing reliable to read
+  const page = await fetchPage(url, retailer);
+  if (page?.image || !asin) return page;
+  const image = await amazonImageByAsin(asin);
+  if (!image) return page;
+  return { ...(page ?? { title: "", price: "$—", reviews: "(0)", description: null }), image }; // an empty title keeps the one the admin has
+}
+
+/** The listing's public page: Open Graph metadata plus Amazon's own markup. */
+async function fetchPage(url: string, retailer: ReturnType<typeof retailerFor>): Promise<ListingDetails | null> {
   try {
     const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 12000);
     const res = await fetch(url, { signal: ctrl.signal, headers: { "user-agent": retailer === "amazon" ? UA_BROWSER : UA_BOT, accept: "text/html,application/xhtml+xml", "accept-language": "en-US,en;q=0.9" } });

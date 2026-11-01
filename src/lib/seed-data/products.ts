@@ -3,7 +3,8 @@
  * Each entry links out to the store that sells it (Amazon for the curated home-safety picks, Etsy for Grace's own downloads);
  * checkout happens there. `npm run db:seed` inserts these on an empty database; `npm run content:products` adds the ones
  * missing from an existing database (matched by URL) without touching listings already edited in the admin.
- * Amazon picks also start on the "wellness" shelf (WELLness-Products at the bottom of Healthy Home Resources); Admin → Products stocks it.
+ * Every listing starts on the AIP Products shelf; Amazon picks also start on the "wellness" shelf (WELLness-Products at the bottom of
+ * Healthy Home Resources). Admin → Products changes where a listing shows under "Shows on".
  */
 import { retailerFor, defaultType } from "../retailers";
 import type { ShelfKey } from "../shelves";
@@ -11,7 +12,7 @@ import type { ShelfKey } from "../shelves";
 export type ProductSeed = {
   url: string; title: string; category: string;
   description?: string; price?: string; image?: string | null; tag?: string | null; type?: string; featured?: boolean; active?: boolean;
-  /** Shelves the listing starts on; Amazon listings default to the WELLness-Products shelf, everything else to none. */
+  /** Shelves the listing starts on; by default AIP Products for every store, plus WELLness-Products for Amazon listings. */
   shelves?: ShelfKey[];
 };
 
@@ -50,8 +51,8 @@ export const PRODUCTS: ProductSeed[] = [
   },
 ];
 
-/** Shelves a seed entry starts on when it names none: Amazon picks go on WELLness-Products. */
-export function defaultShelves(retailer: string): ShelfKey[] { return retailer === "amazon" ? ["wellness"] : []; }
+/** Shelves a seed entry starts on when it names none: the AIP Products page for every store, plus WELLness-Products for Amazon picks. */
+export function defaultShelves(retailer: string): ShelfKey[] { return retailer === "amazon" ? ["aip", "wellness"] : ["aip"]; }
 
 /** The database row for a seed entry. */
 export function productRow(p: ProductSeed, sort: number) {

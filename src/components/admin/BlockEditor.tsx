@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { saveBlock } from "@/lib/actions/content";
 import ImagePicker from "./ImagePicker";
+import { SHELVES, SHELF_KEYS } from "@/lib/shelves";
 
 type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
 const isImageKey = (k: string) => /img|photo|image|logo|avatar|thumb|poster/i.test(k);
@@ -41,6 +42,8 @@ function Field({ k, v, path, update }: { k: string; v: Json; path: (string | num
   if (typeof v === "number") return <label className="label label-caps">{label}<input type="number" value={v} onChange={(e) => update(path, Number(e.target.value))} className="admin-input admin-input-sm" /></label>;
   if (v === null || typeof v === "string") {
     const s = v ?? "";
+    // `shelf` on a product block: which products it shows (a named shelf from Admin → Products, or every visible product).
+    if (String(k) === "shelf") return <label className="label label-caps">Which products<select value={s} onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm"><option value="">Every visible product</option>{SHELF_KEYS.map((key) => <option key={key} value={key}>{SHELVES[key].name} (ticked for it in Admin → Products)</option>)}</select></label>;
     if (isImageKey(String(k)) || isImageVal(s)) return (
       <div style={{ ...full, padding: 8, borderRadius: 10, background: "#fff", border: "1px solid #eef0f4" }}>
         <ImagePicker label={label} fileName={`file::${name}`} value={s} onChange={(next) => update(path, next)} showUrl width={96} height={64} />

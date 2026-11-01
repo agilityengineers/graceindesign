@@ -6,6 +6,7 @@ import { requireArea } from "@/lib/auth/session";
 import { audit } from "@/lib/server/audit";
 import { adminAction, backTo } from "./_util";
 import { str, strOrNull, parseNum, bool, slugify, tryJson } from "@/lib/utils";
+import { isShelfKey, shelfSection } from "@/lib/shelves";
 import { uploadToMedia } from "@/lib/server/media-upload";
 import { autoShareBlogPost } from "@/lib/server/social";
 
@@ -59,10 +60,12 @@ export async function blockAction(formData: FormData) {
 export async function addBlock(formData: FormData) {
   const pageId = parseNum(formData.get("pageId")); const back = backTo(formData, "/admin/content");
   await adminAction("pages", "page_block", "create", async () => {
-    const type = str(formData.get("type")); if (!type) throw new Error("Pick a block type");
+    // "product_shelf:wellness" = a product shelf pre-filled for that shelf (the "WELLness-Products section" entry in the Add block menu).
+    const [type, preset = ""] = str(formData.get("type")).split(":"); if (!type) throw new Error("Pick a block type");
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(pageBlocks).where(eq(pageBlocks.pageId, pageId));
-    const starter: Record<string, Record<string, unknown>> = { rich_text: { title: "New section", body: "<p>Write something…</p>" }, cta: { title: "Ready to get started?", body: "Tell us a little about your project.", cta: "Get Started", ctaHref: "/contact" }, steps: { items: [["Step one", "Describe it"], ["Step two", "Describe it"], ["Step three", "Describe it"]] }, page_header: { eyebrow: "Section", title: "Headline", sub: "Supporting copy." }, news: { eyebrow: "News & Insights", title: "Latest articles", linkLabel: "All articles", linkHref: "/news", count: 3 }, featured_products: { eyebrow: "Featured", title: "Products", linkLabel: "Browse", linkHref: "/healthy-home-resources/aip-products", count: 4 }, product_shelf: { eyebrow: "Shop our picks", title: "Tools we recommend", body: "", shelf: "", categories: [], featuredOnly: false, limit: 4, linkLabel: "See all products", linkHref: "/healthy-home-resources/aip-products", cartAll: true, cartAllLabel: "Add all to your Amazon cart", disclosure: "" }, consult_form: { title: "Start your project" } };
-    const [b] = await db.insert(pageBlocks).values({ pageId, type, sort: Number(n), content: starter[type] || {}, visible: true }).returning();
+    const starter: Record<string, Record<string, unknown>> = { rich_text: { title: "New section", body: "<p>Write something…</p>" }, cta: { title: "Ready to get started?", body: "Tell us a little about your project.", cta: "Get Started", ctaHref: "/contact" }, steps: { items: [["Step one", "Describe it"], ["Step two", "Describe it"], ["Step three", "Describe it"]] }, page_header: { eyebrow: "Section", title: "Headline", sub: "Supporting copy." }, news: { eyebrow: "News & Insights", title: "Latest articles", linkLabel: "All articles", linkHref: "/news", count: 3 }, featured_products: { eyebrow: "Featured", title: "Products", linkLabel: "Browse", linkHref: "/healthy-home-resources/aip-products", count: 4 }, product_grid: { title: "All products", shelf: "aip", categories: [], disclosure: "" }, product_shelf: { eyebrow: "Shop our picks", title: "Tools we recommend", body: "", shelf: "", categories: [], featuredOnly: false, limit: 4, linkLabel: "See all products", linkHref: "/healthy-home-resources/aip-products", cartAll: true, cartAllLabel: "Add all to your Amazon cart", disclosure: "" }, consult_form: { title: "Start your project" } };
+    const content = type === "product_shelf" && isShelfKey(preset) ? shelfSection(preset) : starter[type] || {};
+    const [b] = await db.insert(pageBlocks).values({ pageId, type, sort: Number(n), content, visible: true }).returning();
     return b;
   }, { back, ok: "Block added", entityId: (b) => b.id, revalidate: REVAL });
 }

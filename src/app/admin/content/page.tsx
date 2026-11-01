@@ -11,10 +11,16 @@ import ContentTabs from "@/components/admin/ContentTabs";
 import BlockEditor from "@/components/admin/BlockEditor";
 import { savePageSeo, blockAction, addBlock, reorderBlocks, publishPage, discardPageDraft, createPage, deletePage } from "@/lib/actions/content";
 import { relativeDay } from "@/lib/utils";
+import { SHELVES, SHELF_KEYS } from "@/lib/shelves";
 
 export const metadata = { title: "Content" };
 export const dynamic = "force-dynamic";
-const BLOCK_TYPES = ["rich_text", "page_header", "cta", "steps", "news", "featured_products", "consult_form", "product_grid", "product_shelf", "service_list", "contact_steps"];
+/** The "Add block" menu: block types with plain names, plus ready-made product sections (`product_shelf:<shelf>` arrives pre-filled for that shelf). */
+const BLOCK_OPTIONS: [string, string][] = [
+  ["rich_text", "Rich text"], ["page_header", "Page header"], ["cta", "Call to action"], ["steps", "Steps"], ["news", "News & Insights row"], ["featured_products", "Featured products (homepage row)"], ["consult_form", "Consultation form"],
+  ...SHELF_KEYS.map((k): [string, string] => [`product_shelf:${k}`, `${SHELVES[k].name} section`]),
+  ["product_shelf", "Product shelf (every product, or pick a shelf)"], ["product_grid", "Product grid with category filters"], ["service_list", "Service list"], ["contact_steps", "Contact steps"],
+];
 const CORE = ["home", "about", "services", "hhr", "caribbean", "news", "contact"];
 const PAGE_HREF: Record<string, string> = { home: "/", about: "/about", services: "/services", hhr: "/healthy-home-resources", caribbean: "/caribbean-connection", news: "/news", contact: "/contact", "aip-products": "/healthy-home-resources/aip-products", wellness: "/healthy-home-resources/wellness", "home-health": "/healthy-home-resources/home-health-series", privacy: "/privacy", terms: "/terms", accessibility: "/accessibility" };
 const preview = (c: Record<string, unknown>) => { for (const k of ["title", "lead", "kicker", "eyebrow", "heading", "body"]) { const v = c[k]; if (typeof v === "string" && v) return v.replace(/<[^>]+>/g, "").slice(0, 90); } const first = Object.values(c).find((v) => typeof v === "string" && v); return typeof first === "string" ? first.slice(0, 90) : ""; };
@@ -73,9 +79,9 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
               </Sortable>
               <form action={addBlock} style={{ display: "flex", gap: 8, alignItems: "center", paddingTop: 10, borderTop: "1px solid #eef0f4" }}>
                 <input type="hidden" name="pageId" value={cur.id} /><input type="hidden" name="_back" value={back} />
-                <select name="type" className="admin-input admin-input-sm" style={{ width: 200 }} defaultValue="rich_text">{BLOCK_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}</select>
+                <select name="type" className="admin-input admin-input-sm" style={{ width: 280 }} defaultValue="rich_text">{BLOCK_OPTIONS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}</select>
                 <button type="submit" className="btn btn-ghost btn-xs" style={{ borderRadius: 8 }}>+ Add block</button>
-                <span style={{ fontSize: 11, color: "#8c95a8" }}>New blocks start with placeholder copy and appear at the bottom.</span>
+                <span style={{ fontSize: 11, color: "#8c95a8" }}>New blocks appear at the bottom with starter copy; drag to move them. “{SHELVES.wellness.name} section” shows the products ticked for it in Admin → Products.</span>
               </form>
             </Card>
             <Card title="SEO & page settings">
