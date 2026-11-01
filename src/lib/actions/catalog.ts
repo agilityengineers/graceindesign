@@ -1,8 +1,8 @@
 "use server";
 /** Products (Amazon, Etsy, other stores), RSS feeds and Caribbean Connection moderation. */
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { db, products, rssSources, posts, ccResources, ccEvents, ccCountries } from "@/lib/db";
+import { db, products, rssSources, posts, ccResources, ccEvents, ccCountries, ccSubscribers, outbox } from "@/lib/db";
 import { requireArea } from "@/lib/auth/session";
 import { audit } from "@/lib/server/audit";
 import { adminAction, backTo } from "./_util";
@@ -163,4 +163,23 @@ export async function countryAction(formData: FormData) {
     else if (op === "delete") { const c = await db.query.ccCountries.findFirst({ where: eq(ccCountries.id, id) }); if (c?.name === "Jamaica") throw new Error("Jamaica is the launch country and can't be removed"); await db.delete(ccCountries).where(eq(ccCountries.id, id)); }
     return id;
   }, { back: "/admin/caribbean?tab=countries", ok: op === "add" ? "Country added" : op === "delete" ? "Country removed" : "Country updated", entityId: (k) => k, revalidate: CREVAL });
+}
+
+/**
+ * "Compose issue" on Admin → Caribbean Connection → Newsletter subscribers: a plain-text email to the Caribbean
+ * list, queued one per active subscriber (optionally one segment) and delivered by the outbox job from newsletter@.
+ * Kept at the owner's request for quick notes to that list; designed newsletters are written and sent in
+ * Insta-Newsletter (Admin → Newsletter).
+ */
+export async function composeIssue(formData: FormData) {
+  await adminAction("caribbean", "cc_subscriber", "compose_issue", async () => {
+    const subject = str(formData.get("subject")); const body = str(formData.get("body")); if (!subject || !body) throw new Error("Subject and body are required");
+    const segment = strOrNull(formData.get("segment"));
+    const rows = await db.select({ email: ccSubscribers.email }).from(ccSubscribers).where(and(sql`${ccSubscribers.unsubscribedAt} is null`, segment ? eq(ccSubscribers.segment, segment) : sql`true`));
+    if (!rows.length) throw new Error("No active subscribers in that segment");
+    if (bool(formData.get("test"))) { const to = str(formData.get("testEmail")); if (!to) throw new Error("Enter a test address"); await sendEmail({ to, from: "newsletter", subject: `[TEST] ${subject}`, text: body }); return 1; }
+    let n = 0;
+    for (const r of rows) { await db.insert(outbox).values({ channel: "email", toAddr: r.email, fromAddr: env.senders.newsletter.formatted, subject, bodyText: `${body}\n\n—\nUnsubscribe: ${env.baseUrl}/unsubscribe?e=${encodeURIComponent(r.email)}&list=cc`, relatedType: "cc_issue", status: "queued" }); n++; }
+    return n;
+  }, { back: "/admin/caribbean?tab=subscribers", ok: (n) => n === 1 && bool(formData.get("test")) ? "Test sent to your address" : `Issue queued for ${n} subscriber${n === 1 ? "" : "s"} — the outbox job delivers it`, entityId: (n) => n, revalidate: ["/admin/caribbean", "/admin/ops"] });
 }

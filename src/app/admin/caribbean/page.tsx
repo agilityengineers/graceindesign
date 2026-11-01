@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { asc, desc, eq, isNull, sql } from "drizzle-orm";
 import { requireArea } from "@/lib/auth/session";
 import { db, ccResources, ccEvents, ccCountries, ccSubscribers, rssSources, posts } from "@/lib/db";
@@ -7,22 +6,20 @@ import AdminShell from "@/components/admin/AdminShell";
 import { Card, Stat, StatusPill } from "@/components/admin/ui";
 import Toast from "@/components/admin/Toast";
 import ConfirmButton from "@/components/admin/Confirm";
-import { resourceAction, addResource, eventAction, addEvent, countryAction, addRssSource, rssSourceAction } from "@/lib/actions/catalog";
+import { resourceAction, addResource, eventAction, addEvent, countryAction, addRssSource, rssSourceAction, composeIssue } from "@/lib/actions/catalog";
+import { subscriberAction } from "@/lib/actions/newsletter";
 import { fmtDate, relativeDay } from "@/lib/utils";
 import { isUpcomingEvent } from "@/lib/cc-events";
 
 export const metadata = { title: "Caribbean Connection" };
 export const dynamic = "force-dynamic";
-const TABS = [["resources", "Resource directory"], ["events", "Community events"], ["sources", "Regional news sources"], ["countries", "Countries"]] as const;
+const TABS = [["resources", "Resource directory"], ["events", "Community events"], ["sources", "Regional news sources"], ["countries", "Countries"], ["subscribers", "Newsletter subscribers"]] as const;
 const CATS = ["Healthcare", "Home modification", "Caregiving", "Government & benefits", "Community", "Legal & finance", "Housing", "Transport"];
 
 export default async function CaribbeanAdmin({ searchParams }: { searchParams: Promise<{ tab?: string; filter?: string }> }) {
   const user = await requireArea("caribbean");
-  const sp = await searchParams;
-  // Newsletter subscribers moved to their own section (Admin → Newsletter); old links still land somewhere useful.
-  if (sp.tab === "subscribers") redirect("/admin/newsletter?audience=caribbean-connection");
-  const tab = (TABS.find((t) => t[0] === sp.tab)?.[0] || "resources") as (typeof TABS)[number][0]; const filter = sp.filter || "Pending";
-  const [resources, events, countries, sources, [resPending], [evPending], [ccSubs]] = await Promise.all([
+  const sp = await searchParams; const tab = (TABS.find((t) => t[0] === sp.tab)?.[0] || "resources") as (typeof TABS)[number][0]; const filter = sp.filter || "Pending";
+  const [resources, events, countries, sources, [resPending], [evPending], [ccSubs], subs] = await Promise.all([
     db.select().from(ccResources).orderBy(desc(ccResources.createdAt)),
     db.select().from(ccEvents).orderBy(desc(ccEvents.startsAt)),
     db.select().from(ccCountries).orderBy(asc(ccCountries.sort)),
@@ -30,7 +27,9 @@ export default async function CaribbeanAdmin({ searchParams }: { searchParams: P
     db.select({ n: sql<number>`count(*)` }).from(ccResources).where(eq(ccResources.status, "pending")),
     db.select({ n: sql<number>`count(*)` }).from(ccEvents).where(eq(ccEvents.status, "pending")),
     db.select({ n: sql<number>`count(*)` }).from(ccSubscribers).where(isNull(ccSubscribers.unsubscribedAt)),
+    db.select().from(ccSubscribers).orderBy(desc(ccSubscribers.createdAt)).limit(500),
   ]);
+  const segments = Object.entries(subs.filter((s) => !s.unsubscribedAt).reduce<Record<string, number>>((a, s) => { a[s.segment] = (a[s.segment] || 0) + 1; return a; }, {}));
   const countryNames = countries.map((c) => c.name);
   const back = `/admin/caribbean?tab=${tab}&filter=${filter}`;
   const byStatus = <T extends { status: string }>(rows: T[]) => filter === "All" ? rows : rows.filter((r) => r.status === filter.toLowerCase());
@@ -38,15 +37,15 @@ export default async function CaribbeanAdmin({ searchParams }: { searchParams: P
   const Hidden = ({ id, name }: { id: number; name: string }) => <><input type="hidden" name={name} value={id} /><input type="hidden" name="_back" value={back} /></>;
 
   return (
-    <AdminShell user={user} active="caribbean" title="Caribbean Connection" subtitle="Moderate submissions and curate regional sources. Newsletter sign-ups live under Newsletter.">
+    <AdminShell user={user} active="caribbean" title="Caribbean Connection" subtitle="Moderate submissions, curate regional sources and manage the newsletter">
       <Toast />
       <div className="g4" style={{ gap: 16 }}>
         <Stat label="Awaiting review" value={Number(resPending.n) + Number(evPending.n)} delta={`${resPending.n} resources · ${evPending.n} events`} deltaColor={Number(resPending.n) + Number(evPending.n) ? "#9a3c1e" : "#6b7486"} />
         <Stat label="Published resources" value={resources.filter((r) => r.status === "published").length} delta={`${countries.filter((c) => c.status === "live").map((c) => c.name).join(", ") || "no live countries"}`} />
         <Stat label="Upcoming events" value={events.filter((e) => e.status === "published" && isUpcomingEvent(e)).length} delta="listed publicly" />
-        <Stat label="Newsletter sign-ups" value={Number(ccSubs.n)} delta="managed under Newsletter" />
+        <Stat label="Newsletter subscribers" value={Number(ccSubs.n)} delta={`${segments.length} segment${segments.length === 1 ? "" : "s"}`} />
       </div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{TABS.map(([k, l]) => <Link key={k} href={`/admin/caribbean?tab=${k}`} className={`pill${tab === k ? " is-on" : ""}`}>{l}{k === "resources" && Number(resPending.n) ? ` · ${resPending.n}` : k === "events" && Number(evPending.n) ? ` · ${evPending.n}` : ""}</Link>)}<Link href="/admin/newsletter?audience=caribbean-connection" className="pill" style={{ marginLeft: "auto" }}>Newsletter sign-ups →</Link></div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{TABS.map(([k, l]) => <Link key={k} href={`/admin/caribbean?tab=${k}`} className={`pill${tab === k ? " is-on" : ""}`}>{l}{k === "resources" && Number(resPending.n) ? ` · ${resPending.n}` : k === "events" && Number(evPending.n) ? ` · ${evPending.n}` : ""}</Link>)}</div>
 
       {tab === "resources" && (<>
         <Card title="Resource directory" sub="Submissions from the public land here as Pending. Approve to publish, or reject with a note." action={<Filters />}>
@@ -170,6 +169,35 @@ export default async function CaribbeanAdmin({ searchParams }: { searchParams: P
           <form action={countryAction} style={{ display: "flex", gap: 8, paddingTop: 8 }}><input type="hidden" name="op" value="add" /><input name="name" placeholder="Country name" className="admin-input admin-input-sm" style={{ width: 220 }} required /><button type="submit" className="btn btn-ghost btn-xs" style={{ borderRadius: 8 }}>+ Add country</button></form>
         </Card>
       )}
+
+      {tab === "subscribers" && (<>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 1fr)", gap: 20, alignItems: "start" }} className="g2">
+          <Card title="Caribbean Newsletter subscribers" sub="Segmented by audience and location for targeted sends" action={<a href="/api/admin/export?kind=cc-subscribers" className="btn btn-ghost btn-xs" style={{ borderRadius: 8 }}>Export CSV</a>}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{segments.map(([k, n]) => <span key={k} className="tag">{k} · {n}</span>)}</div>
+            <div style={{ maxHeight: 520, overflow: "auto", display: "flex", flexDirection: "column" }}>
+              {subs.map((s) => (
+                <div key={s.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) 90px auto", gap: 10, alignItems: "center", fontSize: 12, padding: "6px 0", borderBottom: "1px solid #f2f4f7", opacity: s.unsubscribedAt ? .5 : 1 }}>
+                  <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={s.email}>{s.email}</span><span>{s.segment}</span><span style={{ color: "#6b7486" }}>{s.location || s.country || "—"}</span><span style={{ color: "#8c95a8" }}>{relativeDay(s.createdAt)}</span>
+                  <span style={{ display: "flex", gap: 10 }}>
+                    <form action={subscriberAction}><input type="hidden" name="subscriberId" value={s.id} /><input type="hidden" name="audience" value="caribbean-connection" /><input type="hidden" name="op" value={s.unsubscribedAt ? "resubscribe" : "unsubscribe"} /><input type="hidden" name="_back" value={back} /><button type="submit" className="link-btn link-muted">{s.unsubscribedAt ? "Re-subscribe" : "Unsubscribe"}</button></form>
+                    <form action={subscriberAction}><input type="hidden" name="subscriberId" value={s.id} /><input type="hidden" name="audience" value="caribbean-connection" /><input type="hidden" name="op" value="delete" /><input type="hidden" name="_back" value={back} /><ConfirmButton message={`Delete ${s.email}?`}>Delete</ConfirmButton></form>
+                  </span>
+                </div>))}
+              {!subs.length && <span style={{ fontSize: 13, color: "#8c95a8", padding: "12px 0" }}>No subscribers yet. They arrive from the subscribe box on the Caribbean Connection page.</span>}
+            </div>
+            <span style={{ fontSize: 12, color: "#6b7486", lineHeight: 1.6 }}>Unsubscribing here also tells Insta-Newsletter. Whether each person has reached Insta-Newsletter, the Healthy Home checklist list and the connection itself are under <Link href="/admin/newsletter?audience=caribbean-connection" className="link-btn">Newsletter</Link>.</span>
+          </Card>
+          <Card title="Compose issue" sub="A plain-text email to this list from newsletter@: queues one email per active subscriber; the outbox job delivers it. For designed newsletters, write and send in Insta-Newsletter.">
+            <form action={composeIssue} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <label className="label label-caps">Segment<select name="segment" className="admin-input admin-input-sm" defaultValue=""><option value="">Everyone</option>{segments.map(([k]) => <option key={k} value={k}>{k}</option>)}</select></label>
+              <input name="subject" placeholder="Subject" className="admin-input admin-input-sm" required />
+              <textarea name="body" rows={8} placeholder="Plain-text issue body…" className="admin-input" required />
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}><label style={{ fontSize: 12, display: "flex", gap: 6, alignItems: "center" }}><input type="checkbox" name="test" />Send a test to</label><input name="testEmail" placeholder={user.email} className="admin-input admin-input-sm" style={{ width: 200 }} /></div>
+              <ConfirmButton message="Queue this issue for every active subscriber in the chosen segment?" className="btn btn-navy btn-xs" style={{ borderRadius: 8, alignSelf: "flex-start" }}>Queue issue</ConfirmButton>
+            </form>
+          </Card>
+        </div>
+      </>)}
 
     </AdminShell>
   );

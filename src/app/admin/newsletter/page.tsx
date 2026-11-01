@@ -166,7 +166,7 @@ export default async function NewsletterAdmin({ searchParams }: { searchParams: 
               <ol style={{ ...help, fontSize: 13, color: "#4b5569", margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 6 }}>
                 <li><strong>Someone subscribes on the website</strong> (Caribbean Connection page or the Healthy Home checklist). The website records it and sends its own welcome or the checklist.</li>
                 <li><strong>The website hands them to Insta-Newsletter</strong> straight away, into the matching audience, with their segment, location and consent details. Anything that fails is retried every 15 minutes.</li>
-                <li><strong>You write and send in Insta-Newsletter.</strong> Templates, scheduling, open and click tracking, unsubscribe links and the public archive all live there. The website sends no newsletters of its own.</li>
+                <li><strong>You write and send in Insta-Newsletter.</strong> Templates, scheduling, open and click tracking, unsubscribe links and the public archive all live there. The Caribbean Connection page keeps a simple plain-text <em>Compose issue</em> for quick notes to that list.</li>
               </ol>
             </Card>
             <Card title="Do these in Insta-Newsletter" sub="The website does not duplicate them">
