@@ -16,6 +16,8 @@ export const metadata = { title: "Newsletter" };
 export const dynamic = "force-dynamic";
 const TABS = [["subscribers", "Subscribers"], ["insta", "Insta-Newsletter"], ["settings", "Settings"]] as const;
 type Tab = (typeof TABS)[number][0];
+/** The subscribers table: who · list · when · Insta-Newsletter status · actions. The first cell stacks the email over the details so nothing truncates at laptop widths. */
+const COLS = "minmax(0, 1fr) 118px 84px 200px 260px";
 const TONES: Record<StatusTone, [string, string]> = { ok: ["#dcefe4", "#1f6b3f"], wait: ["#fff4d6", "#7a5a00"], bad: ["#fbe9e2", "#9a3c1e"], muted: ["#f2f4f7", "#6b7486"] };
 const help: React.CSSProperties = { fontSize: 12, color: "#6b7486", lineHeight: 1.6 };
 
@@ -82,18 +84,20 @@ export default async function NewsletterAdmin({ searchParams }: { searchParams: 
             {q && <Link href={href({ q: "" })} className="link-btn link-muted" style={{ fontSize: 12 }}>Clear</Link>}
           </form>
         </div>
-        <div className="g2" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.9fr) minmax(0, 1fr)", gap: 20, alignItems: "start" }}>
-          <Card title={`Website sign-ups · ${shown.length}`} sub="The list of record lives in Insta-Newsletter. This is the website's own log of who signed up and whether they got there." action={<a href={exportHref} className="btn btn-ghost btn-xs" style={{ borderRadius: 8 }}>Export CSV</a>}>
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.7fr) 130px minmax(0, 1.2fr) 86px 190px auto", gap: 10, fontSize: 11, color: "#8c95a8", textTransform: "uppercase", letterSpacing: ".06em", padding: "0 0 6px", borderBottom: "1px solid #e9ecf1" }}><span>Email</span><span>List</span><span>Details</span><span>Signed up</span><span>Insta-Newsletter</span><span /></div>
+        <Card title={`Website sign-ups · ${shown.length}`} sub="The list of record lives in Insta-Newsletter. This is the website's own log of who signed up and whether they got there." action={<a href={exportHref} className="btn btn-ghost btn-xs" style={{ borderRadius: 8 }}>Export CSV</a>}>
+            <div style={{ display: "grid", gridTemplateColumns: COLS, gap: 10, fontSize: 11, color: "#8c95a8", textTransform: "uppercase", letterSpacing: ".06em", padding: "0 0 6px", borderBottom: "1px solid #e9ecf1" }}><span>Subscriber</span><span>List</span><span>Signed up</span><span>Insta-Newsletter</span><span /></div>
             <div style={{ maxHeight: 620, overflow: "auto", display: "flex", flexDirection: "column" }}>
               {shown.map((r) => {
                 const a = AUDIENCES[r.audience]; const push = needsPush(r);
-                const sendLabel = !connected ? null : r.unsubscribedAt ? null : r.instaStatus === "suppressed" ? "Email them a confirmation link" : r.instaStatus === "failed" ? "Try again" : push ? "Send now" : null;
+                const details = r.audience === "healthy-home" ? "Checklist download" : [r.segment, r.location || r.country].filter(Boolean).join(" · ") || "—";
+                const sendLabel = !connected ? null : r.unsubscribedAt ? null : r.instaStatus === "suppressed" ? "Ask them to confirm" : r.instaStatus === "failed" ? "Try again" : push ? "Send now" : null;
                 return (
-                  <div key={`${r.audience}-${r.id}`} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.7fr) 130px minmax(0, 1.2fr) 86px 190px auto", gap: 10, alignItems: "center", fontSize: 12, padding: "7px 0", borderBottom: "1px solid #f2f4f7", opacity: r.unsubscribedAt ? .55 : 1 }}>
-                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={r.email}>{r.email}</span>
+                  <div key={`${r.audience}-${r.id}`} style={{ display: "grid", gridTemplateColumns: COLS, gap: 10, alignItems: "center", fontSize: 12, padding: "8px 0", borderBottom: "1px solid #f2f4f7", opacity: r.unsubscribedAt ? .55 : 1 }}>
+                    <span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                      <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontWeight: 600 }} title={r.email}>{r.email}</span>
+                      <span style={{ color: "#6b7486", fontSize: 11, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={details}>{details}</span>
+                    </span>
                     <span className="tag" style={{ justifySelf: "start" }}>{a.short}</span>
-                    <span style={{ color: "#6b7486", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={[r.segment, r.location].filter(Boolean).join(" · ")}>{r.audience === "healthy-home" ? "Checklist download" : [r.segment, r.location || r.country].filter(Boolean).join(" · ") || "—"}</span>
                     <span style={{ color: "#8c95a8" }} title={fmtDateTime(r.createdAt)}>{relativeDay(r.createdAt)}</span>
                     <span><SyncPill rec={r} connected={connected} /></span>
                     <span style={{ display: "flex", gap: 10, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
@@ -106,7 +110,7 @@ export default async function NewsletterAdmin({ searchParams }: { searchParams: 
               {!shown.length && <span style={{ fontSize: 13, color: "#8c95a8", padding: "18px 0" }}>{records.length ? "Nobody matches these filters." : "No sign-ups yet. They arrive from the Caribbean Connection page and the Healthy Home checklist."}</span>}
             </div>
           </Card>
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div className="g2" style={{ gap: 20, alignItems: "start" }}>
             <Card title="Add someone by hand" sub="Recorded on the website and added to Insta-Newsletter. No welcome email is sent.">
               <form action={addSubscriber} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <input name="email" type="email" required placeholder="name@example.com" className="admin-input admin-input-sm" />
@@ -123,7 +127,6 @@ export default async function NewsletterAdmin({ searchParams }: { searchParams: 
               </div>
             </Card>
           </div>
-        </div>
       </>)}
 
       {tab === "insta" && (
@@ -146,7 +149,7 @@ export default async function NewsletterAdmin({ searchParams }: { searchParams: 
               </div>
             </Card>
             <Card title={connected ? "Change the connection" : "Connect Insta-Newsletter"} sub="About two minutes. The website creates the two audiences for you.">
-              <ol style={{ ...help, margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 4 }}>
+              <ol style={{ ...help, listStyle: "decimal", margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 4 }}>
                 <li>In Insta-Newsletter open <strong>Settings → Developers</strong>{links.developers && <> (<a href={links.developers} target="_blank" rel="noreferrer" className="link-btn">open ↗</a>)</>}.</li>
                 <li>Create a key named <em>Grace In Design website</em> with the scopes <code>subscribers:write</code>, <code>audiences:read</code> and <code>audiences:write</code>.</li>
                 <li>Copy the key (it is shown once there) and paste it below.</li>
@@ -163,7 +166,7 @@ export default async function NewsletterAdmin({ searchParams }: { searchParams: 
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <Card title="How it works" sub="Three steps, two systems">
-              <ol style={{ ...help, fontSize: 13, color: "#4b5569", margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 6 }}>
+              <ol style={{ ...help, listStyle: "decimal", fontSize: 13, color: "#4b5569", margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 6 }}>
                 <li><strong>Someone subscribes on the website</strong> (Caribbean Connection page or the Healthy Home checklist). The website records it and sends its own welcome or the checklist.</li>
                 <li><strong>The website hands them to Insta-Newsletter</strong> straight away, into the matching audience, with their segment, location and consent details. Anything that fails is retried every 15 minutes.</li>
                 <li><strong>You write and send in Insta-Newsletter.</strong> Templates, scheduling, open and click tracking, unsubscribe links and the public archive all live there. The Caribbean Connection page keeps a simple plain-text <em>Compose issue</em> for quick notes to that list.</li>

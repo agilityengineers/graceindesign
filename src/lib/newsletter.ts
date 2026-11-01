@@ -171,7 +171,7 @@ export function describeInstaStatus(rec: Pick<SubscriberRecord, "instaStatus" | 
   const s = rec.instaStatus;
   if (rec.unsubscribedAt) {
     if (s === "removed") return { label: "Removed from Insta-Newsletter", tone: "muted", detail: null };
-    if (s === "suppressed") return { label: "Unsubscribed in Insta-Newsletter", tone: "muted", detail: null };
+    if (s === "suppressed") return { label: "Unsubscribed there", tone: "muted", detail: "They unsubscribed in Insta-Newsletter" };
     if (s === "synced" || s === "confirming") return { label: connected ? "Removal pending" : "Still in Insta-Newsletter", tone: connected ? "wait" : "bad", detail: connected ? "Will be removed on the next sync" : "Connect Insta-Newsletter to remove them" };
     if (s === "queued") return { label: "Removal pending", tone: "wait", detail: rec.instaError };
     if (s === "failed") return { label: "Removal failed", tone: "bad", detail: rec.instaError };
@@ -181,7 +181,7 @@ export function describeInstaStatus(rec: Pick<SubscriberRecord, "instaStatus" | 
   switch (s) {
     case "synced": return { label: "In Insta-Newsletter", tone: "ok", detail: null };
     case "confirming": return { label: "Awaiting their confirmation", tone: "wait", detail: "Insta-Newsletter emailed a confirmation link" };
-    case "suppressed": return { label: "Unsubscribed in Insta-Newsletter", tone: "muted", detail: "They left earlier; only their own confirmation brings them back" };
+    case "suppressed": return { label: "Unsubscribed there", tone: "muted", detail: "They unsubscribed in Insta-Newsletter earlier; only their own confirmation brings them back" };
     case "queued": return { label: "Retrying", tone: "wait", detail: rec.instaError };
     case "failed": return { label: "Failed", tone: "bad", detail: rec.instaError };
     case "removed":
