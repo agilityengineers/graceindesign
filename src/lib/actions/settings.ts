@@ -10,6 +10,7 @@ import { env } from "@/lib/env";
 import { slackConfigured } from "@/lib/server/slack";
 import { cftSmsConfigured } from "@/lib/server/cft-master";
 import { revokeCftLaunchLinks } from "@/lib/server/cft-links";
+import { instaLiveStatus } from "@/lib/server/insta-newsletter";
 
 const BACK = "/admin/content/settings";
 const REVAL = [BACK, "/", "/contact", "/about"];
@@ -114,6 +115,7 @@ async function liveStatus(key: string): Promise<string> {
     case "stripe": return env.stripe.secret ? "connected" : "not_connected";
     case "esign": return "connected";
     case "hubspot": return env.hubspotToken ? "connected" : "not_connected";
+    case "insta_newsletter": return await instaLiveStatus();
     default: return "planned";
   }
 }

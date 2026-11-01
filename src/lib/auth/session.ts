@@ -43,10 +43,10 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
 });
 
 /** Permission matrix from design/Roadmap.dc.html "Roles & permissions". */
-export type Area = "leads" | "calendar" | "projects" | "forms" | "pages" | "services" | "posts" | "media" | "products" | "social" | "users" | "integrations" | "caribbean" | "hero" | "rss" | "ops" | "dashboard";
+export type Area = "leads" | "calendar" | "projects" | "forms" | "pages" | "services" | "posts" | "media" | "products" | "social" | "users" | "integrations" | "caribbean" | "newsletter" | "hero" | "rss" | "ops" | "dashboard";
 const MATRIX: Record<UserRole, Area[]> = {
-  owner: ["leads", "calendar", "projects", "forms", "pages", "services", "posts", "media", "products", "social", "users", "integrations", "caribbean", "hero", "rss", "ops", "dashboard"],
-  editor: ["pages", "services", "posts", "media", "products", "caribbean", "hero", "rss", "dashboard"],
+  owner: ["leads", "calendar", "projects", "forms", "pages", "services", "posts", "media", "products", "social", "users", "integrations", "caribbean", "newsletter", "hero", "rss", "ops", "dashboard"],
+  editor: ["pages", "services", "posts", "media", "products", "caribbean", "newsletter", "hero", "rss", "dashboard"],
   sales: ["leads", "calendar", "projects", "ops", "dashboard"],
   social: ["posts", "media", "social", "dashboard"],
 };

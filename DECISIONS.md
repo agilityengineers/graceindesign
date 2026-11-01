@@ -50,9 +50,13 @@ Choices made where the design handoff (`docs/handoff/README.md`) left something 
 
 25. **Community events stay listed through the end of their date, then leave at midnight in the event's own time zone.** An event row stores a start instant (noon on the chosen date) and a time zone, not an end time, so "its date is today or later" is the fairest reading of "still worth seeing": a workshop that began at 10 am is still relevant at 3 pm, and yesterday's is not relevant at 9 am. The rule is `isUpcomingEvent` in `src/lib/cc-events.ts`, shared by the public page and the admin count, and `npm run test:cc-events` pins it down. The public page renders per request, so nothing has to be cleared from a cache for an event to disappear. To cut off at the start time instead, change that one function; to honour a real end time, add an `ends_at` column first.
 
+## Newsletter
+
+26. **Insta-Newsletter is the newsletter system; the website only captures sign-ups and hands them over.** The owner's direction: nothing newsletter-shaped should be built or used in this app when Insta-Newsletter already does it. So designed newsletters are written and sent in Insta-Newsletter, every sign-up is pushed there through its public v1 API with an account-scoped API key (the Oct 31 plan assumed no such API existed; it shipped since), and a dedicated **Newsletter** section holds both lists, the hand-off status and the connection. At Grace's request the Caribbean Connection page keeps its *Newsletter subscribers* tab and the plain-text *Compose issue* for quick notes to that list: a convenience on the same list, not a second newsletter system. The website keeps its two subscriber tables as the capture log and a per-row hand-off status, because the forms, the welcome email and the checklist PDF still live here and the admin needs to see that each person arrived. Insta-Newsletter's rules are honoured rather than worked around: a person who unsubscribed there is not re-added on the website's say-so (they are emailed a confirmation link instead), and the website never sends newsletters of its own. Key storage follows the webhook-secret precedent: Replit Secrets when set, otherwise pasted in the admin and AES-encrypted with the session secret.
+
 ## Open items from the handoff (placeholders the admin can edit)
 
 - Model Home tier pricing and a developer testimonial → `services` row `model-home` (Content → Services).
 - Business street address → Site settings → Contact & footer (currently "Street address / City, State ZIP").
 - Official reversed logo → `public/assets/logo-white-on-dark.png` (media slot `brand.logo-white`).
-- Blog RSS URLs, Etsy shop URL, social credentials, newsletter ESP → RSS feeds, `ETSY_SHOP_URL`, Replit Secrets, and the built-in outbox respectively.
+- Blog RSS URLs, Etsy shop URL, social credentials → RSS feeds, `ETSY_SHOP_URL`, Replit Secrets. Newsletter ESP → Insta-Newsletter (decision 26).

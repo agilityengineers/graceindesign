@@ -1,4 +1,31 @@
-# Newsletter review and Insta-Newsletter integration plan
+# Newsletter: how the website and Insta-Newsletter work together
+
+## Status (2026-11-01): built, on the website's side, using Insta-Newsletter's v1 API
+
+The plan below (written 2026-10-31) proposed a new inbound endpoint on Insta-Newsletter because, at the time of that read, it had no machine credential. Insta-Newsletter has since shipped a **public v1 API with account-scoped API keys** (`agilityengineers/InstaNewsletter` at `904a226`: `shared/apiKeys.ts`, `server/publicApi.ts`, `docs/api-v1.md`), so the website now uses that directly and **no change to Insta-Newsletter is needed**. The owner's direction settled the rest: Insta-Newsletter is the newsletter system; the website does not send newsletters of its own.
+
+What is in place on the website:
+
+- **Admin → Newsletter** (`/admin/newsletter`, owners and editors), its own link in the left nav. Three tabs: *Subscribers* (both website lists together, filters, search, per-person Insta-Newsletter status, unsubscribe / re-subscribe / remove, add-by-hand, CSV export), *Insta-Newsletter* (connect with an API key, account and plan headroom, the two audiences, check connection, send everything waiting, recent hand-offs, links into Insta-Newsletter) and *Settings* (website welcome email on/off, double opt-in).
+- **The hand-off** (`src/lib/server/insta-newsletter.ts`, vocabulary in `src/lib/newsletter.ts`): on each sign-up the website calls `POST /v1/subscribers` with the audience id, tags (`website`, the list key, the segment), custom fields (`website_list`, `segment`, `location`, `country`, `source`) and `consent` (time, IP, page). Unsubscribes call `POST /v1/subscribers/unsubscribe`. The answer is kept on the row (`insta_status`: `synced`, `confirming`, `suppressed`, `queued`, `failed`, `removed`; `null` = never sent) and the `newsletter` cron job retries `queued` rows and never-sent rows every 15 minutes. A person Insta-Newsletter reports as `suppressed` (they unsubscribed there earlier) is not re-added by the website; it asks Insta-Newsletter to email them a confirmation link instead.
+- **Audiences.** Connecting finds or creates two audiences by name, *Caribbean Connection* and *Healthy Home* (`POST /v1/audiences` is find-or-create). With a key that lacks `audiences:write`, they must already exist with those names.
+- **The key.** `INSTA_NEWSLETTER_URL` + `INSTA_NEWSLETTER_API_KEY` in Replit Secrets, or pasted under Admin → Newsletter → Insta-Newsletter and stored AES-encrypted in `site_settings.newsletter` (same approach as outbound webhook secrets). Secrets win when both exist. Scopes needed: `subscribers:write`, `audiences:read`; `audiences:write` recommended.
+- **Kept, at the owner's request:** the *Newsletter subscribers* tab under Caribbean Connection with its plain-text *Compose issue* (one outbox email per active Caribbean subscriber, from `newsletter@`), for quick notes to that list. Its unsubscribe / re-subscribe go through the same actions as Admin → Newsletter, so Insta-Newsletter hears about them. The outbound-webhook design in §5 was not built.
+
+### Setting it up (five minutes)
+
+1. In Insta-Newsletter, sign in to Grace In Design's account and open **Settings → Developers**. Create a key named *Grace In Design website* with the scopes `subscribers:write`, `audiences:read` and `audiences:write`. Copy it (shown once).
+2. In the website admin, open **Newsletter → Insta-Newsletter**, enter Insta-Newsletter's address and paste the key, then **Connect and test**. The card shows the account, the plan's contact headroom and ✓ beside both audiences.
+3. Press **Send everything waiting** to push the sign-ups already on the website (a hundred per press; the cron picks up the rest). Or export the CSV and use Contacts → Import in Insta-Newsletter; the file's `status` column keeps unsubscribed people unsubscribed.
+4. Submit a test sign-up on `/caribbean-connection` and watch it appear with status *In Insta-Newsletter*, then in Insta-Newsletter's Contacts with source "Added through the API".
+5. Under **Newsletter → Settings**, switch the website's welcome email off if Insta-Newsletter's own welcome or confirmation email covers it.
+
+What still happens elsewhere: the Slack notice per sign-up is a Form builder → Notifications switch; the Healthy Home checklist PDF is always emailed by the website because it is what the person asked for; designed newsletters are written, scheduled and sent in Insta-Newsletter, which also carries its own unsubscribe and preferences links, while the Caribbean tab's Compose issue remains for plain-text notes. A reader who unsubscribes from an Insta-Newsletter email is not mirrored back to the website (its API has no outbound webhooks yet); that only matters for the website's own welcome email, which goes out once.
+
+---
+
+# Original review and plan (2026-10-31)
+
 
 *Written 2026-10-31 from a read of both repositories (`agilityengineers/graceindesign` at `61ac172`, `agilityengineers/InstaNewsletter` at `d2a2582`). No code was changed in either repository as part of this review. The live site at insta-newsletter.com could not be reached from the review environment, so every statement about Insta-Newsletter describes the code in the repository, not the deployment.*
 
