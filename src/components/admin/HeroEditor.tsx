@@ -17,7 +17,7 @@ export default function HeroEditor({ target: t }: { target: HeroTarget }) {
   const addScene = () => setScenes((ss) => [...ss, { key: Date.now(), name: `Scene ${live.length + 1}`, word: "", line: "", img: "", href: "", deleted: false }]);
   const cinematic = style === "cinematic";
   return (
-    <form action={saveHero} encType="multipart/form-data" className="admin-card" style={{ gap: 18 }}>
+    <form action={saveHero} className="admin-card" style={{ gap: 18 }}>
       <input type="hidden" name="kind" value={t.kind} /><input type="hidden" name="id" value={t.id} /><input type="hidden" name="heroStyle" value={style} />
       <input type="hidden" name="sceneCount" value={scenes.length} /><input type="hidden" name="sceneOrder" value={scenes.map((_, i) => i).join(",")} />
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
