@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { asc, desc, eq, ne, and, sql } from "drizzle-orm";
 import { requireArea } from "@/lib/auth/session";
-import { db, emailSequences, emailSequenceSteps, sequenceEnrollments, smsTemplates, proposals, leads, projects, invoices, approvals, webhookSubscriptions, webhookDeliveries, webhookEvents, outbox, cronRuns, hubspotSync, paths, LEAD_STAGES, LEAD_STAGE_LABELS } from "@/lib/db";
+import { db, emailSequences, emailSequenceSteps, sequenceEnrollments, smsTemplates, proposals, leads, projects, invoices, approvals, webhookSubscriptions, webhookDeliveries, webhookEvents, outbox, cronRuns, hubspotSync, paths } from "@/lib/db";
+import { getLeadStages } from "@/lib/server/lead-stages";
 import { GID_EVENTS } from "@/lib/server/webhooks";
 import { JOBS } from "@/lib/server/cron";
 import { readOutboxPreviews } from "@/lib/server/outbox-privacy";
@@ -22,6 +23,7 @@ const TABS = [["sequences", "Email & SMS drips"], ["sms", "SMS templates"], ["pr
 
 export default async function OpsPage({ searchParams }: { searchParams: Promise<{ tab?: string; open?: string }> }) {
   const user = await requireArea("ops");
+  const leadStageDefs = await getLeadStages(); const stageName = (k: string) => leadStageDefs.find((s) => s.key === k)?.label || k;
   const sp = await searchParams; const tab = (TABS.find((t) => t[0] === sp.tab)?.[0] || "sequences") as (typeof TABS)[number][0];
   const [[queued], [failedMail], [pendingInv], [pendingAppr], [openProps]] = await Promise.all([
     db.select({ n: sql<number>`count(*)` }).from(outbox).where(eq(outbox.status, "queued")),
@@ -50,11 +52,11 @@ export default async function OpsPage({ searchParams }: { searchParams: Promise<
           <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.7fr) minmax(0, 1fr)", gap: 20, alignItems: "start" }} className="g2">
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               {seqs.map((s) => { const mine = steps.filter((x) => x.sequenceId === s.id); return (
-                <Card key={s.id} title={s.name} sub={`Triggers when a lead enters “${s.triggerStage ? LEAD_STAGE_LABELS[s.triggerStage] : "any stage"}”${s.triggerPathId ? ` on the ${pathRows.find((p) => p.id === s.triggerPathId)?.label || s.triggerPathId} path` : ""} · ${enrolls.filter((e) => e.e.sequenceId === s.id && e.e.status === "active").length} active`} action={<div style={{ display: "flex", gap: 12, alignItems: "center" }}><form action={sequenceAction}><input type="hidden" name="sequenceId" value={s.id} /><input type="hidden" name="op" value="toggle" /><button type="submit" className={`toggle${s.isActive ? " is-on" : ""}`} aria-label="Toggle" /></form><form action={sequenceAction}><input type="hidden" name="sequenceId" value={s.id} /><input type="hidden" name="op" value="delete" /><ConfirmButton message={`Delete “${s.name}” and stop its enrollments?`}>Delete</ConfirmButton></form></div>}>
+                <Card key={s.id} title={s.name} sub={`Triggers when a lead enters “${s.triggerStage ? stageName(s.triggerStage) : "any stage"}”${s.triggerPathId ? ` on the ${pathRows.find((p) => p.id === s.triggerPathId)?.label || s.triggerPathId} path` : ""} · ${enrolls.filter((e) => e.e.sequenceId === s.id && e.e.status === "active").length} active`} action={<div style={{ display: "flex", gap: 12, alignItems: "center" }}><form action={sequenceAction}><input type="hidden" name="sequenceId" value={s.id} /><input type="hidden" name="op" value="toggle" /><button type="submit" className={`toggle${s.isActive ? " is-on" : ""}`} aria-label="Toggle" /></form><form action={sequenceAction}><input type="hidden" name="sequenceId" value={s.id} /><input type="hidden" name="op" value="delete" /><ConfirmButton message={`Delete “${s.name}” and stop its enrollments?`}>Delete</ConfirmButton></form></div>}>
                   <form action={saveSequence} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr auto", gap: 8, alignItems: "end" }}>
                     <input type="hidden" name="sequenceId" value={s.id} /><input type="hidden" name="isActive" value={s.isActive ? "on" : ""} />
                     <label className="label label-caps">Name<input name="name" defaultValue={s.name} className="admin-input admin-input-sm" /></label>
-                    <label className="label label-caps">Trigger stage<select name="triggerStage" defaultValue={s.triggerStage || ""} className="admin-input admin-input-sm"><option value="">Any</option>{LEAD_STAGES.map((st) => <option key={st} value={st}>{LEAD_STAGE_LABELS[st]}</option>)}</select></label>
+                    <label className="label label-caps">Trigger stage<select name="triggerStage" defaultValue={s.triggerStage || ""} className="admin-input admin-input-sm"><option value="">Any</option>{leadStageDefs.map((st) => <option key={st.key} value={st.key}>{st.label}</option>)}</select></label>
                     <label className="label label-caps">Path<select name="triggerPathId" defaultValue={s.triggerPathId || ""} className="admin-input admin-input-sm"><option value="">Any</option>{pathRows.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}</select></label>
                     <button type="submit" className="btn btn-ghost btn-xs" style={{ borderRadius: 8, height: 34 }}>Save</button>
                   </form>
@@ -79,7 +81,7 @@ export default async function OpsPage({ searchParams }: { searchParams: Promise<
               <Card title="New sequence">
                 <form action={saveSequence} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <input name="name" placeholder="Commercial lead nurture" className="admin-input admin-input-sm" required />
-                  <select name="triggerStage" className="admin-input admin-input-sm" defaultValue="new">{LEAD_STAGES.map((st) => <option key={st} value={st}>{LEAD_STAGE_LABELS[st]}</option>)}</select>
+                  <select name="triggerStage" className="admin-input admin-input-sm" defaultValue="new">{leadStageDefs.map((st) => <option key={st.key} value={st.key}>{st.label}</option>)}</select>
                   <select name="triggerPathId" className="admin-input admin-input-sm" defaultValue=""><option value="">Any path</option>{pathRows.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}</select>
                   <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8, alignSelf: "flex-start" }}>Create</button>
                 </form>

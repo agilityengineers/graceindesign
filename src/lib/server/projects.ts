@@ -34,7 +34,7 @@ export async function convertLeadToProject(leadId: number, userId: number | null
     stageId: stage?.id ?? null, ownerId: lead.ownerId ?? userId, contractValue: opts.contractValue != null ? String(opts.contractValue) : null, signedAt: new Date().toISOString().slice(0, 10), targetDate: opts.targetDate || null, address: opts.address || lead.address || null,
     answers: rules.copyAnswers ? lead.answers : {}, notes: rules.copyAnswers ? lead.notes : null, nextMilestone: rules.requestDepositInvoice ? "Request deposit" : "Kickoff",
   }).returning();
-  await db.update(leads).set({ convertedProjectId: project.id, stage: rules.moveLeadToWon ? "won" : lead.stage, updatedAt: new Date() }).where(eq(leads.id, lead.id));
+  await db.update(leads).set({ convertedProjectId: project.id, stage: rules.moveLeadToWon ? "won" : lead.stage, ...(rules.moveLeadToWon && lead.stage !== "won" ? { stageChangedAt: new Date() } : {}), updatedAt: new Date() }).where(eq(leads.id, lead.id));
   await db.insert(leadActivity).values({ leadId: lead.id, userId, type: "stage", body: `Signed — project ${code} created` });
   await db.insert(projectActivity).values({ projectId: project.id, userId, type: "system", body: `Project created from lead “${lead.name}”` });
   await db.insert(milestones).values({ projectId: project.id, title: "Agreement signed", dueAt: project.signedAt, doneAt: new Date(), sort: 0 });

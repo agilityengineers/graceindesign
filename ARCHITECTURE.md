@@ -44,7 +44,7 @@ tests/                 smoke test and screenshot helper
 
 ## Scheduled work
 
-`/api/cron/<job>` (bearer `CRON_SECRET`) or `npm run cron -- <job>` runs: `reminders` (24h booking reminders), `rss`, `etsy`, `social` (publish due posts, sync feeds), `drips`, `webhooks` (retry deliveries), `outbox` (retry queued mail/SMS), `hubspot`, `newsletter` (push website sign-ups that have not reached Insta-Newsletter yet), or `all`. Each run is logged in `cron_runs`. On Replit, create a Scheduled Deployment that runs `npm run cron -- all` every 15 minutes (plus `rss` hourly if you prefer a separate cadence).
+`/api/cron/<job>` (bearer `CRON_SECRET`) or `npm run cron -- <job>` runs: `reminders` (24h booking reminders), `rss`, `etsy`, `social` (publish due posts, sync feeds), `drips`, `webhooks` (retry deliveries), `outbox` (retry queued mail/SMS), `hubspot`, `newsletter` (push website sign-ups that have not reached Insta-Newsletter yet), `lead_cleanup` (delete leads that have sat in an auto-delete board column, e.g. Trash, past its day limit), or `all`. Each run is logged in `cron_runs`. On Replit, create a Scheduled Deployment that runs `npm run cron -- all` every 15 minutes (plus `rss` hourly if you prefer a separate cadence).
 
 ## Call Flow Tracker integration (switched on after launch)
 

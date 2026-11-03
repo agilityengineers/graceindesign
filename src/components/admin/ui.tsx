@@ -1,8 +1,11 @@
 import type { CSSProperties, ReactNode } from "react";
-import { LEAD_STAGE_LABELS, type LeadStage } from "@/lib/db/constants";
+import { DEFAULT_LEAD_STAGES, type LeadStage, type LeadStageDef } from "@/lib/db/constants";
 
-export const STAGE_COLORS: Record<LeadStage, [string, string]> = { new: ["#e6f3fc", "#1a2238"], contacted: ["#fff4d6", "#7a5a00"], consultation_booked: ["#e9e4fb", "#4a2fa3"], proposal_sent: ["#dcefe4", "#1f6b3f"], won: ["#1a2238", "#fff"], lost: ["#f2f4f7", "#6b7486"], nurture: ["#fbe9e2", "#9a3c1e"] };
-export function StagePill({ stage }: { stage: LeadStage }) { const [bg, color] = STAGE_COLORS[stage]; return <span className="status-pill" style={{ padding: "5px 10px", background: bg, color }}>{LEAD_STAGE_LABELS[stage]}</span>; }
+/** Pass `def` (the column from lead_stages) so renamed or added columns show their own name and colour. */
+export function StagePill({ stage, def }: { stage: LeadStage; def?: Pick<LeadStageDef, "label" | "bg" | "fg"> }) {
+  const d = def || DEFAULT_LEAD_STAGES.find((s) => s.key === stage) || { label: stage.replace(/_/g, " "), bg: "#f2f4f7", fg: "#4b5569" };
+  return <span className="status-pill" style={{ padding: "5px 10px", background: d.bg, color: d.fg }}>{d.label}</span>;
+}
 export function Stat({ label, value, delta, deltaColor = "#6b7486" }: { label: string; value: string | number; delta?: string; deltaColor?: string }) {
   return <div className="stat"><span style={{ fontSize: 12, color: "#6b7486", fontWeight: 500 }}>{label}</span><b>{value}</b>{delta && <span style={{ fontSize: 12, color: deltaColor, fontWeight: 600 }}>{delta}</span>}</div>;
 }

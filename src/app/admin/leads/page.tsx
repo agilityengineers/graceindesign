@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { and, asc, desc, eq, gte, ilike, lt, or, sql } from "drizzle-orm";
 import { requireArea } from "@/lib/auth/session";
-import { db, leads, leadActivity, bookings, documents, users, paths, projects, LEAD_STAGES, LEAD_STAGE_LABELS, type LeadStage } from "@/lib/db";
+import { db, leads, leadActivity, bookings, documents, users, paths, projects } from "@/lib/db";
 import AdminShell from "@/components/admin/AdminShell";
 import { Stat } from "@/components/admin/ui";
 import Toast from "@/components/admin/Toast";
 import LeadsView from "@/components/admin/LeadsView";
 import LeadDrawer from "@/components/admin/LeadDrawer";
+import LeadColumnsConfig from "@/components/admin/LeadColumnsConfig";
+import { getLeadStages, leadCountsByStage } from "@/lib/server/lead-stages";
 import { money } from "@/lib/utils";
 import { env } from "@/lib/env";
 
@@ -20,6 +22,19 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   const user = await requireArea("leads");
   const sp = await searchParams;
   const source = one(sp.source) || "All";
+  const canEditColumns = user.role === "owner" || user.isSuperAdmin;
+  const stages = await getLeadStages();
+
+  if (one(sp.view) === "columns" && canEditColumns) {
+    const counts = await leadCountsByStage();
+    return (
+      <AdminShell user={user} active="leads" title="Board columns" subtitle="Add, rename, reorder and remove the columns on the Leads board">
+        <Toast />
+        <LeadColumnsConfig stages={stages.map((s) => ({ ...s, count: counts.get(s.key) || 0 }))} counts={{ total: Array.from(counts.values()).reduce((a, n) => a + n, 0) }} />
+      </AdminShell>
+    );
+  }
+
   const view = one(sp.view) === "board" ? "board" : "table";
   const archived = one(sp.archived) === "1";
   const q = one(sp.q);
@@ -50,8 +65,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   const tw = Number(thisWeek.n), lw = Number(lastWeek.n);
   const delta = lw === 0 ? (tw ? "+100% vs last week" : "no change") : `${tw >= lw ? "+" : ""}${Math.round(((tw - lw) / lw) * 100)}% vs last week`;
 
-  const tableRows = rows.map(({ lead, owner }) => ({ id: lead.id, name: lead.name, email: lead.email || "", phone: lead.phone || "", source: lead.sourceLabel || lead.sourcePage, stage: lead.stage, owner: owner || "Unassigned", createdAt: lead.createdAt.toISOString(), followUpAt: lead.followUpAt, tags: lead.tags, converted: !!lead.convertedProjectId }));
-  const stages = LEAD_STAGES.map((s) => ({ id: s as LeadStage, label: LEAD_STAGE_LABELS[s] }));
+  const tableRows = rows.map(({ lead, owner }) => ({ id: lead.id, name: lead.name, email: lead.email || "", phone: lead.phone || "", source: lead.sourceLabel || lead.sourcePage, stage: lead.stage, owner: owner || "Unassigned", createdAt: lead.createdAt.toISOString(), stageChangedAt: lead.stageChangedAt.toISOString(), followUpAt: lead.followUpAt, tags: lead.tags, converted: !!lead.convertedProjectId }));
 
   let drawer: React.ReactNode = null;
   if (openId) {
@@ -65,7 +79,8 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
       ]);
       drawer = (
         <LeadDrawer
-          lead={{ ...lead, createdAt: lead.createdAt.toISOString(), consentAt: lead.consentAt ? lead.consentAt.toISOString() : null } as any}
+          lead={{ ...lead, createdAt: lead.createdAt.toISOString(), stageChangedAt: lead.stageChangedAt.toISOString(), consentAt: lead.consentAt ? lead.consentAt.toISOString() : null } as any}
+          stages={stages}
           activity={acts.map(({ a, userName }) => ({ id: a.id, type: a.type, body: a.body, attachmentUrl: a.attachmentUrl, createdAt: a.createdAt.toISOString(), userName }))}
           bookings={bks.map((b) => ({ id: b.id, startsAt: b.startsAt.toISOString(), endsAt: b.endsAt.toISOString(), status: b.status }))}
           documents={docs}
@@ -88,7 +103,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         <Stat label="Proposals out" value={Number(proposals.n)} delta="awaiting signature" />
         <Stat label="Won this quarter" value={money(Number(won.n))} delta={`${Number(won.c)} project${Number(won.c) === 1 ? "" : "s"} signed`} deltaColor="#1f6b3f" />
       </div>
-      <LeadsView rows={tableRows} sources={sources} currentSource={source} view={view} stages={stages} archived={archived} q={q} />
+      <LeadsView rows={tableRows} sources={sources} currentSource={source} view={view} stages={stages} archived={archived} q={q} canEditColumns={canEditColumns} />
       {drawer}
     </AdminShell>
   );

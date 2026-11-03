@@ -10,6 +10,7 @@ import { env } from "@/lib/env";
 import { hmacHex, timingSafeEqual, sha256Hex } from "@/lib/server/crypto";
 import { normalizePhone } from "@/lib/server/outbox-phone";
 import { notifyTeam } from "@/lib/server/notify";
+import { isLeadStage } from "@/lib/server/lead-stages";
 
 export function verifyCftSignature(headers: Headers, raw: string) {
   if (!env.cft.webhookSecret) return false;
@@ -49,16 +50,16 @@ export async function processCftEvent(raw: string): Promise<{ status: string; le
         if (!lead) [lead] = await db.insert(leads).values({ name, email, phone, sourcePage: "cft", sourceLabel: "Call Flow Tracker · inbound call", stage: "contacted", externalSource: "cft", externalId: externalId ? String(externalId) : null, answers: { cft: d }, tags: ["CFT", "Phone"] }).returning();
         const dur = d.duration ?? d.durationSeconds; const outcome = d.status || d.disposition || "completed";
         await db.insert(leadActivity).values({ leadId: lead.id, type: "call", body: `Call ${outcome}${dur ? ` · ${Math.round(Number(dur) / 60)} min` : ""}${d.campaignName ? ` · ${d.campaignName}` : ""}${d.recordingUrl ? " · recording available" : ""}`, attachmentUrl: d.recordingUrl || null, meta: d });
-        if (lead.stage === "new") await db.update(leads).set({ stage: "contacted", updatedAt: new Date() }).where(eq(leads.id, lead.id));
+        if (lead.stage === "new") await db.update(leads).set({ stage: "contacted", stageChangedAt: new Date(), updatedAt: new Date() }).where(eq(leads.id, lead.id));
         break;
       }
       case "disposition.changed": {
         if (!lead) { result = "ignored"; break; }
         const disp = String(d.disposition || d.leadStatus || "").toLowerCase();
         const map: Record<string, typeof lead.stage> = { won: "won", qualified: "proposal_sent", contacted: "contacted", lost: "lost", dnc: "lost", nurture: "nurture" };
-        const stage = map[disp];
+        const stage = map[disp] && (await isLeadStage(map[disp])) ? map[disp] : undefined; // "nurture" may have been removed from the board
         await db.insert(leadActivity).values({ leadId: lead.id, type: "stage", body: `CFT disposition: ${d.disposition || d.leadStatus}${stage ? ` → ${stage}` : ""}`, meta: d });
-        if (stage && !["won"].includes(lead.stage)) await db.update(leads).set({ stage, updatedAt: new Date() }).where(eq(leads.id, lead.id));
+        if (stage && !["won"].includes(lead.stage)) await db.update(leads).set({ stage, stageChangedAt: new Date(), updatedAt: new Date() }).where(eq(leads.id, lead.id));
         break;
       }
       case "appointment.booked": {
@@ -66,7 +67,7 @@ export async function processCftEvent(raw: string): Promise<{ status: string; le
         const start = new Date(d.startsAt || d.scheduledAt || d.startTime || Date.now() + 86400000);
         const end = new Date(d.endsAt || start.getTime() + 15 * 60000);
         const [bk] = await db.insert(bookings).values({ leadId: lead.id, type: d.type || "discovery_15", startsAt: start, endsAt: end, status: "booked", externalId: d.appointmentId ? String(d.appointmentId) : null, notes: d.notes || null }).returning();
-        await db.update(leads).set({ stage: "consultation_booked", updatedAt: new Date() }).where(eq(leads.id, lead.id));
+        await db.update(leads).set({ stage: "consultation_booked", stageChangedAt: new Date(), updatedAt: new Date() }).where(eq(leads.id, lead.id));
         await db.insert(leadActivity).values({ leadId: lead.id, type: "booking", body: "Appointment booked via Call Flow Tracker", meta: { bookingId: bk.id, ...d } });
         break;
       }

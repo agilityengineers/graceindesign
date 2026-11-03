@@ -6,7 +6,7 @@ import { Close, Check } from "@/components/ui/Icons";
 import { Avatar } from "./ui";
 import ConfirmButton from "./Confirm";
 import { updateLead, addLeadActivity, attachLeadDocument, markLeadSigned, deleteLead, archiveLead, cancelBooking } from "@/lib/actions/leads";
-import { LEAD_STAGES, LEAD_STAGE_LABELS } from "@/lib/db/constants";
+import type { LeadStageDef } from "@/lib/db/constants";
 import type { Lead } from "@/lib/db/schema";
 import { fmtDateTime, relativeDay } from "@/lib/utils";
 
@@ -14,7 +14,7 @@ type Activity = { id: number; type: string; body: string; attachmentUrl: string 
 type Booking = { id: number; startsAt: string; endsAt: string; status: string };
 const ICON: Record<string, [string, string]> = { note: ["✎", "#f2f4f7"], call: ["☎", "#fff4d6"], email: ["✉", "#e6f3fc"], sms: ["✉", "#e6f3fc"], proposal: ["▲", "#dcefe4"], stage: ["●", "#e6f3fc"], system: ["●", "#f2f4f7"], booking: ["◷", "#e9e4fb"], webhook: ["⇄", "#fbe9e2"] };
 
-export default function LeadDrawer({ lead, activity, bookings, documents, team, paths, project, canDelete, cftUrl }: { lead: Lead & { createdAt: string; consentAt: string | null }; activity: Activity[]; bookings: Booking[]; documents: { id: number; name: string; url: string; type: string }[]; team: { id: number; name: string }[]; paths: { id: string; label: string }[]; project: { id: number; code: string; name: string } | null; canDelete: boolean; cftUrl?: string | null }) {
+export default function LeadDrawer({ lead, stages, activity, bookings, documents, team, paths, project, canDelete, cftUrl }: { lead: Lead & { createdAt: string; consentAt: string | null }; stages: LeadStageDef[]; activity: Activity[]; bookings: Booking[]; documents: { id: number; name: string; url: string; type: string }[]; team: { id: number; name: string }[]; paths: { id: string; label: string }[]; project: { id: number; code: string; name: string } | null; canDelete: boolean; cftUrl?: string | null }) {
   const router = useRouter(); const sp = useSearchParams();
   const back = `/admin/leads?${(() => { const n = new URLSearchParams(sp.toString()); n.set("open", String(lead.id)); return n.toString(); })()}`;
   const close = () => { const n = new URLSearchParams(sp.toString()); n.delete("open"); n.delete("ok"); n.delete("err"); router.push(`/admin/leads${n.toString() ? `?${n}` : ""}`); };
@@ -31,7 +31,7 @@ export default function LeadDrawer({ lead, activity, bookings, documents, team, 
       </div>
       <form action={updateLead} style={{ padding: "20px 28px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, borderBottom: "1px solid #eef0f4" }}>
         <input type="hidden" name="id" value={lead.id} /><input type="hidden" name="_back" value={back} />
-        <label className="label label-caps">Stage<select name="stage" defaultValue={lead.stage} className="admin-input">{LEAD_STAGES.map((s) => <option key={s} value={s}>{LEAD_STAGE_LABELS[s]}</option>)}</select></label>
+        <label className="label label-caps">Stage<select name="stage" defaultValue={lead.stage} className="admin-input">{!stages.some((s) => s.key === lead.stage) && <option value={lead.stage}>{lead.stage.replace(/_/g, " ")}</option>}{stages.map((s) => <option key={s.key} value={s.key}>{s.label}{s.autoDeleteDays ? ` (deletes after ${s.autoDeleteDays} days)` : ""}</option>)}</select></label>
         <label className="label label-caps">Owner<select name="ownerId" defaultValue={lead.ownerId ?? ""} className="admin-input">{team.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}<option value="">Unassigned</option></select></label>
         <label className="label label-caps">Follow-up reminder<input type="date" name="followUpAt" defaultValue={lead.followUpAt || ""} className="admin-input" /></label>
         <div className="label label-caps">Source<span style={{ height: 40, display: "flex", alignItems: "center", gap: 8, padding: "0 10px", borderRadius: 8, background: "#e6f3fc", fontSize: 13, color: "#1a2238", textTransform: "none", letterSpacing: 0, fontWeight: 600 }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3f9ad9" }} />{lead.sourceLabel || lead.sourcePage}</span></div>
