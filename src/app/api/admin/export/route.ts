@@ -1,7 +1,7 @@
 import { desc, eq, asc } from "drizzle-orm";
 import { db, leads, users, ccSubscribers, newsletterSubscribers } from "@/lib/db";
 import { getCurrentUser, can } from "@/lib/auth/session";
-import { LEAD_STAGE_LABELS } from "@/lib/db";
+import { getLeadStages } from "@/lib/server/lead-stages";
 import { loadSubscribers } from "@/lib/server/insta-newsletter";
 import { filterSubscribers, subscribersCsv } from "@/lib/newsletter";
 export const dynamic = "force-dynamic";
@@ -13,7 +13,8 @@ export async function GET(req: Request) {
     if (!can(u, "leads")) return new Response("Forbidden", { status: 403 });
     const rows = await db.select({ l: leads, owner: users.name }).from(leads).leftJoin(users, eq(users.id, leads.ownerId)).orderBy(desc(leads.createdAt));
     const src = url.searchParams.get("source");
-    const out = rows.filter((r) => !src || (r.l.sourceLabel || r.l.sourcePage) === src).map((r) => [r.l.id, r.l.name, r.l.email, r.l.phone, r.l.company, r.l.sourceLabel || r.l.sourcePage, r.l.pathId, LEAD_STAGE_LABELS[r.l.stage], r.owner || "Unassigned", r.l.budget, r.l.timeline, r.l.tags.join("; "), r.l.followUpAt, r.l.createdAt.toISOString(), JSON.stringify(r.l.answers)]);
+    const stageLabels = new Map((await getLeadStages()).map((s) => [s.key, s.label]));
+    const out = rows.filter((r) => !src || (r.l.sourceLabel || r.l.sourcePage) === src).map((r) => [r.l.id, r.l.name, r.l.email, r.l.phone, r.l.company, r.l.sourceLabel || r.l.sourcePage, r.l.pathId, stageLabels.get(r.l.stage) || r.l.stage, r.owner || "Unassigned", r.l.budget, r.l.timeline, r.l.tags.join("; "), r.l.followUpAt, r.l.createdAt.toISOString(), JSON.stringify(r.l.answers)]);
     return new Response(csv([["id", "name", "email", "phone", "company", "source", "path", "stage", "owner", "budget", "timeline", "tags", "follow_up", "created_at", "answers"], ...out]), { headers: { "content-type": "text/csv", "content-disposition": `attachment; filename="leads-${new Date().toISOString().slice(0, 10)}.csv"` } });
   }
   if (kind === "subscribers") {

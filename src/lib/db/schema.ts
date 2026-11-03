@@ -12,7 +12,6 @@ import { sql } from "drizzle-orm";
 // Enums
 // ---------------------------------------------------------------------------
 export const userRoleEnum = pgEnum("user_role", ["owner", "editor", "sales", "social"]);
-export const leadStageEnum = pgEnum("lead_stage", ["new", "contacted", "consultation_booked", "proposal_sent", "won", "lost", "nurture"]);
 export const moderationStatusEnum = pgEnum("moderation_status", ["pending", "published", "rejected"]);
 export const invoiceStatusEnum = pgEnum("invoice_status", ["pending", "scheduled", "paid", "void"]);
 export const bookingStatusEnum = pgEnum("booking_status", ["booked", "done", "no_show", "cancelled"]);
@@ -25,7 +24,7 @@ export const proposalStatusEnum = pgEnum("proposal_status", ["draft", "sent", "v
 export const approvalStatusEnum = pgEnum("approval_status", ["pending", "approved", "changes_requested"]);
 export const enrollmentStatusEnum = pgEnum("enrollment_status", ["active", "completed", "stopped"]);
 
-export { LEAD_STAGES, LEAD_STAGE_LABELS, USER_ROLES, USER_ROLE_LABELS, type LeadStage, type UserRole } from "./constants";
+export { LEAD_STAGES, LEAD_STAGE_LABELS, DEFAULT_LEAD_STAGES, CORE_LEAD_STAGES, isCoreLeadStage, type LeadStageDef, USER_ROLES, USER_ROLE_LABELS, type LeadStage, type UserRole } from "./constants";
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -183,7 +182,8 @@ export const leads = pgTable("leads", {
   sourceLabel: text("source_label"),
   pathId: text("path_id").references(() => paths.id, { onDelete: "set null" }),
   utm: jsonb("utm").$type<Record<string, string>>().notNull().default(sql`'{}'::jsonb`),
-  stage: leadStageEnum("stage").notNull().default("new"),
+  stage: text("stage").notNull().default("new"), // a lead_stages.key (board column)
+  stageChangedAt: timestamp("stage_changed_at", { withTimezone: true }).defaultNow().notNull(), // drives auto-delete columns like "Trash"
   ownerId: integer("owner_id").references(() => users.id, { onDelete: "set null" }),
   tags: text("tags").array().notNull().default(sql`'{}'::text[]`),
   consentAt: timestamp("consent_at", { withTimezone: true }),
@@ -200,6 +200,17 @@ export const leads = pgTable("leads", {
   hubspotId: text("hubspot_id"),
   ...timestamps,
 }, (t) => ({ stageIdx: index("leads_stage_idx").on(t.stage), emailIdx: index("leads_email_idx").on(t.email), extIdx: index("leads_external_idx").on(t.externalSource, t.externalId) }));
+
+/** Columns on the Leads board, editable in Admin → Leads → Board → Manage columns. */
+export const leadStages = pgTable("lead_stages", {
+  key: text("key").primaryKey(),
+  label: text("label").notNull(),
+  sort: integer("sort").notNull().default(0),
+  bg: text("bg").notNull().default("#f2f4f7"),
+  fg: text("fg").notNull().default("#4b5569"),
+  autoDeleteDays: integer("auto_delete_days"), // leads sitting in this column longer than this are deleted by the lead_cleanup cron job
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const leadActivity = pgTable("lead_activity", {
   id: serial("id").primaryKey(),
@@ -667,7 +678,7 @@ export const emailSequences = pgTable("email_sequences", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   triggerPathId: text("trigger_path_id").references(() => paths.id, { onDelete: "set null" }),
-  triggerStage: leadStageEnum("trigger_stage"),
+  triggerStage: text("trigger_stage"),
   isActive: boolean("is_active").notNull().default(true),
   ...timestamps,
 });

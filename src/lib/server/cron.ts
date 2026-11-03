@@ -13,8 +13,9 @@ import { runDueSequenceSteps } from "@/lib/server/sequences";
 import { dispatchDueSocialPosts, syncSocialFeeds } from "@/lib/server/social";
 import { runHubspotSync } from "@/lib/server/hubspot";
 import { syncPendingSubscribers } from "@/lib/server/insta-newsletter";
+import { purgeExpiredLeads } from "@/lib/server/lead-stages";
 
-export const JOBS = ["reminders", "rss", "etsy", "social", "drips", "webhooks", "outbox", "hubspot", "newsletter", "all"] as const;
+export const JOBS = ["reminders", "rss", "etsy", "social", "drips", "webhooks", "outbox", "hubspot", "newsletter", "lead_cleanup", "all"] as const;
 export type Job = (typeof JOBS)[number];
 
 export async function runJob(job: Job): Promise<Record<string, unknown>> {
@@ -48,6 +49,7 @@ const JOB_FNS: Record<Exclude<Job, "all">, () => Promise<Record<string, unknown>
     return { sent };
   },
   async rss() { return { sources: await syncAllRss() }; },
+  async lead_cleanup() { return { deleted: await purgeExpiredLeads() }; }, // board columns with "auto-delete after N days", e.g. Trash
   async etsy() { return { updated: await syncProducts() }; }, // every visible listing (Etsy, Amazon, …); the job keeps its original name
   async social() { const dispatched = await dispatchDueSocialPosts(); const feeds = await syncSocialFeeds(); return { dispatched, feeds }; },
   async drips() { return { sent: await runDueSequenceSteps() }; },

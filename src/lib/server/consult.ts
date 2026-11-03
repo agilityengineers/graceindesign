@@ -112,7 +112,7 @@ export async function submitConsultation(input: ConsultSubmission, meta: { ip?: 
       const clash = await db.select({ id: bookings.id }).from(bookings).where(and(ne(bookings.status, "cancelled"), lte(bookings.startsAt, end), gte(bookings.endsAt, start))).limit(1);
       if (!clash.length) {
         [booking] = await db.insert(bookings).values({ leadId: lead.id, startsAt: start, endsAt: end, status: "booked" }).returning();
-        await db.update(leads).set({ stage: "consultation_booked" }).where(eq(leads.id, lead.id));
+        await db.update(leads).set({ stage: "consultation_booked", stageChangedAt: new Date() }).where(eq(leads.id, lead.id));
         await db.insert(leadActivity).values({ leadId: lead.id, type: "booking", body: `Discovery call booked for ${fmtWhen(start)}`, meta: { bookingId: booking.id } });
       } else {
         await db.insert(leadActivity).values({ leadId: lead.id, type: "system", body: `Requested ${fmtWhen(start)} but the slot was taken — follow up to reschedule.` });

@@ -2,7 +2,8 @@
 /** Phase 4 — drips, SMS templates, proposals, webhooks, outbox, scheduled jobs, HubSpot. */
 import { and, asc, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { db, emailSequences, emailSequenceSteps, sequenceEnrollments, smsTemplates, proposals, leads, leadActivity, webhookSubscriptions, webhookDeliveries, outbox, LEAD_STAGES, type LeadStage } from "@/lib/db";
+import { db, emailSequences, emailSequenceSteps, sequenceEnrollments, smsTemplates, proposals, leads, leadActivity, webhookSubscriptions, webhookDeliveries, outbox } from "@/lib/db";
+import { isLeadStage } from "@/lib/server/lead-stages";
 import { requireArea } from "@/lib/auth/session";
 import { audit } from "@/lib/server/audit";
 import { adminAction, backTo } from "./_util";
@@ -23,7 +24,7 @@ export async function saveSequence(formData: FormData) {
   const id = formData.get("sequenceId") ? parseNum(formData.get("sequenceId")) : null;
   await adminAction("ops", "email_sequence", id ? "update" : "create", async () => {
     const name = str(formData.get("name")); if (!name) throw new Error("Name is required");
-    const stage = str(formData.get("triggerStage")); const triggerStage = (LEAD_STAGES as readonly string[]).includes(stage) ? (stage as LeadStage) : null;
+    const stage = str(formData.get("triggerStage")); const triggerStage = (await isLeadStage(stage)) ? stage : null;
     const values = { name, triggerPathId: strOrNull(formData.get("triggerPathId")), triggerStage, isActive: formData.has("isActive") ? bool(formData.get("isActive")) : true, updatedAt: new Date() };
     if (id) { await db.update(emailSequences).set(values).where(eq(emailSequences.id, id)); return id; }
     const [s] = await db.insert(emailSequences).values(values).returning();

@@ -143,7 +143,7 @@ async function main() {
   const leadIdByName: Record<string, number> = {};
   for (const l of D.DEMO_LEADS) {
     const created = daysAgo(l.createdDaysAgo, 9, 14);
-    const [row] = await db.insert(S.leads).values({ name: l.name, email: l.email, phone: l.phone, sourcePage: l.sourcePage, sourceLabel: l.sourceLabel, pathId: l.pathId, stage: l.stage as S.LeadStage, ownerId: l.owner ? userIds[l.owner] : null, tags: l.tags, consentAt: created, budget: l.budget ?? (l.answers as any).budget ?? null, timeline: l.timeline ?? null, answers: l.answers, followUpAt: l.followUp, createdAt: created, updatedAt: created, contactPref: "Email" }).returning();
+    const [row] = await db.insert(S.leads).values({ name: l.name, email: l.email, phone: l.phone, sourcePage: l.sourcePage, sourceLabel: l.sourceLabel, pathId: l.pathId, stage: l.stage as S.LeadStage, stageChangedAt: created, ownerId: l.owner ? userIds[l.owner] : null, tags: l.tags, consentAt: created, budget: l.budget ?? (l.answers as any).budget ?? null, timeline: l.timeline ?? null, answers: l.answers, followUpAt: l.followUp, createdAt: created, updatedAt: created, contactPref: "Email" }).returning();
     leadIdByName[l.name] = row.id;
     for (const [type, body, ago] of l.activity) await db.insert(S.leadActivity).values({ leadId: row.id, userId: type === "system" ? null : grace, type, body, createdAt: daysAgo(ago, 10) });
     if (l.booking) {
