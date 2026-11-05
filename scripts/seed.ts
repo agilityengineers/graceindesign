@@ -131,7 +131,7 @@ async function main() {
     await db.insert(S.ccResources).values({ name, category, country, area, type, kind, status, submittedByName: byName, submittedByEmail: byEmail, description, reviewedBy: status === "pending" ? null : grace, publishedAt: status === "published" ? daysAgo(ago) : null, createdAt: daysAgo(ago), sort: i, reviewNote: status === "rejected" ? "Commercial lender, not a support resource." : null });
   }
   for (const [status, title, where, format, host, by, inDays, timeLabel, description, country] of D.CC_EVENTS) {
-    await db.insert(S.ccEvents).values({ title, startsAt: daysAgo(-inDays, 10), timeLabel, whereLabel: where, format, host, description, country, status, submittedByName: by, submittedByEmail: by === "GID" ? null : `${slugify(by)}@example.com`, reviewedBy: status === "pending" ? null : grace, publishedAt: status === "published" ? daysAgo(20) : null, reviewNote: status === "rejected" ? "Sales presentation, not a community resource." : null });
+    await db.insert(S.ccEvents).values({ title, slug: status === "published" ? slugify(title) : null, startsAt: daysAgo(-inDays, 10), timeLabel, whereLabel: where, format, host, description, country, status, submittedByName: by, submittedByEmail: by === "GID" ? null : `${slugify(by)}@example.com`, reviewedBy: status === "pending" ? null : grace, publishedAt: status === "published" ? daysAgo(20) : null, reviewNote: status === "rejected" ? "Sales presentation, not a community resource." : null });
   }
   if (DEMO) for (const [email, segment, location, ago] of D.CC_SUBSCRIBERS) await db.insert(S.ccSubscribers).values({ email, segment, location, country: location.includes("Jamaica") ? "Jamaica" : "Diaspora", consentedAt: daysAgo(ago), createdAt: daysAgo(ago) });
 

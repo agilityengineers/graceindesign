@@ -1,5 +1,5 @@
 // server-only (also used by scripts/cron.ts)
-import { db, ccResources, ccEvents, ccSubscribers, newsletterSubscribers, leadActivity } from "@/lib/db";
+import { db, ccResources, ccSubscribers, newsletterSubscribers, leadActivity } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { sendEmail } from "@/lib/server/outbox";
 import { env } from "@/lib/env";
@@ -14,14 +14,6 @@ export async function submitResource(input: { kind: "suggestion" | "own"; name: 
   await notifyAdmin("resource", row.name, row.id, { Name: row.name, Category: row.category, Area: input.area, Submitted_by: input.email, Kind: input.kind === "own" ? "Own organization" : "Suggestion" });
   await sendEmail({ to: input.email, from: "support", subject: "We received your Caribbean Connection submission", text: `Thank you — “${input.name}” is now in review. We'll email you when it's published in the Caribbean Connection directory (usually within 5 business days).\n\nGrace In Design` });
   await emitEvent("cc.submission.created", { type: "resource", id: row.id, name: row.name });
-  return row;
-}
-export async function submitEvent(input: { title: string; date: string; time?: string; format: string; where?: string; host: string; email: string; description: string; url?: string; cost?: string }) {
-  const starts = new Date(`${input.date}T12:00:00-05:00`);
-  const [row] = await db.insert(ccEvents).values({ title: input.title, startsAt: isNaN(starts.getTime()) ? new Date() : starts, timeLabel: input.time || null, whereLabel: input.where || (input.format === "virtual" ? "Online" : "TBA"), format: input.format, host: input.host, url: input.url || null, cost: input.cost || "Free", description: input.description, status: "pending", submittedByEmail: input.email, submittedByName: input.host, country: /jamaica/i.test(input.where || "") ? "Jamaica" : "Diaspora" }).returning();
-  await notifyAdmin("event", row.title, row.id, { Title: row.title, Date: input.date, Format: input.format, Host: input.host, Submitted_by: input.email });
-  await sendEmail({ to: input.email, from: "support", subject: "We received your event submission", text: `Thank you — “${input.title}” is in review. We'll email you when it's listed on Caribbean Connection.\n\nGrace In Design` });
-  await emitEvent("cc.submission.created", { type: "event", id: row.id, title: row.title });
   return row;
 }
 export type SignupMeta = { ip?: string | null; page?: string | null };

@@ -14,6 +14,7 @@ export const ADMIN_NAV: { key: string; label: string; href: string; area: Area }
   { key: "hero", label: "Hero editor", href: "/admin/hero", area: "hero" },
   { key: "products", label: "Products", href: "/admin/products", area: "products" },
   { key: "rss", label: "RSS feeds", href: "/admin/rss", area: "rss" },
+  { key: "events", label: "Events", href: "/admin/events", area: "caribbean" },
   { key: "caribbean", label: "Caribbean Connection", href: "/admin/caribbean", area: "caribbean" },
   { key: "newsletter", label: "Newsletter", href: "/admin/newsletter", area: "newsletter" },
   { key: "social", label: "Social media", href: "/admin/social", area: "social" },
@@ -29,7 +30,7 @@ export default async function AdminShell({ user, active, title, subtitle, childr
     db.select({ n: sql<number>`count(*)` }).from(ccSubscribers).where(inArray(ccSubscribers.instaStatus, ["queued", "failed"])),
     db.select({ n: sql<number>`count(*)` }).from(newsletterSubscribers).where(inArray(newsletterSubscribers.instaStatus, ["queued", "failed"])),
   ]);
-  const badges: Record<string, number> = { leads: Number(nl.n), caribbean: Number(cr.n) + Number(ce.n), newsletter: Number(ns1.n) + Number(ns2.n) };
+  const badges: Record<string, number> = { leads: Number(nl.n), events: Number(ce.n), caribbean: Number(cr.n), newsletter: Number(ns1.n) + Number(ns2.n) };
   const items = ADMIN_NAV.filter((n) => can(user, n.area)).map((n) => ({ ...n, badge: badges[n.key] || 0 }));
   return (
     <div className="admin-shell">

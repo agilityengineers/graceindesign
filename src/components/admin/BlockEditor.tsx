@@ -3,6 +3,7 @@ import { useState } from "react";
 import { saveBlock } from "@/lib/actions/content";
 import ImagePicker from "./ImagePicker";
 import { SHELVES, SHELF_KEYS } from "@/lib/shelves";
+import { EVENT_REGIONS, US_STATES } from "@/lib/events";
 
 type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
 const isImageKey = (k: string) => /img|photo|image|logo|avatar|thumb|poster/i.test(k);
@@ -44,6 +45,10 @@ function Field({ k, v, path, update }: { k: string; v: Json; path: (string | num
     const s = v ?? "";
     // `shelf` on a product block: which products it shows (a named shelf from Admin → Products, or every visible product).
     if (String(k) === "shelf") return <label className="label label-caps">Which products<select value={s} onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm"><option value="">Every visible product</option>{SHELF_KEYS.map((key) => <option key={key} value={key}>{SHELVES[key].name} (ticked for it in Admin → Products)</option>)}</select></label>;
+    // An events block's filter: Region (blank = all), and for the United States a State dropdown (blank = every state). City stays a text box.
+    if (String(k) === "region") return <label className="label label-caps">Region (which events show)<select value={s} onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm"><option value="">All regions</option>{EVENT_REGIONS.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}</select></label>;
+    if (String(k) === "state") return <label className="label label-caps">State (United States events only)<select value={s} onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm"><option value="">Every state</option>{US_STATES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}</select></label>;
+    if (String(k) === "city") return <label className="label label-caps">City (United States events only; blank = every city)<input value={s} placeholder="e.g. Atlanta" onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm" /></label>;
     if (isImageKey(String(k)) || isImageVal(s)) return (
       <div style={{ ...full, padding: 8, borderRadius: 10, background: "#fff", border: "1px solid #eef0f4" }}>
         <ImagePicker label={label} fileName={`file::${name}`} value={s} onChange={(next) => update(path, next)} showUrl width={96} height={64} />
