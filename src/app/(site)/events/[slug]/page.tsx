@@ -7,7 +7,7 @@ import { getEventBySlug } from "@/lib/data/site";
 import { env } from "@/lib/env";
 import { fmtDate } from "@/lib/utils";
 import { isUpcomingEvent, localDay } from "@/lib/cc-events";
-import { eventLocation, eventPath, regionLabel, usState } from "@/lib/events";
+import { eventFilterLabel, eventLocation, eventPath, eventsHref, regionLabel, usState } from "@/lib/events";
 import type { CcEvent } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +46,7 @@ export default async function EventPage({ params }: Params) {
   const pageUrl = `${env.baseUrl}${eventPath(e.slug!)}`;
   const upcoming = isUpcomingEvent(e);
   const caribbean = e.region === "caribbean";
-  const back = caribbean ? { href: "/caribbean-connection#events", label: "Caribbean Connection events" } : { href: `/events?region=${e.region}`, label: `${regionLabel(e.region)} events` };
+  const back = caribbean ? { href: "/caribbean-connection#events", label: "Caribbean Connection events" } : { href: eventsHref({ region: e.region, state: e.state }), label: `${eventFilterLabel({ region: e.region, state: e.state })} events` };
   const facts: [string, string][] = [
     ["When", `${longDate(e)}${e.timeLabel ? ` · ${e.timeLabel}` : ""}`],
     ["Where", eventLocation(e)],

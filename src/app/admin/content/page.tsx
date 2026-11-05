@@ -15,10 +15,11 @@ import { SHELVES, SHELF_KEYS } from "@/lib/shelves";
 
 export const metadata = { title: "Content" };
 export const dynamic = "force-dynamic";
-/** The "Add block" menu: block types with plain names, plus ready-made product sections (`product_shelf:<shelf>` arrives pre-filled for that shelf). */
+/** The "Add block" menu: block types with plain names, plus ready-made product sections (`product_shelf:<shelf>` arrives pre-filled for that shelf) and events sections (`events:<region>`). */
 const BLOCK_OPTIONS: [string, string][] = [
   ["rich_text", "Rich text"], ["page_header", "Page header"], ["cta", "Call to action"], ["steps", "Steps"], ["news", "News & Insights row"], ["featured_products", "Featured products (homepage row)"], ["consult_form", "Consultation form"],
   ...SHELF_KEYS.map((k): [string, string] => [`product_shelf:${k}`, `${SHELVES[k].name} section`]),
+  ["events:caribbean", "Caribbean events section"], ["events:us", "United States events section"], ["events", "Events (choose region, state or city)"],
   ["product_shelf", "Product shelf (every product, or pick a shelf)"], ["product_grid", "Product grid with category filters"], ["service_list", "Service list"], ["contact_steps", "Contact steps"],
 ];
 const CORE = ["home", "about", "services", "hhr", "caribbean", "news", "contact"];

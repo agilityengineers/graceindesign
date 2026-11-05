@@ -116,7 +116,7 @@ export async function saveRssSettings(formData: FormData) {
 }
 
 // --- Caribbean Connection ------------------------------------------------------
-const CREVAL = ["/admin/caribbean", "/caribbean-connection", "/events"];
+const CREVAL = ["/admin/caribbean", "/admin/events", "/caribbean-connection", "/events"];
 const cback = (formData: FormData, tab: string) => backTo(formData, `/admin/caribbean?tab=${tab}`);
 
 export async function resourceAction(formData: FormData) {
@@ -145,7 +145,7 @@ export async function addResource(formData: FormData) {
   }, { back: "/admin/caribbean?tab=resources", ok: "Resource added and published", entityId: (r) => r.id, revalidate: CREVAL });
 }
 export async function eventAction(formData: FormData) {
-  const id = parseNum(formData.get("eventId")); const op = str(formData.get("op")); const back = cback(formData, "events");
+  const id = parseNum(formData.get("eventId")); const op = str(formData.get("op")); const back = backTo(formData, "/admin/events");
   await adminAction("caribbean", "cc_event", op, async (user) => {
     const e = await db.query.ccEvents.findFirst({ where: eq(ccEvents.id, id) }); if (!e) throw new Error("Event not found");
     const note = strOrNull(formData.get("note"));
@@ -168,7 +168,7 @@ export async function addEvent(formData: FormData) {
     const title = str(formData.get("title")); const date = str(formData.get("date")); if (!title || !date) throw new Error("Title and date are required");
     const [e] = await db.insert(ccEvents).values({ ...regionFields(formData), title, startsAt: new Date(`${date}T12:00:00-05:00`), timeLabel: strOrNull(formData.get("timeLabel")), whereLabel: str(formData.get("whereLabel")) || "Online", format: str(formData.get("format")) || "virtual", host: str(formData.get("host")) || "Grace In Design", url: strOrNull(formData.get("url")), cost: str(formData.get("cost")) || "Free", description: str(formData.get("description")) || title, country: str(formData.get("country")) || "Jamaica", status: "published", publishedAt: new Date(), reviewedBy: user.id, submittedByName: "Grace In Design" }).returning();
     return { ...e, slug: await ensureEventSlug(e) }; // added by an admin = approved, so it gets its link right away
-  }, { back: "/admin/caribbean?tab=events", ok: (e) => `Event added — its page is ${eventPath(e.slug)}`, entityId: (e) => e.id, revalidate: CREVAL });
+  }, { back: backTo(formData, "/admin/events"), ok: (e) => `Event added — its page is ${eventPath(e.slug)}`, entityId: (e) => e.id, revalidate: CREVAL });
 }
 export async function countryAction(formData: FormData) {
   const op = str(formData.get("op"));

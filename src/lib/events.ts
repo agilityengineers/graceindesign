@@ -72,3 +72,42 @@ export function eventSlug(title: string, day: string, taken: ReadonlySet<string>
   if (!taken.has(dated)) return dated;
   for (let n = 2; ; n++) if (!taken.has(`${dated}-${n}`)) return `${dated}-${n}`;
 }
+
+/** Which events an events block (or the /events page) shows: a region, optionally narrowed to a US state and city. Empty = any. */
+export type EventFilter = { region?: string | null; state?: string | null; city?: string | null };
+/** Normalise a block's filter: unknown regions → all; state/city only apply to United States. */
+export function cleanEventFilter(f: EventFilter): { region: string; state: string; city: string } {
+  const region = isEventRegion(f.region) ? f.region : "";
+  const state = region === "us" ? usState(f.state)?.[0] || "" : "";
+  const city = region === "us" ? (f.city || "").trim() : "";
+  return { region, state, city };
+}
+/** "Atlanta, GA", "Georgia", "United States", "Caribbean" or "" (all regions): for headings and empty states. */
+export function eventFilterLabel(f: EventFilter): string {
+  const { region, state, city } = cleanEventFilter(f);
+  if (city) return state ? `${city}, ${state}` : city;
+  if (state) return usState(state)![1];
+  return region ? regionLabel(region) : "";
+}
+
+/** The /events link for a filter: "See all events" under a block, canonical URLs on /events. */
+export function eventsHref(f: EventFilter) {
+  const { region, state, city } = cleanEventFilter(f);
+  const q = new URLSearchParams(Object.entries({ region, state, city }).filter(([, v]) => v)).toString();
+  return q ? `/events?${q}` : "/events";
+}
+
+/**
+ * Starting content for an `events` block from Content → Pages → Add block. `preset` is the region from the menu entry
+ * ("events:us" → United States). The admin can then narrow it to a state or city and turn the submission form on or off.
+ */
+export function eventsSection(preset = ""): Record<string, unknown> {
+  const region = isEventRegion(preset) ? preset : "";
+  const where = region ? `${regionLabel(region)} ` : "";
+  return {
+    eyebrow: "Community Events", title: `Upcoming ${where}events`,
+    body: "Fairs, workshops, clinics and talks for older adults, families and caregivers.",
+    region, state: "", city: "", limit: 8, showForm: true,
+    formEyebrow: "Submit an event", formBody: "Hosting something for older adults, families or caregivers? Send it in and we'll review it for listing.",
+  };
+}

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { eventSlug, eventTimeZone, eventLocation, eventPath, isEventRegion, regionLabel, usState, US_STATES } from "../src/lib/events";
+import { eventSlug, eventTimeZone, eventLocation, eventPath, isEventRegion, regionLabel, usState, US_STATES, cleanEventFilter, eventFilterLabel, eventsHref, eventsSection } from "../src/lib/events";
 import { isUpcomingEvent } from "../src/lib/cc-events";
 
 test("the link is made from the title", () => {
@@ -56,4 +56,35 @@ test("location line combines the venue with city/state or country without repeat
   assert.equal(eventLocation({ region: "us", whereLabel: "Online", city: null, state: null }), "Online");
   assert.equal(eventLocation({ region: "caribbean", whereLabel: "Kingston, Jamaica", country: "Jamaica" }), "Kingston, Jamaica");
   assert.equal(eventLocation({ region: "caribbean", whereLabel: "UWI Mona", country: "Jamaica" }), "UWI Mona, Jamaica");
+});
+
+test("an events block's filter: state and city only count for the United States", () => {
+  assert.deepEqual(cleanEventFilter({ region: "us", state: "ga", city: " Atlanta " }), { region: "us", state: "GA", city: "Atlanta" });
+  assert.deepEqual(cleanEventFilter({ region: "caribbean", state: "GA", city: "Atlanta" }), { region: "caribbean", state: "", city: "" });
+  assert.deepEqual(cleanEventFilter({ region: "mars", state: "GA" }), { region: "", state: "", city: "" });
+  assert.deepEqual(cleanEventFilter({ region: "us", state: "ZZ" }), { region: "us", state: "", city: "" });
+});
+
+test("filter labels for headings and empty lists", () => {
+  assert.equal(eventFilterLabel({ region: "us", state: "GA", city: "Atlanta" }), "Atlanta, GA");
+  assert.equal(eventFilterLabel({ region: "us", state: "GA" }), "Georgia");
+  assert.equal(eventFilterLabel({ region: "us" }), "United States");
+  assert.equal(eventFilterLabel({ region: "caribbean" }), "Caribbean");
+  assert.equal(eventFilterLabel({}), "");
+});
+
+test("'See all events' links carry the block's filter to /events", () => {
+  assert.equal(eventsHref({}), "/events");
+  assert.equal(eventsHref({ region: "caribbean", state: "GA" }), "/events?region=caribbean");
+  assert.equal(eventsHref({ region: "us", state: "GA", city: "Atlanta" }), "/events?region=us&state=GA&city=Atlanta");
+});
+
+test("Add block presets: United States, Caribbean, or every region", () => {
+  assert.equal(eventsSection("us").region, "us");
+  assert.equal(eventsSection("us").title, "Upcoming United States events");
+  assert.equal(eventsSection("caribbean").region, "caribbean");
+  assert.equal(eventsSection("").region, "");
+  assert.equal(eventsSection("nonsense").region, "");
+  const c = eventsSection("us");
+  for (const k of ["state", "city", "limit", "showForm", "formEyebrow", "formBody"]) assert.ok(k in c, k); // every setting shows in the block editor
 });

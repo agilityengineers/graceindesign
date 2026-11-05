@@ -80,20 +80,26 @@ export const getCaribbeanData = cache(async () => {
   const liveCountries = await db.select().from(ccCountries).orderBy(asc(ccCountries.sort));
   const liveNames = liveCountries.filter((c) => c.status === "live").map((c) => c.name);
   const countryFilter = (col: any) => or(inArray(col, liveNames.length ? [...liveNames, "Regional", "Diaspora", "Regional / Diaspora"] : ["Jamaica", "Regional", "Diaspora"]), sql`${col} is null`);
-  const [resources, events, regional, gidPosts, feeds] = await Promise.all([
+  const [resources, regional, gidPosts, feeds] = await Promise.all([
     db.select().from(ccResources).where(and(eq(ccResources.status, "published"), countryFilter(ccResources.country))).orderBy(asc(ccResources.sort), asc(ccResources.name)),
-    // Published events through the end of their own date (midnight in the event's time zone). The query only narrows; src/lib/cc-events.ts has the rule and its test.
-    getUpcomingEvents("caribbean", 8),
     getPublishedPosts("caribbean", 20).then((rows) => rows.filter((p) => p.origin === "rss").slice(0, 6)),
     getPublishedPosts("caribbean", 20).then((rows) => rows.filter((p) => p.origin !== "rss").slice(0, 3)),
     db.select().from(rssSources).where(and(eq(rssSources.scope, "caribbean"), eq(rssSources.isActive, true))),
   ]);
-  return { countries: liveCountries, resources, events, regional, gidPosts, feeds };
+  return { countries: liveCountries, resources, regional, gidPosts, feeds }; // events: the events blocks load their own (getUpcomingEvents)
 });
 
-/** Published events still upcoming (through the end of their own day), optionally for one region. The query only narrows; src/lib/cc-events.ts decides. */
-export const getUpcomingEvents = cache(async (region?: string, limit = 100) => {
-  const rows = await db.select().from(ccEvents).where(and(eq(ccEvents.status, "published"), gte(ccEvents.startsAt, new Date(Date.now() - UPCOMING_EVENTS_LOOKBACK_MS)), region ? eq(ccEvents.region, region) : undefined)).orderBy(asc(ccEvents.startsAt));
+/**
+ * Published events still upcoming (through the end of their own day). Optionally one region, and for the United States one
+ * state and/or city (any capitalisation). Empty strings mean "any". The query only narrows; src/lib/cc-events.ts decides.
+ */
+export const getUpcomingEvents = cache(async (region = "", state = "", city = "", limit = 100) => {
+  const rows = await db.select().from(ccEvents).where(and(
+    eq(ccEvents.status, "published"), gte(ccEvents.startsAt, new Date(Date.now() - UPCOMING_EVENTS_LOOKBACK_MS)),
+    region ? eq(ccEvents.region, region) : undefined,
+    state ? eq(ccEvents.state, state) : undefined,
+    city ? sql`lower(${ccEvents.city}) = ${city.toLowerCase()}` : undefined,
+  )).orderBy(asc(ccEvents.startsAt));
   return upcomingEvents(rows, new Date(), limit);
 });
 /** One event's public page. Only published events have a page; an unlisted or rejected one returns null (404). Past events still resolve, so old links keep working. */
