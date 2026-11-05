@@ -586,6 +586,8 @@ export const ccEvents = pgTable("cc_events", {
   state: text("state"),
   /** The event's own page is /events/<slug>. Set when the event is approved and never changed after, so shared links keep working. */
   slug: text("slug").unique(),
+  /** Optional picture, admin-only: an uploaded file's URL or a media library reference (media://slot). */
+  imageUrl: text("image_url"),
   status: moderationStatusEnum("status").notNull().default("pending"),
   submittedByName: text("submitted_by_name"),
   submittedByEmail: text("submitted_by_email"),

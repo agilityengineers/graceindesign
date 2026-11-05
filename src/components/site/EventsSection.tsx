@@ -3,6 +3,25 @@ import { fmtDate, slugify } from "@/lib/utils";
 import { cleanEventFilter, eventFilterLabel, eventLocation, eventPath, eventsHref, type EventFilter } from "@/lib/events";
 import { SubmitEventForm } from "./CaribbeanForms";
 
+/**
+ * The square at the start of an event row. With a picture: the picture, with the date on a small label. Without: the bold
+ * date tile (navy for the first event, light blue for online ones), so a list that mixes both still reads as one design.
+ */
+export function EventTile({ e, size = 84, first = false }: { e: { title: string; startsAt: Date; tz: string; format: string; imageUrl: string | null }; size?: number; first?: boolean }) {
+  const month = fmtDate(e.startsAt, { month: "short" }, e.tz), day = fmtDate(e.startsAt, { day: "numeric" }, e.tz);
+  if (e.imageUrl) return (
+    <div style={{ position: "relative", width: size, height: size, borderRadius: 14, overflow: "hidden", background: "#f7f8fa", flex: "none" }}>
+      <img src={e.imageUrl} alt="" loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+      <span style={{ position: "absolute", left: 6, bottom: 6, padding: "3px 7px", borderRadius: 8, background: "rgba(26,34,56,.88)", color: "#fff", fontSize: 11, fontWeight: 700, letterSpacing: ".04em", lineHeight: 1.2 }}>{month.toUpperCase()} {day}</span>
+    </div>);
+  const bg = first ? "#1a2238" : e.format === "virtual" ? "#e6f3fc" : "#f7f8fa"; const color = first ? "#fff" : "#1a2238";
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: 14, background: bg, color, flex: "none" }}>
+      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase" }}>{month}</span>
+      <span className="display" style={{ fontSize: Math.round(size * 0.43), fontWeight: 600, lineHeight: 1 }}>{day}</span>
+    </div>);
+}
+
 type Content = { eyebrow?: string; title?: string; body?: string; limit?: number; showForm?: boolean; formEyebrow?: string; formBody?: string };
 
 /**
@@ -31,11 +50,11 @@ export default async function EventsSection({ c, filter, anchor }: { c: Content;
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {events.length === 0 && <div style={{ padding: "28px 32px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff", display: "flex", flexDirection: "column", gap: 8 }}><span style={{ fontSize: 17, fontWeight: 600 }}>No upcoming events{place ? ` in ${place}` : ""} are listed yet.</span><span style={{ fontSize: 14, lineHeight: 1.65, color: "#6b7486" }}>Know of a fair, workshop, clinic or talk for older adults, families or caregivers?{showForm ? " Submit it below and we'll review it for listing." : " Check back soon."}</span></div>}
         {events.map((e, k) => {
-          const virtual = e.format === "virtual"; const d = e.startsAt; const bg = k === 0 ? "#1a2238" : virtual ? "#e6f3fc" : "#f7f8fa"; const color = k === 0 ? "#fff" : "#1a2238";
+          const virtual = e.format === "virtual";
           const href = e.slug ? eventPath(e.slug) : e.url || `#${id}`; const external = !e.slug && !!e.url;
           return (
             <div key={e.id} className="reveal event-row" style={{ display: "grid", gridTemplateColumns: "84px 1fr auto", gap: 20, alignItems: "center", padding: "20px 24px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff" }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 84, height: 84, borderRadius: 14, background: bg, color }}><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase" }}>{fmtDate(d, { month: "short" }, e.tz)}</span><span className="display" style={{ fontSize: 36, fontWeight: 600, lineHeight: 1 }}>{fmtDate(d, { day: "numeric" }, e.tz)}</span></div>
+              <EventTile e={e} first={k === 0} />
               <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><a href={href} target={external ? "_blank" : undefined} rel="noreferrer" style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.3, color: "inherit", textDecoration: "none" }}>{e.title}</a>{virtual && <span style={{ padding: "3px 8px", borderRadius: 999, background: "#e6f3fc", fontSize: 10, fontWeight: 700, letterSpacing: ".06em" }}>VIRTUAL</span>}</div>
                 <span style={{ fontSize: 13, lineHeight: 1.55, color: "#6b7486", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{e.description}</span>

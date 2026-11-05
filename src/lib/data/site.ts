@@ -100,9 +100,18 @@ export const getUpcomingEvents = cache(async (region = "", state = "", city = ""
     state ? eq(ccEvents.state, state) : undefined,
     city ? sql`lower(${ccEvents.city}) = ${city.toLowerCase()}` : undefined,
   )).orderBy(asc(ccEvents.startsAt));
-  return upcomingEvents(rows, new Date(), limit);
+  return withEventImages(upcomingEvents(rows, new Date(), limit));
 });
+/** Turn each event's picture reference into a URL. A library picture that no longer exists becomes null (the designed no-picture look), never a placeholder. */
+async function withEventImages<T extends { imageUrl: string | null }>(rows: T[]): Promise<T[]> {
+  if (!rows.some((r) => r.imageUrl?.startsWith("media://"))) return rows;
+  const map = await getMediaMap();
+  return rows.map((r) => (r.imageUrl?.startsWith("media://") ? { ...r, imageUrl: map.get(r.imageUrl.slice(8)) ?? null } : r));
+}
 /** One event's public page. Only published events have a page; an unlisted or rejected one returns null (404). Past events still resolve, so old links keep working. */
-export const getEventBySlug = cache(async (slug: string) => (await db.query.ccEvents.findFirst({ where: and(eq(ccEvents.slug, slug), eq(ccEvents.status, "published")) })) ?? null);
+export const getEventBySlug = cache(async (slug: string) => {
+  const e = await db.query.ccEvents.findFirst({ where: and(eq(ccEvents.slug, slug), eq(ccEvents.status, "published")) });
+  return e ? (await withEventImages([e]))[0] : null;
+});
 
 export const getInstagramFeed = cache(async (limit = 6) => db.select().from(socialFeedItems).where(eq(socialFeedItems.network, "instagram")).orderBy(desc(socialFeedItems.postedAt)).limit(limit));

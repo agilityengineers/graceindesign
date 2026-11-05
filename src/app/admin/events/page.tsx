@@ -12,6 +12,8 @@ import { fmtDate, relativeDay } from "@/lib/utils";
 import { isUpcomingEvent } from "@/lib/cc-events";
 import { EVENT_REGIONS, eventLocation, eventPath, isEventRegion, regionLabel } from "@/lib/events";
 import { env } from "@/lib/env";
+import ImagePicker from "@/components/admin/ImagePicker";
+import { getMediaMap, resolveImg } from "@/lib/data/media";
 
 export const metadata = { title: "Events" };
 export const dynamic = "force-dynamic";
@@ -26,10 +28,11 @@ export default async function EventsAdmin({ searchParams }: { searchParams: Prom
   const sp = await searchParams;
   const filter = (STATUSES as readonly string[]).includes(sp.filter || "") ? sp.filter! : "Pending";
   const region = isEventRegion(sp.region) ? sp.region : "";
-  const [all, countries, [pending]] = await Promise.all([
+  const [all, countries, [pending], media] = await Promise.all([
     db.select().from(ccEvents).orderBy(desc(ccEvents.startsAt)),
     db.select().from(ccCountries).orderBy(asc(ccCountries.sort)),
     db.select({ n: sql<number>`count(*)` }).from(ccEvents).where(eq(ccEvents.status, "pending")),
+    getMediaMap(),
   ]);
   const countryNames = countries.map((c) => c.name);
   const inRegion = region ? all.filter((e) => e.region === region) : all;
@@ -58,7 +61,7 @@ export default async function EventsAdmin({ searchParams }: { searchParams: Prom
         {events.map((e) => (
           <details key={e.id} style={{ borderBottom: "1px solid #f2f4f7", padding: "8px 0" }}>
             <summary style={{ display: "grid", gridTemplateColumns: "54px minmax(0, 2fr) 160px 120px 100px auto", gap: 12, alignItems: "center", fontSize: 13, cursor: "pointer", listStyle: "none" }}>
-              <div style={{ textAlign: "center", borderRadius: 8, background: "#e6f3fc", padding: "4px 0" }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>{fmtDate(e.startsAt, { month: "short" }, e.tz)}</div><div style={{ fontSize: 18, fontWeight: 700 }}>{fmtDate(e.startsAt, { day: "numeric" }, e.tz)}</div></div>
+              {e.imageUrl ? <img src={resolveImg(media, e.imageUrl)} alt="" style={{ width: 54, height: 54, borderRadius: 8, objectFit: "cover" }} title={fmtDate(e.startsAt, { month: "short", day: "numeric" }, e.tz)} /> : <div style={{ textAlign: "center", borderRadius: 8, background: "#e6f3fc", padding: "4px 0" }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>{fmtDate(e.startsAt, { month: "short" }, e.tz)}</div><div style={{ fontSize: 18, fontWeight: 700 }}>{fmtDate(e.startsAt, { day: "numeric" }, e.tz)}</div></div>}
               <div style={{ display: "flex", flexDirection: "column", minWidth: 0, gap: 2 }}>
                 <span style={{ fontWeight: 600 }}>{e.title}</span>
                 <span style={{ fontSize: 12, color: "#6b7486" }}>{regionLabel(e.region)} · {eventLocation(e)} · {e.format.replace("_", " ")}{e.timeLabel ? ` · ${e.timeLabel}` : ""}</span>
@@ -87,6 +90,7 @@ export default async function EventsAdmin({ searchParams }: { searchParams: Prom
               <label className="label label-caps">Cost<input name="cost" defaultValue={e.cost} className="admin-input admin-input-sm" /></label>
               <EventRegionFields region={e.region} state={e.state} city={e.city} country={e.country} countries={countryNames} />
               <label className="label label-caps" style={{ gridColumn: "1/-1" }}>Description<textarea name="description" rows={3} defaultValue={e.description} className="admin-input" /></label>
+              <div style={{ gridColumn: "1/-1" }}><ImagePicker label="Picture (optional — shown on the event page, in lists and when the link is shared)" name="imageUrl" fileName="image_file" defaultValue={e.imageUrl || ""} preview={e.imageUrl ? resolveImg(media, e.imageUrl) : undefined} showUrl width={120} height={68} />{e.imageUrl && <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6b7486", marginTop: 6 }}><input type="checkbox" name="removeImage" value="1" />Remove picture (the page uses the designed date header instead)</label>}</div>
               <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8, justifySelf: "start" }}>Save edits</button>
             </form>
           </details>))}
@@ -106,6 +110,7 @@ export default async function EventsAdmin({ searchParams }: { searchParams: Prom
           <label className="label label-caps">Cost<input name="cost" placeholder="Free" className="admin-input admin-input-sm" /></label>
           <EventRegionFields region={region || undefined} countries={countryNames} />
           <label className="label label-caps" style={{ gridColumn: "1/-1" }}>Description<textarea name="description" rows={3} className="admin-input" /></label>
+          <div style={{ gridColumn: "1/-1" }}><ImagePicker label="Picture (optional — events without one get a designed date header)" name="imageUrl" fileName="image_file" showUrl width={120} height={68} /></div>
           <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8, justifySelf: "start" }}>+ Add event</button>
         </form>
       </Card>

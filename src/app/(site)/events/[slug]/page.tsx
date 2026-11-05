@@ -21,7 +21,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params; const e = await getEventBySlug(slug); if (!e) return {};
   const title = `${e.title} · ${fmtDate(e.startsAt, { month: "short", day: "numeric", year: "numeric" }, e.tz)}`;
   const description = `${longDate(e)}${e.timeLabel ? `, ${e.timeLabel}` : ""} · ${eventLocation(e)}. ${summary(e)}`.slice(0, 300);
-  return { title, description, alternates: { canonical: eventPath(e.slug!) }, openGraph: { type: "website", title, description, url: eventPath(e.slug!) }, twitter: { card: "summary", title, description } };
+  const images = e.imageUrl ? [e.imageUrl] : undefined; // social previews use the event's picture when it has one
+  return { title, description, alternates: { canonical: eventPath(e.slug!) }, openGraph: { type: "website", title, description, url: eventPath(e.slug!), images }, twitter: { card: images ? "summary_large_image" : "summary", title, description, images } };
 }
 
 /** schema.org Event, so search engines can show the event (date, place, registration) in their results. */
@@ -32,7 +33,7 @@ function jsonLd(e: CcEvent, pageUrl: string) {
   const online = { "@type": "VirtualLocation", url: e.url || pageUrl };
   const free = /^free$/i.test(e.cost.trim());
   return {
-    "@context": "https://schema.org", "@type": "Event", name: e.title, description: e.description, url: pageUrl,
+    "@context": "https://schema.org", "@type": "Event", name: e.title, description: e.description, url: pageUrl, ...(e.imageUrl ? { image: [new URL(e.imageUrl, pageUrl).href] } : {}),
     startDate: localDay(e.startsAt, e.tz), eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: `https://schema.org/${e.format === "virtual" ? "Online" : e.format === "hybrid" ? "Mixed" : "Offline"}EventAttendanceMode`,
     location: e.format === "virtual" ? online : e.format === "hybrid" ? [place, online] : place,
@@ -60,14 +61,18 @@ export default async function EventPage({ params }: Params) {
       <article className="gx" style={{ paddingTop: 72, paddingBottom: 104, maxWidth: 900 }}>
         <Link href={back.href} className="eyebrow">← {back.label}</Link>
         {!upcoming && <div role="status" style={{ marginTop: 20, padding: "14px 18px", borderRadius: 12, background: "#f7f8fa", border: "1px solid #e9ecf1", fontSize: 14, color: "#4b5569" }}>This event has already taken place. <Link href="/events" style={{ color: "#3f9ad9", fontWeight: 600 }}>See upcoming events →</Link></div>}
-        <div style={{ display: "flex", gap: 24, alignItems: "flex-start", margin: "24px 0 28px", flexWrap: "wrap" }}>
-          <div aria-hidden style={{ flex: "none", width: 96, height: 96, borderRadius: 16, background: "#1a2238", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        {/* With a picture: the picture as a banner, then the title. Without one: a soft panel with a large date tile, so the page still has a strong header. */}
+        {e.imageUrl && <div style={{ position: "relative", aspectRatio: "16/9", maxHeight: 460, width: "100%", borderRadius: 20, overflow: "hidden", margin: "24px 0 0", background: "#f7f8fa" }}><img src={e.imageUrl} alt={e.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /></div>}
+        <div style={{ display: "flex", gap: 24, alignItems: "center", margin: "24px 0 28px", flexWrap: "wrap", ...(e.imageUrl ? {} : { padding: "32px 32px", borderRadius: 20, background: "linear-gradient(135deg, #e6f3fc 0%, #f7f8fa 70%)", border: "1px solid #e3eef8" }) }}>
+          <div aria-hidden style={{ flex: "none", width: 104, height: 104, borderRadius: 18, background: "#1a2238", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", boxShadow: e.imageUrl ? "none" : "0 14px 32px rgba(26,34,56,.18)" }}>
             <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase" }}>{fmtDate(e.startsAt, { month: "short" }, e.tz)}</span>
-            <span className="display" style={{ fontSize: 40, fontWeight: 600, lineHeight: 1 }}>{fmtDate(e.startsAt, { day: "numeric" }, e.tz)}</span>
+            <span className="display" style={{ fontSize: 44, fontWeight: 600, lineHeight: 1 }}>{fmtDate(e.startsAt, { day: "numeric" }, e.tz)}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".08em", opacity: .75, marginTop: 2 }}>{fmtDate(e.startsAt, { weekday: "short" }, e.tz).toUpperCase()}</span>
           </div>
           <div style={{ flex: "1 1 320px", minWidth: 0 }}>
             <span className="eyebrow eyebrow-sm">{regionLabel(e.region)} · {FORMAT[e.format] || e.format}</span>
-            <h1 className="h1" style={{ fontSize: 48, margin: "10px 0 0" }}>{e.title}</h1>
+            <h1 className="h1" style={{ fontSize: 48, margin: "10px 0 8px" }}>{e.title}</h1>
+            <span style={{ fontSize: 15, color: "#4b5569" }}>{[e.timeLabel, eventLocation(e)].filter(Boolean).join(" · ")}</span>
           </div>
         </div>
         <dl style={{ display: "grid", gridTemplateColumns: "max-content 1fr", gap: "10px 24px", margin: "0 0 32px", padding: "22px 24px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff", fontSize: 15 }}>

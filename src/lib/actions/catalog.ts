@@ -144,6 +144,19 @@ export async function addResource(formData: FormData) {
     return r;
   }, { back: "/admin/caribbean?tab=resources", ok: "Resource added and published", entityId: (r) => r.id, revalidate: CREVAL });
 }
+/**
+ * The event's picture from an admin form: an uploaded file (stored in the media library) wins; otherwise the picker's value
+ * (a library pick or a pasted URL; empty removes the picture). A form without the picker leaves the picture as it was.
+ */
+async function eventImage(formData: FormData, userId: number, current: string | null = null) {
+  const f = formData.get("image_file");
+  if (f instanceof File && f.size > 0) {
+    if (f.type && !f.type.startsWith("image/")) throw new Error("The event picture must be an image file (JPG, PNG or WebP)");
+    return (await uploadToMedia(f, { folder: "events", usedOn: ["Events"], userId })).url;
+  }
+  if (formData.get("removeImage")) return null; // the "Remove picture" box
+  return formData.has("imageUrl") ? strOrNull(formData.get("imageUrl")) : current;
+}
 export async function eventAction(formData: FormData) {
   const id = parseNum(formData.get("eventId")); const op = str(formData.get("op")); const back = backTo(formData, "/admin/events");
   await adminAction("caribbean", "cc_event", op, async (user) => {
@@ -159,14 +172,14 @@ export async function eventAction(formData: FormData) {
       if (e.submittedByEmail) await sendEmail({ to: e.submittedByEmail, from: "support", subject: `About your event submission: ${e.title}`, text: `Thank you for submitting “${e.title}”. We weren't able to list it this time.${note ? `\n\nReason: ${note}` : ""}\n\nGrace In Design` });
     } else if (op === "unlist") await db.update(ccEvents).set({ status: "pending", reviewedBy: user.id, updatedAt: new Date() }).where(eq(ccEvents.id, id));
     else if (op === "delete") await db.delete(ccEvents).where(eq(ccEvents.id, id));
-    else if (op === "update") { const date = str(formData.get("date")); await db.update(ccEvents).set({ ...regionFields(formData, e), title: str(formData.get("title")) || e.title, startsAt: date ? new Date(`${date}T12:00:00-05:00`) : e.startsAt, timeLabel: strOrNull(formData.get("timeLabel")), whereLabel: str(formData.get("whereLabel")) || e.whereLabel, format: str(formData.get("format")) || e.format, host: str(formData.get("host")) || e.host, url: strOrNull(formData.get("url")), cost: str(formData.get("cost")) || e.cost, description: str(formData.get("description")) || e.description, country: str(formData.get("country")) || e.country, updatedAt: new Date() }).where(eq(ccEvents.id, id)); }
+    else if (op === "update") { const date = str(formData.get("date")); await db.update(ccEvents).set({ ...regionFields(formData, e), imageUrl: await eventImage(formData, user.id, e.imageUrl), title: str(formData.get("title")) || e.title, startsAt: date ? new Date(`${date}T12:00:00-05:00`) : e.startsAt, timeLabel: strOrNull(formData.get("timeLabel")), whereLabel: str(formData.get("whereLabel")) || e.whereLabel, format: str(formData.get("format")) || e.format, host: str(formData.get("host")) || e.host, url: strOrNull(formData.get("url")), cost: str(formData.get("cost")) || e.cost, description: str(formData.get("description")) || e.description, country: str(formData.get("country")) || e.country, updatedAt: new Date() }).where(eq(ccEvents.id, id)); }
     return id;
   }, { back, ok: { approve: "Approved — link created and submitter emailed", reject: "Rejected — submitter emailed", unlist: "Unlisted", restore: "Restored", delete: "Event deleted", update: "Event saved" }[op] || "Done", entityId: () => id, revalidate: CREVAL });
 }
 export async function addEvent(formData: FormData) {
   await adminAction("caribbean", "cc_event", "create", async (user) => {
     const title = str(formData.get("title")); const date = str(formData.get("date")); if (!title || !date) throw new Error("Title and date are required");
-    const [e] = await db.insert(ccEvents).values({ ...regionFields(formData), title, startsAt: new Date(`${date}T12:00:00-05:00`), timeLabel: strOrNull(formData.get("timeLabel")), whereLabel: str(formData.get("whereLabel")) || "Online", format: str(formData.get("format")) || "virtual", host: str(formData.get("host")) || "Grace In Design", url: strOrNull(formData.get("url")), cost: str(formData.get("cost")) || "Free", description: str(formData.get("description")) || title, country: str(formData.get("country")) || "Jamaica", status: "published", publishedAt: new Date(), reviewedBy: user.id, submittedByName: "Grace In Design" }).returning();
+    const [e] = await db.insert(ccEvents).values({ ...regionFields(formData), imageUrl: await eventImage(formData, user.id), title, startsAt: new Date(`${date}T12:00:00-05:00`), timeLabel: strOrNull(formData.get("timeLabel")), whereLabel: str(formData.get("whereLabel")) || "Online", format: str(formData.get("format")) || "virtual", host: str(formData.get("host")) || "Grace In Design", url: strOrNull(formData.get("url")), cost: str(formData.get("cost")) || "Free", description: str(formData.get("description")) || title, country: str(formData.get("country")) || "Jamaica", status: "published", publishedAt: new Date(), reviewedBy: user.id, submittedByName: "Grace In Design" }).returning();
     return { ...e, slug: await ensureEventSlug(e) }; // added by an admin = approved, so it gets its link right away
   }, { back: backTo(formData, "/admin/events"), ok: (e) => `Event added — its page is ${eventPath(e.slug)}`, entityId: (e) => e.id, revalidate: CREVAL });
 }

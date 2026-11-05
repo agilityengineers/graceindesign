@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import SiteFrame from "@/components/site/SiteFrame";
 import { getUpcomingEvents } from "@/lib/data/site";
-import { fmtDate } from "@/lib/utils";
+import { EventTile } from "@/components/site/EventsSection";
 import { EVENT_REGIONS, cleanEventFilter, eventFilterLabel, eventLocation, eventPath, eventsHref, regionLabel } from "@/lib/events";
 
 export const dynamic = "force-dynamic";
@@ -31,10 +31,7 @@ export default async function EventsIndex({ searchParams }: SP) {
           {events.length === 0 && <div style={{ padding: "28px 32px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff", fontSize: 15, color: "#4b5569" }}>No upcoming events are listed{place ? ` for ${place}` : ""} right now. Check back soon.</div>}
           {events.map((e) => (
             <Link key={e.id} href={e.slug ? eventPath(e.slug) : "/events"} style={{ display: "grid", gridTemplateColumns: "84px minmax(0,1fr)", gap: 20, alignItems: "center", padding: "20px 24px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff", color: "inherit", textDecoration: "none" }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 84, height: 84, borderRadius: 14, background: "#f7f8fa" }}>
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase" }}>{fmtDate(e.startsAt, { month: "short" }, e.tz)}</span>
-                <span className="display" style={{ fontSize: 36, fontWeight: 600, lineHeight: 1 }}>{fmtDate(e.startsAt, { day: "numeric" }, e.tz)}</span>
-              </div>
+              <EventTile e={e} />
               <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
                 <span style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.3 }}>{e.title}</span>
                 <span style={{ fontSize: 13, color: "#6b7486" }}>{[e.timeLabel, eventLocation(e), !r ? regionLabel(e.region) : null, e.cost].filter(Boolean).join(" · ")}</span>
