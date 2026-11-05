@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 // Old graceindesign.net paths → new routes (permanent 301s). Add entries from the old site's sitemap before cutover.
 import redirects from "./src/lib/redirects.json";
 
@@ -42,4 +43,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default function config(phase: string): NextConfig {
+  // Keep production builds from replacing files used by the running preview.
+  return { ...nextConfig, distDir: phase === PHASE_DEVELOPMENT_SERVER ? ".next-dev" : ".next" };
+}
