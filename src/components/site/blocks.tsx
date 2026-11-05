@@ -22,7 +22,8 @@ function shopFields(p: ProductRow, shop: AmazonShop) {
   const asin = p.retailer === "amazon" ? asinFromUrl(p.url) : null;
   return { url: withAssociateTag(p.url, shop.tag), asin, cartUrl: asin && shop.tag && shop.cartButtons ? amazonCartUrl([asin], shop.tag, shop.marketplace) : "" };
 }
-import CaribbeanForms, { NewsletterForm, SuggestResourceForm, SubmitEventForm, LeadMagnetForm } from "./CaribbeanForms";
+import CaribbeanForms, { NewsletterForm, SuggestResourceForm, LeadMagnetForm } from "./CaribbeanForms";
+import EventsSection from "./EventsSection";
 import dynamic from "next/dynamic";
 
 const ConsultForm = dynamic(() => import("./ConsultForm"));
@@ -311,26 +312,10 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
           <SuggestResourceForm />
         </div>
       </section>); }
-    case "cc_events": { const { events } = await getCaribbeanData(); return (
-      <section id="events" className="gx g2 g2-stack-md" style={{ paddingBottom: 104, gridTemplateColumns: "minmax(0,1fr) minmax(0,1.4fr)", gap: 64, alignItems: "start" }}>
-        <div className="sticky-md-off" style={{ display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 24 }}>
-          <span className="eyebrow">{c.eyebrow}</span><h2 className="h2" style={{ fontSize: 44 }}>{c.title}</h2><p style={{ fontSize: 15, lineHeight: 1.7, color: "#4b5569" }}>{c.body}</p>
-          <a href="#suggest-event" className="btn btn-navy" style={{ alignSelf: "flex-start" }}>Submit an event</a>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {events.length === 0 && <div style={{ padding: "28px 32px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff", display: "flex", flexDirection: "column", gap: 8 }}><span style={{ fontSize: 17, fontWeight: 600 }}>No upcoming events are listed yet.</span><span style={{ fontSize: 14, lineHeight: 1.65, color: "#6b7486" }}>Know of a fair, workshop, clinic or talk for older adults, families or caregivers? Submit it below and we'll review it for listing.</span></div>}
-          {events.map((e, k) => { const virtual = e.format === "virtual"; const d = e.startsAt; const bg = k === 0 ? "#1a2238" : virtual ? "#e6f3fc" : "#f7f8fa"; const color = k === 0 ? "#fff" : "#1a2238"; return (
-            <div key={e.id} className="reveal event-row" style={{ display: "grid", gridTemplateColumns: "84px 1fr auto", gap: 20, alignItems: "center", padding: "20px 24px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff" }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 84, height: 84, borderRadius: 14, background: bg, color }}><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase" }}>{fmtDate(d, { month: "short" }, e.tz)}</span><span className="display" style={{ fontSize: 36, fontWeight: 600, lineHeight: 1 }}>{fmtDate(d, { day: "numeric" }, e.tz)}</span></div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}><div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><span style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.3 }}>{e.title}</span>{virtual && <span style={{ padding: "3px 8px", borderRadius: 999, background: "#e6f3fc", fontSize: 10, fontWeight: 700, letterSpacing: ".06em" }}>VIRTUAL</span>}</div><span style={{ fontSize: 13, lineHeight: 1.55, color: "#6b7486" }}>{e.description}</span><span style={{ fontSize: 12, color: "#8c95a8" }}>{e.whereLabel} · {e.host}</span></div>
-              <a href={e.url || "#events"} target={e.url ? "_blank" : undefined} rel="noreferrer" className="btn btn-ghost btn-sm" style={{ height: 40 }}>Details</a>
-            </div>); })}
-          <div id="suggest-event" style={{ marginTop: 12, padding: 28, borderRadius: 16, background: "#f7f8fa", border: "1px solid #e9ecf1", display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span className="eyebrow eyebrow-sm">{c.formEyebrow}</span><span style={{ fontSize: 14, lineHeight: 1.6, color: "#4b5569" }}>{c.formBody}</span></div>
-            <SubmitEventForm />
-          </div>
-        </div>
-      </section>); }
+    // The Caribbean page's original events block: the shared events section fixed to the Caribbean, keeping its #events anchor.
+    case "cc_events": return <EventsSection c={c} filter={{ region: "caribbean" }} anchor="events" />;
+    // Events on any page: the block picks the region (and for the United States, optionally a state and city).
+    case "events": return <EventsSection c={c} filter={{ region: c.region, state: c.state, city: c.city }} />;
     case "cc_newsletter": return (
       <section id="newsletter" className="mx-gx g2 g2-stack-md panel" style={{ marginBottom: 104, padding: "72px 80px", borderRadius: 24, background: "#1a2238", color: "#fff", gridTemplateColumns: "minmax(0,1.2fr) minmax(0,1fr)", gap: 64, alignItems: "center" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

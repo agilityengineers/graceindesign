@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Check } from "@/components/ui/Icons";
+import { EVENT_REGIONS, US_STATES, usState } from "@/lib/events";
 
 const inp: React.CSSProperties = { height: 44, padding: "0 12px", border: "1px solid #dfe3ea", borderRadius: 10, fontSize: 14, background: "#fff", width: "100%" };
 async function post(url: string, body: Record<string, unknown>) { const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); const j = await r.json().catch(() => ({})); if (!r.ok || j.ok === false) throw new Error(j.error || "Something went wrong"); return j; }
@@ -29,16 +30,31 @@ export function SuggestResourceForm() {
   );
 }
 
-export function SubmitEventForm() {
+/**
+ * The "Submit an event" form, shared by every events block. The block decides how much the submitter is asked:
+ * a Caribbean block sends region=caribbean (as the Caribbean page always has); a United States block asks for the state
+ * and city, pre-filled with the block's own; a block for all regions asks where the event is first. The admin can still
+ * change the region when reviewing.
+ */
+export function SubmitEventForm({ region = "", state = "", city = "" }: { region?: string; state?: string; city?: string }) {
   const f = useForm();
-  if (f.sent) return <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "18px 20px", borderRadius: 12, background: "#fff", border: "1px solid #e9ecf1" }}><div style={{ width: 40, height: 40, flex: "none", borderRadius: "50%", background: "#e6f3fc", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={18} /></div><div style={{ display: "flex", flexDirection: "column", gap: 2 }}><span style={{ fontSize: 15, fontWeight: 600 }}>Thanks — your event is in review.</span><span style={{ fontSize: 13, color: "#6b7486" }}>It's now <strong>Pending</strong> in the admin queue. We'll email you when it's listed.</span></div></div>;
+  const [where, setWhere] = useState(region === "us" || region === "caribbean" ? region : "");
+  const us = where === "us";
+  if (f.sent) return <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "18px 20px", borderRadius: 12, background: "#fff", border: "1px solid #e9ecf1" }}><div style={{ width: 40, height: 40, flex: "none", borderRadius: "50%", background: "#e6f3fc", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={18} /></div><div style={{ display: "flex", flexDirection: "column", gap: 2 }}><span style={{ fontSize: 15, fontWeight: 600 }}>Thanks — your event is in review.</span><span style={{ fontSize: 13, color: "#6b7486" }}>Once it's approved we'll email you a link to its own page that you can share.</span></div></div>;
   return (
-    <form className="g2 g2-stack-sm" style={{ gap: 12 }} onSubmit={async (e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); f.setBusy(true); f.setErr(null); try { await post("/api/caribbean/event", Object.fromEntries(fd.entries())); f.setSent(true); } catch (x: any) { f.setErr(x.message); } finally { f.setBusy(false); } }}>
+    <form className="g2 g2-stack-sm" style={{ gap: 12 }} onSubmit={async (e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); f.setBusy(true); f.setErr(null); try { await post("/api/events", Object.fromEntries(fd.entries())); f.setSent(true); } catch (x: any) { f.setErr(x.message); } finally { f.setBusy(false); } }}>
       <label className="label" style={{ gridColumn: "1/-1" }}><span>Event title <span className="req">*</span></span><input name="title" required placeholder="e.g. Fall-Prevention Workshop for Seniors" style={inp} /></label>
+      {region === "us" || region === "caribbean"
+        ? <input type="hidden" name="region" value={region} />
+        : <label className="label" style={{ gridColumn: "1/-1" }}><span>Where is the event? <span className="req">*</span></span><select name="region" required value={where} onChange={(e) => setWhere(e.target.value)} style={inp}><option value="" disabled>Select…</option>{EVENT_REGIONS.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}</select></label>}
+      {us && <>
+        <label className="label"><span>State <span className="req">*</span></span><select name="state" required defaultValue={usState(state)?.[0] || ""} style={inp}><option value="" disabled>Select…</option>{US_STATES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}</select></label>
+        <label className="label">City<input name="city" defaultValue={city} placeholder="e.g. Atlanta" style={inp} /></label>
+      </>}
       <label className="label"><span>Date <span className="req">*</span></span><input name="date" type="date" required style={inp} /></label>
-      <label className="label">Start time &amp; time zone<input name="time" placeholder="10:00 AM · Jamaica (EST)" style={inp} /></label>
+      <label className="label">Start time &amp; time zone<input name="time" placeholder={us ? "10:00 AM ET" : "10:00 AM · Jamaica (EST)"} style={inp} /></label>
       <label className="label"><span>Format <span className="req">*</span></span><select name="format" required style={inp} defaultValue=""><option value="">Select…</option><option value="in_person">In person</option><option value="virtual">Virtual</option><option value="hybrid">Hybrid</option></select></label>
-      <label className="label">Location (or link for virtual)<input name="where" placeholder="Kingston, Jamaica · venue" style={inp} /></label>
+      <label className="label">{us ? "Venue (or link for virtual)" : "Location (or link for virtual)"}<input name="where" placeholder={us ? "Venue name and street address" : "Kingston, Jamaica · venue"} style={inp} /></label>
       <label className="label"><span>Host organization <span className="req">*</span></span><input name="host" required placeholder="Organization name" style={inp} /></label>
       <label className="label"><span>Contact email <span className="req">*</span></span><input name="email" type="email" required placeholder="you@email.com" style={inp} /></label>
       <label className="label" style={{ gridColumn: "1/-1" }}><span>Short description <span className="req">*</span></span><textarea name="description" required rows={2} placeholder="Who it's for and what to expect…" style={{ ...inp, height: "auto", padding: 12, resize: "vertical" }} /></label>

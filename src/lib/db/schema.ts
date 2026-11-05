@@ -579,6 +579,20 @@ export const ccEvents = pgTable("cc_events", {
   cost: text("cost").notNull().default("Free"),
   description: text("description").notNull(),
   country: text("country").notNull().default("Jamaica"),
+  /** caribbean | us (src/lib/events.ts). Chosen by the admin; public submissions start as caribbean. */
+  region: text("region").notNull().default("caribbean"),
+  /** US events: city (free text) and two-letter state code; the state also sets `tz`. */
+  city: text("city"),
+  state: text("state"),
+  /** The event's own page is /events/<slug>. Set when the event is approved and never changed after, so shared links keep working. */
+  slug: text("slug").unique(),
+  /** Optional picture, admin-only: an uploaded file's URL or a media library reference (media://slot). */
+  imageUrl: text("image_url"),
+  /** Counters for Admin → Events (src/lib/event-stats.ts): page views by people, Register clicks, calendar downloads, share clicks. */
+  viewCount: integer("view_count").notNull().default(0),
+  registerClicks: integer("register_clicks").notNull().default(0),
+  calendarAdds: integer("calendar_adds").notNull().default(0),
+  shareClicks: integer("share_clicks").notNull().default(0),
   status: moderationStatusEnum("status").notNull().default("pending"),
   submittedByName: text("submitted_by_name"),
   submittedByEmail: text("submitted_by_email"),
