@@ -13,6 +13,8 @@ import { env } from "@/lib/env";
 import { retailerLabel, asinFromUrl, amazonCartUrl, withAssociateTag } from "@/lib/retailers";
 import { onShelf } from "@/lib/shelves";
 import { getAmazonShop, type AmazonShop } from "@/lib/server/amazon";
+import { getSetting } from "@/lib/server/settings";
+import { safeMapEmbedUrl } from "@/lib/google";
 
 type ProductRow = Awaited<ReturnType<typeof getProducts>>[number];
 /** Only the listings on a named shelf when the block names one (`shelf: "aip" | "wellness"`); the whole catalog otherwise. */
@@ -264,6 +266,16 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
       <section className="gx g3" style={{ paddingTop: 80, paddingBottom: 80, gap: 28 }}>
         {(c.items as [string, string][]).map(([t, d], k) => <div key={t} style={{ display: "flex", flexDirection: "column", gap: 10 }}><span className="display" style={{ fontSize: 40, color: "#6cb6e6", lineHeight: 1 }}>{String(k + 1).padStart(2, "0")}</span><span style={{ fontSize: 16, fontWeight: 600 }}>{t}</span><span style={{ fontSize: 14, lineHeight: 1.65, color: "#6b7486" }}>{d}</span></div>)}
       </section>);
+    case "google_map": { // map from Admin → Site settings → Google & SEO; renders nothing until one is set
+      const src = safeMapEmbedUrl((await getSetting("google")).mapEmbedUrl); if (!src) return null;
+      const height = Math.min(Math.max(Number(c.height) || 420, 240), 720);
+      return (
+        <section className="gx section" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {(c.eyebrow || c.title) && <div>{c.eyebrow && <span className="eyebrow">{c.eyebrow}</span>}{c.title && <h2 className="h2" style={{ marginTop: 8 }}>{c.title}</h2>}</div>}
+          <iframe src={src} title={c.title || "Map showing Grace In Design's location"} style={{ width: "100%", height, border: 0, borderRadius: 16 }} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
+        </section>
+      );
+    }
     case "rich_text": return <section className="gx section" style={{ maxWidth: 860 }}><h1 className="h1" style={{ marginBottom: 28 }}>{c.title}</h1><div className="prose" style={{ fontSize: 16, lineHeight: 1.75, color: "#4b5569" }} dangerouslySetInnerHTML={{ __html: c.body }} /></section>;
     case "cc_why": { const { countries } = await getCaribbeanData(); return (
       <section className="gx section g2 g2-stack-md" style={{ gap: 80, alignItems: "start" }}>

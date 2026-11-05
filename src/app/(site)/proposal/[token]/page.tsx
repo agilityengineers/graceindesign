@@ -25,7 +25,7 @@ export default async function ProposalPage({ params, searchParams }: { params: P
   if (!p.viewedAt) await db.update(proposals).set({ viewedAt: new Date(), status: p.status === "sent" ? "viewed" : p.status }).where(eq(proposals.id, p.id));
   const html = /<[a-z][\s\S]*>/i.test(p.body) ? p.body : p.body.split(/\n{2,}/).map((para) => `<p>${para.replace(/\n/g, "<br/>")}</p>`).join("");
   return (
-    <SiteFrame label="Proposal" active="none" sourceKey="general">
+    <SiteFrame label="Proposal" active="none" sourceKey="general" privatePage>
       <section className="gx" style={{ paddingTop: 72, paddingBottom: 104, maxWidth: 820, display: "flex", flexDirection: "column", gap: 28 }}>
         <div><span className="eyebrow">Proposal{p.recipientName ? ` for ${p.recipientName}` : ""}</span><h1 className="h1" style={{ fontSize: 48, marginTop: 14 }}>{p.title}</h1>{p.amount && <p className="lede" style={{ marginTop: 10 }}>Investment: <strong>{money(Number(p.amount))}</strong></p>}</div>
         <div className="prose" style={{ fontSize: 17, lineHeight: 1.75, color: "#4b5569" }} dangerouslySetInnerHTML={{ __html: html }} />

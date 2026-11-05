@@ -12,7 +12,7 @@ async function unsubscribe(formData: FormData) {
 export default async function UnsubscribePage({ searchParams }: { searchParams: Promise<{ e?: string; done?: string }> }) {
   const sp = await searchParams;
   return (
-    <SiteFrame label="Email preferences" active="none" sourceKey="general">
+    <SiteFrame label="Email preferences" active="none" sourceKey="general" privatePage>
       <section className="gx" style={{ paddingTop: 88, paddingBottom: 104, maxWidth: 640 }}>
         <span className="eyebrow">Email preferences</span>
         {sp.done ? (<><h1 className="h1" style={{ margin: "14px 0 18px" }}>You're unsubscribed.</h1><p className="lede">{sp.e} won't receive our newsletters anymore. Booking confirmations and project updates you've asked for still arrive.</p></>) : (<>

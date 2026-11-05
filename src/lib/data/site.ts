@@ -8,7 +8,7 @@ import { UPCOMING_EVENTS_LOOKBACK_MS, upcomingEvents } from "@/lib/cc-events";
 
 export const getSiteChrome = cache(async () => {
   const [settings, svc] = await Promise.all([
-    getSettings(["contact", "footer", "social_links", "consult_form", "social"]),
+    getSettings(["contact", "footer", "social_links", "consult_form", "social", "google", "seo"]),
     db.select({ slug: services.slug, title: services.title, parentId: services.parentId, id: services.id, navGroup: services.navGroup, sort: services.sort, status: services.status }).from(services).orderBy(asc(services.sort)),
   ]);
   const published = svc.filter((s) => s.status === "published");

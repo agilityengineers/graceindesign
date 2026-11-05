@@ -13,7 +13,7 @@ export default async function BookingPage({ params, searchParams }: { params: Pr
   const path = lead.pathId ? await db.query.paths.findFirst({ where: eq(paths.id, lead.pathId) }) : null;
   const consultType = (path?.consultType || "15-min discovery call").replace(/^15-min /, "15-minute ");
   return (
-    <SiteFrame label="Your consultation" active="none" sourceKey="general">
+    <SiteFrame label="Your consultation" active="none" sourceKey="general" privatePage>
       <section className="gx" style={{ paddingTop: 88, paddingBottom: 104, maxWidth: 760 }}>
         <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#e6f3fc", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}><Check size={30} /></div>
         <span className="eyebrow">Booking details</span>

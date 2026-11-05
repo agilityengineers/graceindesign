@@ -4,7 +4,7 @@ import type { SocialLink, ContactSettings } from "@/lib/server/settings";
 
 const ICONS: Record<string, () => React.JSX.Element> = { Facebook: Social.Facebook, Instagram: Social.Instagram, LinkedIn: Social.LinkedIn, Pinterest: Social.Pinterest, YouTube: Social.YouTube };
 
-export default function SiteFooter({ contact, footer, social, isAdmin, etsyUrl }: { contact: ContactSettings; footer: { blurb: string; copyright: string }; social: SocialLink[]; isAdmin: boolean; etsyUrl: string }) {
+export default function SiteFooter({ contact, footer, social, isAdmin, etsyUrl, reviewUrl = "" }: { contact: ContactSettings; footer: { blurb: string; copyright: string }; social: SocialLink[]; isAdmin: boolean; etsyUrl: string; reviewUrl?: string }) {
   return (
     <footer className="gx" style={{ background: "#1a2238", color: "#fff", paddingTop: 80, paddingBottom: 40, display: "flex", flexDirection: "column", gap: 56 }}>
       <div className="footer-grid">
@@ -38,6 +38,7 @@ export default function SiteFooter({ contact, footer, social, isAdmin, etsyUrl }
           <a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`} style={{ color: "#fff", fontSize: 14 }}>{contact.phone}</a>
           {(contact.address || contact.addressLine2) && <span style={{ color: "#c6cbd6", fontSize: 14, lineHeight: 1.6 }}>{contact.address}{contact.address && contact.addressLine2 && <br />}{contact.addressLine2}</span>}
           <span style={{ color: "#c6cbd6", fontSize: 13, lineHeight: 1.6 }}>{contact.hours}<br />{contact.consultationsNote}</span>
+          {reviewUrl && <a href={reviewUrl} target="_blank" rel="noreferrer" style={{ color: "#6cb6e6", fontSize: 14, fontWeight: 600 }}>★ Review us on Google</a>}
         </div>
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap", paddingTop: 28, borderTop: "1px solid rgba(255,255,255,.12)", fontSize: 12.5, color: "#8c95a8" }}>

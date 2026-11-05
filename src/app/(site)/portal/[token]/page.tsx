@@ -51,7 +51,7 @@ export default async function PortalPage({ params, searchParams }: { params: Pro
   const open = inv.filter((i) => i.status !== "paid" && i.status !== "void");
   const Section = ({ id, title, children }: { id: string; title: string; children: React.ReactNode }) => <section id={id} style={{ display: "flex", flexDirection: "column", gap: 16 }}><h2 className="h2" style={{ fontSize: 26 }}>{title}</h2>{children}</section>;
   return (
-    <SiteFrame label="Client portal" active="none" sourceKey="general">
+    <SiteFrame label="Client portal" active="none" sourceKey="general" privatePage>
       <section className="gx" style={{ paddingTop: 72, paddingBottom: 48, display: "flex", flexDirection: "column", gap: 14 }}>
         <span className="eyebrow">Client portal · {project.code}</span>
         <h1 className="h1" style={{ fontSize: 48 }}>{project.name}</h1>
