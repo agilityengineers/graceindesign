@@ -9,6 +9,7 @@ import { getProducts, getPublishedPosts, getFounder, getServiceList, getCaribbea
 import { getMediaMap, resolveDeep } from "@/lib/data/media";
 import { WELLNESS_GROUPS, EPISODES } from "@/lib/seed-data/demo";
 import { fmtDate } from "@/lib/utils";
+import { eventPath } from "@/lib/events";
 import { env } from "@/lib/env";
 import { retailerLabel, asinFromUrl, amazonCartUrl, withAssociateTag } from "@/lib/retailers";
 import { onShelf } from "@/lib/shelves";
@@ -323,7 +324,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
             <div key={e.id} className="reveal event-row" style={{ display: "grid", gridTemplateColumns: "84px 1fr auto", gap: 20, alignItems: "center", padding: "20px 24px", borderRadius: 16, border: "1px solid #e9ecf1", background: "#fff" }}>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 84, height: 84, borderRadius: 14, background: bg, color }}><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase" }}>{fmtDate(d, { month: "short" }, e.tz)}</span><span className="display" style={{ fontSize: 36, fontWeight: 600, lineHeight: 1 }}>{fmtDate(d, { day: "numeric" }, e.tz)}</span></div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}><div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><span style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.3 }}>{e.title}</span>{virtual && <span style={{ padding: "3px 8px", borderRadius: 999, background: "#e6f3fc", fontSize: 10, fontWeight: 700, letterSpacing: ".06em" }}>VIRTUAL</span>}</div><span style={{ fontSize: 13, lineHeight: 1.55, color: "#6b7486" }}>{e.description}</span><span style={{ fontSize: 12, color: "#8c95a8" }}>{e.whereLabel} · {e.host}</span></div>
-              <a href={e.url || "#events"} target={e.url ? "_blank" : undefined} rel="noreferrer" className="btn btn-ghost btn-sm" style={{ height: 40 }}>Details</a>
+              {e.slug ? <a href={eventPath(e.slug)} className="btn btn-ghost btn-sm" style={{ height: 40 }}>Details</a> : <a href={e.url || "#events"} target={e.url ? "_blank" : undefined} rel="noreferrer" className="btn btn-ghost btn-sm" style={{ height: 40 }}>Details</a>}
             </div>); })}
           <div id="suggest-event" style={{ marginTop: 12, padding: 28, borderRadius: 16, background: "#f7f8fa", border: "1px solid #e9ecf1", display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span className="eyebrow eyebrow-sm">{c.formEyebrow}</span><span style={{ fontSize: 14, lineHeight: 1.6, color: "#4b5569" }}>{c.formBody}</span></div>

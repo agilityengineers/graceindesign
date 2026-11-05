@@ -83,12 +83,20 @@ export const getCaribbeanData = cache(async () => {
   const [resources, events, regional, gidPosts, feeds] = await Promise.all([
     db.select().from(ccResources).where(and(eq(ccResources.status, "published"), countryFilter(ccResources.country))).orderBy(asc(ccResources.sort), asc(ccResources.name)),
     // Published events through the end of their own date (midnight in the event's time zone). The query only narrows; src/lib/cc-events.ts has the rule and its test.
-    db.select().from(ccEvents).where(and(eq(ccEvents.status, "published"), gte(ccEvents.startsAt, new Date(Date.now() - UPCOMING_EVENTS_LOOKBACK_MS)))).orderBy(asc(ccEvents.startsAt)).then((rows) => upcomingEvents(rows, new Date(), 8)),
+    getUpcomingEvents("caribbean", 8),
     getPublishedPosts("caribbean", 20).then((rows) => rows.filter((p) => p.origin === "rss").slice(0, 6)),
     getPublishedPosts("caribbean", 20).then((rows) => rows.filter((p) => p.origin !== "rss").slice(0, 3)),
     db.select().from(rssSources).where(and(eq(rssSources.scope, "caribbean"), eq(rssSources.isActive, true))),
   ]);
   return { countries: liveCountries, resources, events, regional, gidPosts, feeds };
 });
+
+/** Published events still upcoming (through the end of their own day), optionally for one region. The query only narrows; src/lib/cc-events.ts decides. */
+export const getUpcomingEvents = cache(async (region?: string, limit = 100) => {
+  const rows = await db.select().from(ccEvents).where(and(eq(ccEvents.status, "published"), gte(ccEvents.startsAt, new Date(Date.now() - UPCOMING_EVENTS_LOOKBACK_MS)), region ? eq(ccEvents.region, region) : undefined)).orderBy(asc(ccEvents.startsAt));
+  return upcomingEvents(rows, new Date(), limit);
+});
+/** One event's public page. Only published events have a page; an unlisted or rejected one returns null (404). Past events still resolve, so old links keep working. */
+export const getEventBySlug = cache(async (slug: string) => (await db.query.ccEvents.findFirst({ where: and(eq(ccEvents.slug, slug), eq(ccEvents.status, "published")) })) ?? null);
 
 export const getInstagramFeed = cache(async (limit = 6) => db.select().from(socialFeedItems).where(eq(socialFeedItems.network, "instagram")).orderBy(desc(socialFeedItems.postedAt)).limit(limit));

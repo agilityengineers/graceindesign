@@ -16,6 +16,8 @@ import { sendEmail } from "@/lib/server/outbox";
 import { emitEvent } from "@/lib/server/webhooks";
 import { uploadToMedia } from "@/lib/server/media-upload";
 import { env } from "@/lib/env";
+import { ensureEventSlug, regionFields } from "@/lib/server/events";
+import { eventPath } from "@/lib/events";
 
 // --- Products (links to Amazon, Etsy or any other store) ------------------------
 const PREVAL = Array.from(new Set(["/admin/products", "/", "/healthy-home-resources/aip-products", "/healthy-home-resources", ...SHELF_KEYS.map((k) => SHELVES[k].href)]));
@@ -114,7 +116,7 @@ export async function saveRssSettings(formData: FormData) {
 }
 
 // --- Caribbean Connection ------------------------------------------------------
-const CREVAL = ["/admin/caribbean", "/caribbean-connection"];
+const CREVAL = ["/admin/caribbean", "/caribbean-connection", "/events"];
 const cback = (formData: FormData, tab: string) => backTo(formData, `/admin/caribbean?tab=${tab}`);
 
 export async function resourceAction(formData: FormData) {
@@ -149,23 +151,24 @@ export async function eventAction(formData: FormData) {
     const note = strOrNull(formData.get("note"));
     if (op === "approve" || op === "restore") {
       await db.update(ccEvents).set({ status: "published", publishedAt: e.publishedAt || new Date(), reviewedBy: user.id, reviewNote: note, updatedAt: new Date() }).where(eq(ccEvents.id, id));
-      if (op === "approve" && e.submittedByEmail) await sendEmail({ to: e.submittedByEmail, from: "support", subject: `Listed: ${e.title}`, text: `“${e.title}” is now listed on Caribbean Connection → Community events.\n\n${env.baseUrl}/caribbean-connection#events\n\nGrace In Design` });
-      if (op === "approve") await emitEvent("cc.submission.published", { type: "event", id, title: e.title });
+      const link = `${env.baseUrl}${eventPath(await ensureEventSlug(e))}`; // the event's own page, created on approval
+      if (op === "approve" && e.submittedByEmail) await sendEmail({ to: e.submittedByEmail, from: "support", subject: `Listed: ${e.title}`, text: `“${e.title}” is approved and has its own page — share this link to promote it:\n\n${link}\n\nIt is also listed with our other upcoming events.\n\nGrace In Design` });
+      if (op === "approve") await emitEvent("cc.submission.published", { type: "event", id, title: e.title, url: link });
     } else if (op === "reject") {
       await db.update(ccEvents).set({ status: "rejected", reviewedBy: user.id, reviewNote: note, updatedAt: new Date() }).where(eq(ccEvents.id, id));
       if (e.submittedByEmail) await sendEmail({ to: e.submittedByEmail, from: "support", subject: `About your event submission: ${e.title}`, text: `Thank you for submitting “${e.title}”. We weren't able to list it this time.${note ? `\n\nReason: ${note}` : ""}\n\nGrace In Design` });
     } else if (op === "unlist") await db.update(ccEvents).set({ status: "pending", reviewedBy: user.id, updatedAt: new Date() }).where(eq(ccEvents.id, id));
     else if (op === "delete") await db.delete(ccEvents).where(eq(ccEvents.id, id));
-    else if (op === "update") { const date = str(formData.get("date")); await db.update(ccEvents).set({ title: str(formData.get("title")) || e.title, startsAt: date ? new Date(`${date}T12:00:00-05:00`) : e.startsAt, timeLabel: strOrNull(formData.get("timeLabel")), whereLabel: str(formData.get("whereLabel")) || e.whereLabel, format: str(formData.get("format")) || e.format, host: str(formData.get("host")) || e.host, url: strOrNull(formData.get("url")), cost: str(formData.get("cost")) || e.cost, description: str(formData.get("description")) || e.description, country: str(formData.get("country")) || e.country, updatedAt: new Date() }).where(eq(ccEvents.id, id)); }
+    else if (op === "update") { const date = str(formData.get("date")); await db.update(ccEvents).set({ ...regionFields(formData, e), title: str(formData.get("title")) || e.title, startsAt: date ? new Date(`${date}T12:00:00-05:00`) : e.startsAt, timeLabel: strOrNull(formData.get("timeLabel")), whereLabel: str(formData.get("whereLabel")) || e.whereLabel, format: str(formData.get("format")) || e.format, host: str(formData.get("host")) || e.host, url: strOrNull(formData.get("url")), cost: str(formData.get("cost")) || e.cost, description: str(formData.get("description")) || e.description, country: str(formData.get("country")) || e.country, updatedAt: new Date() }).where(eq(ccEvents.id, id)); }
     return id;
-  }, { back, ok: { approve: "Listed — submitter emailed", reject: "Rejected — submitter emailed", unlist: "Unlisted", restore: "Restored", delete: "Event deleted", update: "Event saved" }[op] || "Done", entityId: () => id, revalidate: CREVAL });
+  }, { back, ok: { approve: "Approved — link created and submitter emailed", reject: "Rejected — submitter emailed", unlist: "Unlisted", restore: "Restored", delete: "Event deleted", update: "Event saved" }[op] || "Done", entityId: () => id, revalidate: CREVAL });
 }
 export async function addEvent(formData: FormData) {
   await adminAction("caribbean", "cc_event", "create", async (user) => {
     const title = str(formData.get("title")); const date = str(formData.get("date")); if (!title || !date) throw new Error("Title and date are required");
-    const [e] = await db.insert(ccEvents).values({ title, startsAt: new Date(`${date}T12:00:00-05:00`), timeLabel: strOrNull(formData.get("timeLabel")), whereLabel: str(formData.get("whereLabel")) || "Online", format: str(formData.get("format")) || "virtual", host: str(formData.get("host")) || "Grace In Design", url: strOrNull(formData.get("url")), cost: str(formData.get("cost")) || "Free", description: str(formData.get("description")) || title, country: str(formData.get("country")) || "Jamaica", status: "published", publishedAt: new Date(), reviewedBy: user.id, submittedByName: "Grace In Design" }).returning();
-    return e;
-  }, { back: "/admin/caribbean?tab=events", ok: "Event added and listed", entityId: (e) => e.id, revalidate: CREVAL });
+    const [e] = await db.insert(ccEvents).values({ ...regionFields(formData), title, startsAt: new Date(`${date}T12:00:00-05:00`), timeLabel: strOrNull(formData.get("timeLabel")), whereLabel: str(formData.get("whereLabel")) || "Online", format: str(formData.get("format")) || "virtual", host: str(formData.get("host")) || "Grace In Design", url: strOrNull(formData.get("url")), cost: str(formData.get("cost")) || "Free", description: str(formData.get("description")) || title, country: str(formData.get("country")) || "Jamaica", status: "published", publishedAt: new Date(), reviewedBy: user.id, submittedByName: "Grace In Design" }).returning();
+    return { ...e, slug: await ensureEventSlug(e) }; // added by an admin = approved, so it gets its link right away
+  }, { back: "/admin/caribbean?tab=events", ok: (e) => `Event added — its page is ${eventPath(e.slug)}`, entityId: (e) => e.id, revalidate: CREVAL });
 }
 export async function countryAction(formData: FormData) {
   const op = str(formData.get("op"));

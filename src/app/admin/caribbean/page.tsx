@@ -10,6 +10,9 @@ import { resourceAction, addResource, eventAction, addEvent, countryAction, addR
 import { subscriberAction } from "@/lib/actions/newsletter";
 import { fmtDate, relativeDay } from "@/lib/utils";
 import { isUpcomingEvent } from "@/lib/cc-events";
+import { eventLocation, eventPath, regionLabel } from "@/lib/events";
+import { EventRegionFields, CopyEventLink } from "@/components/admin/EventFields";
+import { env } from "@/lib/env";
 
 export const metadata = { title: "Caribbean Connection" };
 export const dynamic = "force-dynamic";
@@ -92,12 +95,12 @@ export default async function CaribbeanAdmin({ searchParams }: { searchParams: P
       </>)}
 
       {tab === "events" && (<>
-        <Card title="Community events" sub="Public submissions and GID events. Approve to list; an event leaves the public page by itself at midnight (its own time zone) once its date has passed." action={<Filters />}>
+        <Card title="Community events" sub="Public submissions and GID events, in the Caribbean or the United States. Approving gives an event its own shareable page at /events/<name-of-event> (the link never changes, even if you edit the title later). An event leaves the public lists by itself at midnight (its own time zone) once its date has passed." action={<Filters />}>
           {byStatus(events).map((e) => (
             <details key={e.id} style={{ borderBottom: "1px solid #f2f4f7", padding: "8px 0" }}>
               <summary style={{ display: "grid", gridTemplateColumns: "54px minmax(0, 2fr) 160px 120px 100px auto", gap: 12, alignItems: "center", fontSize: 13, cursor: "pointer", listStyle: "none" }}>
                 <div style={{ textAlign: "center", borderRadius: 8, background: "#e6f3fc", padding: "4px 0" }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>{fmtDate(e.startsAt, { month: "short" }, e.tz)}</div><div style={{ fontSize: 18, fontWeight: 700 }}>{fmtDate(e.startsAt, { day: "numeric" }, e.tz)}</div></div>
-                <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}><span style={{ fontWeight: 600 }}>{e.title}</span><span style={{ fontSize: 12, color: "#6b7486" }}>{e.whereLabel} · {e.format.replace("_", " ")}{e.timeLabel ? ` · ${e.timeLabel}` : ""}</span></div>
+                <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}><span style={{ fontWeight: 600 }}>{e.title}</span><span style={{ fontSize: 12, color: "#6b7486" }}>{regionLabel(e.region)} · {eventLocation(e)} · {e.format.replace("_", " ")}{e.timeLabel ? ` · ${e.timeLabel}` : ""}</span>{e.slug && e.status === "published" && <span style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 12 }}><a href={eventPath(e.slug)} target="_blank" rel="noreferrer" className="link-btn" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 260 }}>{eventPath(e.slug)} ↗</a><CopyEventLink url={`${env.baseUrl}${eventPath(e.slug)}`} /></span>}</div>
                 <span style={{ fontSize: 12 }}>{e.host}</span>
                 <span style={{ fontSize: 12, color: "#6b7486" }}>{e.submittedByEmail || "GID"}<br /><span style={{ fontSize: 11 }}>{relativeDay(e.createdAt)}</span></span>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 3 }}><StatusPill status={e.status} />{!isUpcomingEvent(e) && <span title="Past events are not shown on the public page" style={{ fontSize: 10, color: "#8c95a8", whiteSpace: "nowrap" }}>Past · not shown</span>}</div>
@@ -119,8 +122,8 @@ export default async function CaribbeanAdmin({ searchParams }: { searchParams: P
                 <label className="label label-caps">Host<input name="host" defaultValue={e.host} className="admin-input admin-input-sm" /></label>
                 <label className="label label-caps">Link<input name="url" defaultValue={e.url || ""} className="admin-input admin-input-sm" /></label>
                 <label className="label label-caps">Cost<input name="cost" defaultValue={e.cost} className="admin-input admin-input-sm" /></label>
-                <label className="label label-caps">Country<input name="country" list="ccountries" defaultValue={e.country} className="admin-input admin-input-sm" /></label>
-                <label className="label label-caps" style={{ gridColumn: "2/-1" }}>Description<textarea name="description" rows={2} defaultValue={e.description} className="admin-input" /></label>
+                <EventRegionFields region={e.region} state={e.state} city={e.city} country={e.country} countries={countryNames} />
+                <label className="label label-caps" style={{ gridColumn: "1/-1" }}>Description<textarea name="description" rows={2} defaultValue={e.description} className="admin-input" /></label>
                 <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8, justifySelf: "start" }}>Save edits</button>
               </form>
             </details>))}
@@ -131,7 +134,8 @@ export default async function CaribbeanAdmin({ searchParams }: { searchParams: P
           <form action={addEvent} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 8 }}>
             <input name="title" placeholder="Title" className="admin-input admin-input-sm" required /><input name="date" type="date" className="admin-input admin-input-sm" required /><input name="timeLabel" placeholder="10:00 am – 12:00 pm" className="admin-input admin-input-sm" />
             <input name="whereLabel" placeholder="Where" className="admin-input admin-input-sm" /><select name="format" className="admin-input admin-input-sm" defaultValue="virtual"><option value="in_person">In person</option><option value="virtual">Virtual</option><option value="hybrid">Hybrid</option></select><input name="host" placeholder="Host" defaultValue="Grace In Design" className="admin-input admin-input-sm" />
-            <input name="url" placeholder="Registration link" className="admin-input admin-input-sm" /><input name="cost" placeholder="Free" className="admin-input admin-input-sm" /><input name="country" list="ccountries" placeholder="Country" defaultValue="Jamaica" className="admin-input admin-input-sm" />
+            <input name="url" placeholder="Registration link" className="admin-input admin-input-sm" /><input name="cost" placeholder="Free" className="admin-input admin-input-sm" />
+            <EventRegionFields countries={countryNames} />
             <textarea name="description" rows={2} placeholder="Description" className="admin-input" style={{ gridColumn: "1/-1" }} />
             <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8, justifySelf: "start" }}>+ Add event</button>
           </form>
