@@ -6,5 +6,5 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Build roadmap", robots: { index: false, follow: false } };
 export default async function RoadmapPage() {
   const u = await getCurrentUser(); if (!u) redirect("/login?next=/roadmap");
-  return <SiteFrame label="Build plan · internal" active="none" sourceKey="general"><RoadmapContent /></SiteFrame>;
+  return <SiteFrame label="Build plan · internal" active="none" sourceKey="general" privatePage><RoadmapContent /></SiteFrame>;
 }

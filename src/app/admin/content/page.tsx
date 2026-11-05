@@ -17,7 +17,7 @@ export const metadata = { title: "Content" };
 export const dynamic = "force-dynamic";
 /** The "Add block" menu: block types with plain names, plus ready-made product sections (`product_shelf:<shelf>` arrives pre-filled for that shelf). */
 const BLOCK_OPTIONS: [string, string][] = [
-  ["rich_text", "Rich text"], ["page_header", "Page header"], ["cta", "Call to action"], ["steps", "Steps"], ["news", "News & Insights row"], ["featured_products", "Featured products (homepage row)"], ["consult_form", "Consultation form"],
+  ["rich_text", "Rich text"], ["page_header", "Page header"], ["cta", "Call to action"], ["steps", "Steps"], ["news", "News & Insights row"], ["featured_products", "Featured products (homepage row)"], ["consult_form", "Consultation form"], ["google_map", "Google map (set in Site settings → Google & SEO)"],
   ...SHELF_KEYS.map((k): [string, string] => [`product_shelf:${k}`, `${SHELVES[k].name} section`]),
   ["product_shelf", "Product shelf (every product, or pick a shelf)"], ["product_grid", "Product grid with category filters"], ["service_list", "Service list"], ["contact_steps", "Contact steps"],
 ];

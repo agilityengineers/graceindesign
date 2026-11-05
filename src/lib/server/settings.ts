@@ -1,5 +1,6 @@
 import { db, siteSettings } from "@/lib/db";
 import { eq } from "drizzle-orm";
+import { GOOGLE_DEFAULTS, type GoogleSettings } from "@/lib/google";
 
 export type ContactSettings = { phone: string; email: string; hours: string; address: string; addressLine2: string; utilityLabel: string; consultationsNote: string };
 export type SocialLink = { name: string; url: string; enabled: boolean };
@@ -77,6 +78,8 @@ export const SETTINGS_DEFAULTS = {
   seo: { siteName: "Grace In Design", defaultDescription: "Interior design, Aging In Place and project management in Atlanta." },
   hero_defaults: { slideSeconds: 5 },
   amazon: { associateTag: "", cartButtons: true } as AmazonSettings,
+  /** Google Analytics, Tag Manager, Search Console and Business Profile (Site settings → Google & SEO). */
+  google: GOOGLE_DEFAULTS as GoogleSettings,
   newsletter: { instaUrl: "", instaApiKeyEnc: "", instaApiKeyPrefix: "", audienceIds: {}, instaAccountName: "", instaPlan: null, connectedAt: null, lastCheckedAt: null, lastCheckError: null, doubleOptIn: false, sendWelcomeEmail: true } as NewsletterSettings,
 };
 export type SettingKey = keyof typeof SETTINGS_DEFAULTS;

@@ -7,10 +7,11 @@ import { Card, Avatar, StatusPill } from "@/components/admin/ui";
 import Toast from "@/components/admin/Toast";
 import ConfirmButton from "@/components/admin/Confirm";
 import ContentTabs from "@/components/admin/ContentTabs";
-import { saveContactSettings, saveSocialLinks, removeSocialLink, inviteUser, updateUser, integrationAction, integrationLiveStatus, saveAmazonSettings } from "@/lib/actions/settings";
+import { saveContactSettings, saveSocialLinks, removeSocialLink, inviteUser, updateUser, integrationAction, integrationLiveStatus, saveAmazonSettings, saveGoogleSettings } from "@/lib/actions/settings";
 import { env } from "@/lib/env";
 import { relativeDay } from "@/lib/utils";
 import { ensureInstaIntegrationRow } from "@/lib/server/insta-newsletter";
+import { reviewUrl, trackedProfileWebsiteUrl } from "@/lib/google";
 
 export const metadata = { title: "Site settings" };
 export const dynamic = "force-dynamic";
@@ -19,9 +20,20 @@ const ENV_HINTS: Record<string, string> = { insta_newsletter: "INSTA_NEWSLETTER_
 export default async function SettingsAdmin() {
   const user = await requireArea("pages");
   await ensureInstaIntegrationRow();
-  const [s, team, ints] = await Promise.all([getSettings(["contact", "footer", "social_links", "seo", "amazon"]), db.select().from(users).orderBy(asc(users.name)), db.select().from(integrations).orderBy(asc(integrations.phase), asc(integrations.id))]);
+  const [s, team, ints] = await Promise.all([getSettings(["contact", "footer", "social_links", "seo", "amazon", "google"]), db.select().from(users).orderBy(asc(users.name)), db.select().from(integrations).orderBy(asc(integrations.phase), asc(integrations.id))]);
   const live = await Promise.all(ints.map((i) => integrationLiveStatus(i.key)));
   const manageUsers = can(user, "users");
+  const g = s.google;
+  const gaEnvFallback = !g.gaMeasurementId && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ? process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID : "";
+  const site = env.baseUrl.replace(/\/$/, "");
+  const siteIsLocal = /localhost|127\.0\.0\.1/.test(site);
+  const status = [
+    { done: !!(g.gaMeasurementId || gaEnvFallback), label: "Google Analytics" },
+    { done: !!g.searchConsoleToken, label: "Search Console verification" },
+    { done: !!g.profileUrl, label: "Business Profile link" },
+    { done: !!g.placeId, label: "Place ID (review link)" },
+    { done: !!g.mapEmbedUrl, label: "Map for the Google map block" },
+  ];
   return (
     <AdminShell user={user} active="cms" title="Site settings" subtitle="Contact details, footer, social links, team access and integrations" actions={<ContentTabs active="settings" />}>
       <Toast />
@@ -58,6 +70,46 @@ export default async function SettingsAdmin() {
           <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8 }}>Save</button>
         </form>
         <p style={{ fontSize: 12, color: "#6b7486", margin: 0 }}>{env.amazon.accessKey && env.amazon.secretKey ? "Product Advertising API keys are set: Admin → Products can search Amazon, and prices and ratings refresh through the API." : "Searching Amazon from the admin and live prices need the Product Advertising API keys in Replit → Secrets (see Integrations). Pasting product links works without them."}</p>
+      </Card>
+      <Card title="Google & SEO" sub="Analytics, Search Console and your Google Business Profile. Changes go live on the public site as soon as you save — no republish needed.">
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{status.map((x) => <span key={x.label} className="tag" style={{ background: x.done ? "#e3f4ea" : "#f2f4f7", color: x.done ? "#1f7a46" : "#6b7486" }}>{x.done ? "✓" : "○"} {x.label}</span>)}</div>
+        {siteIsLocal && <p style={{ fontSize: 12, color: "#a23b2a", margin: 0 }}>BASE_URL in Replit → Secrets is not your live domain yet ({site}). Set it to your real address (e.g. https://graceindesign.net) and republish, or Google will be sent to the wrong sitemap.</p>}
+        <form action={saveGoogleSettings} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <fieldset style={{ border: 0, padding: 0, margin: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <legend className="label-caps" style={{ fontSize: 11, fontWeight: 700, marginBottom: 6 }}>Analytics & verification</legend>
+            <label className="label label-caps">GA4 Measurement ID<input name="gaMeasurementId" defaultValue={g.gaMeasurementId} placeholder={gaEnvFallback || "G-XXXXXXXXXX"} className="admin-input admin-input-sm" /></label>
+            <label className="label label-caps">Tag Manager container (optional)<input name="gtmContainerId" defaultValue={g.gtmContainerId} placeholder="GTM-XXXXXXX" className="admin-input admin-input-sm" /></label>
+            <label className="label label-caps" style={{ gridColumn: "1/-1" }}>Search Console verification (HTML tag)<input name="searchConsoleToken" defaultValue={g.searchConsoleToken} placeholder={'<meta name="google-site-verification" content="…" /> — paste the whole tag or just the code'} className="admin-input admin-input-sm" /></label>
+            <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, gridColumn: "1/-1" }}><input type="checkbox" name="excludeTeam" defaultChecked={g.excludeTeam} />Don’t count visits from signed-in team members</label>
+            <p style={{ fontSize: 11.5, color: "#6b7486", margin: 0, gridColumn: "1/-1" }}>{gaEnvFallback ? `Analytics is currently using ${gaEnvFallback} from Replit Secrets; an ID saved here takes over. ` : ""}Use either the GA4 ID or a Tag Manager container that loads GA4 — not both, or visits are counted twice. Analytics only runs on public pages, never on admin, client portal, proposal or booking links.</p>
+          </fieldset>
+          <fieldset style={{ border: 0, padding: 0, margin: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <legend className="label-caps" style={{ fontSize: 11, fontWeight: 700, marginBottom: 6 }}>Google Business Profile</legend>
+            <label className="label label-caps">Profile link (Share → copy link)<input name="profileUrl" defaultValue={g.profileUrl} placeholder="https://maps.app.goo.gl/…" className="admin-input admin-input-sm" /></label>
+            <label className="label label-caps">Place ID<input name="placeId" defaultValue={g.placeId} placeholder="ChIJ…" className="admin-input admin-input-sm" /></label>
+            <label className="label label-caps" style={{ gridColumn: "1/-1" }}>Map embed (Google Maps → Share → Embed a map → copy HTML)<input name="mapEmbedUrl" defaultValue={g.mapEmbedUrl} placeholder={'<iframe src="https://www.google.com/maps/embed?pb=…"></iframe>'} className="admin-input admin-input-sm" /></label>
+            <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, gridColumn: "1/-1" }}><input type="checkbox" name="footerReviewLink" defaultChecked={g.footerReviewLink} />Show “Review us on Google” in the site footer (needs the Place ID)</label>
+          </fieldset>
+          <fieldset style={{ border: 0, padding: 0, margin: 0, display: "grid", gridTemplateColumns: "2fr 1fr 70px 100px", gap: 10 }}>
+            <legend className="label-caps" style={{ fontSize: 11, fontWeight: 700, marginBottom: 6 }}>Business details for search engines — match your Business Profile exactly</legend>
+            <label className="label label-caps">Street address<input name="streetAddress" defaultValue={g.streetAddress} className="admin-input admin-input-sm" /></label>
+            <label className="label label-caps">City<input name="city" defaultValue={g.city} className="admin-input admin-input-sm" /></label>
+            <label className="label label-caps">State<input name="region" defaultValue={g.region} className="admin-input admin-input-sm" /></label>
+            <label className="label label-caps">ZIP<input name="postalCode" defaultValue={g.postalCode} className="admin-input admin-input-sm" /></label>
+            <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, gridColumn: "1/-1" }}><input type="checkbox" name="hideStreet" defaultChecked={g.hideStreet} />Keep the street address private (choose this if your Business Profile hides it as a service-area business)</label>
+            <label className="label label-caps" style={{ gridColumn: "1/3" }}>Areas served (comma separated)<input name="areaServed" defaultValue={g.areaServed} placeholder="Metro Atlanta, Marietta, Decatur" className="admin-input admin-input-sm" /></label>
+            <label className="label label-caps" style={{ gridColumn: "3/-1" }}>Hours<input name="openingHours" defaultValue={g.openingHours} placeholder="Mo-Fr 09:00-17:00" className="admin-input admin-input-sm" /></label>
+            <p style={{ fontSize: 11.5, color: "#6b7486", margin: 0, gridColumn: "1/-1" }}>Name, phone and email come from Contact & footer above. Hours use two-letter days and 24-hour times; separate different days with “;”, e.g. <code>Mo-Fr 09:00-17:00; Sa 10:00-14:00</code>.</p>
+          </fieldset>
+          <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8, alignSelf: "flex-start" }}>Save Google settings</button>
+        </form>
+        <div style={{ display: "grid", gap: 8, fontSize: 12, borderTop: "1px solid #eef0f4", paddingTop: 12 }}>
+          <span style={{ fontWeight: 700 }}>Links to copy into Google</span>
+          <span><span style={{ color: "#6b7486" }}>Sitemap (Search Console → Sitemaps):</span> <code style={{ userSelect: "all" }}>{site}/sitemap.xml</code></span>
+          <span><span style={{ color: "#6b7486" }}>Website field in your Business Profile (tracked in Analytics):</span> <code style={{ userSelect: "all", wordBreak: "break-all" }}>{trackedProfileWebsiteUrl(site)}</code></span>
+          <span><span style={{ color: "#6b7486" }}>Ask clients for a review:</span> {g.placeId ? <code style={{ userSelect: "all", wordBreak: "break-all" }}>{reviewUrl(g.placeId)}</code> : <em style={{ color: "#8c95a8" }}>add your Place ID to get this link</em>}</span>
+          <span style={{ color: "#6b7486" }}>To show the map on a page, open Content → Pages and add a “Google map” block.</span>
+        </div>
       </Card>
       <Card title="Users & roles" sub="Owner — everything · Editor — CMS only · Sales — leads & calendar · Social manager — social & posts">
         {team.map((u) => (

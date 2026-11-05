@@ -11,6 +11,7 @@ import { slackConfigured } from "@/lib/server/slack";
 import { cftSmsConfigured } from "@/lib/server/cft-master";
 import { revokeCftLaunchLinks } from "@/lib/server/cft-links";
 import { instaLiveStatus } from "@/lib/server/insta-newsletter";
+import { normalizeGaId, normalizeGtmId, normalizeSearchConsoleToken, normalizePlaceId, normalizeProfileUrl, normalizeMapEmbedUrl } from "@/lib/google";
 
 const BACK = "/admin/content/settings";
 const REVAL = [BACK, "/", "/contact", "/about"];
@@ -21,6 +22,32 @@ export async function saveAmazonSettings(formData: FormData) {
     await setSetting("amazon", { ...a, associateTag: str(formData.get("associateTag")).replace(/\s+/g, ""), cartButtons: bool(formData.get("cartButtons")) });
     return "amazon";
   }, { back: BACK, ok: "Amazon shop settings saved", entityId: (k) => k, revalidate: [...REVAL, "/healthy-home-resources/aip-products", "/healthy-home-resources"] });
+}
+/** Google & SEO card: Analytics, Tag Manager, Search Console and Business Profile. Every pasted value is checked before it is saved. */
+export async function saveGoogleSettings(formData: FormData) {
+  await adminAction("pages", "setting", "update", async () => {
+    const g = await getSetting("google");
+    const checks = {
+      gaMeasurementId: normalizeGaId(str(formData.get("gaMeasurementId"))),
+      gtmContainerId: normalizeGtmId(str(formData.get("gtmContainerId"))),
+      searchConsoleToken: normalizeSearchConsoleToken(str(formData.get("searchConsoleToken"))),
+      placeId: normalizePlaceId(str(formData.get("placeId"))),
+      profileUrl: normalizeProfileUrl(str(formData.get("profileUrl"))),
+      mapEmbedUrl: normalizeMapEmbedUrl(str(formData.get("mapEmbedUrl"))),
+    };
+    const firstError = Object.values(checks).find((c) => c.error)?.error;
+    if (firstError) throw new Error(firstError);
+    const line = (k: string, max = 200) => str(formData.get(k)).replace(/\s+/g, " ").slice(0, max);
+    await setSetting("google", {
+      ...g,
+      gaMeasurementId: checks.gaMeasurementId.value, gtmContainerId: checks.gtmContainerId.value, searchConsoleToken: checks.searchConsoleToken.value,
+      placeId: checks.placeId.value, profileUrl: checks.profileUrl.value, mapEmbedUrl: checks.mapEmbedUrl.value,
+      excludeTeam: bool(formData.get("excludeTeam")), footerReviewLink: bool(formData.get("footerReviewLink")), hideStreet: bool(formData.get("hideStreet")),
+      streetAddress: line("streetAddress"), city: line("city", 80), region: line("region", 40), postalCode: line("postalCode", 20),
+      areaServed: line("areaServed", 400), openingHours: str(formData.get("openingHours")).slice(0, 300),
+    });
+    return "google";
+  }, { back: BACK, ok: "Google & SEO settings saved", entityId: (k) => k, revalidate: REVAL });
 }
 export async function saveContactSettings(formData: FormData) {
   await adminAction("pages", "setting", "update", async () => {
