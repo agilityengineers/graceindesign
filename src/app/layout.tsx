@@ -30,7 +30,9 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, them
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={`${montserrat.variable} ${cormorant.variable}`}>
+    // LastPass adds attributes to <html> before hydration. Keep suppression
+    // scoped to this element; mismatches in application children still warn.
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth" className={`${montserrat.variable} ${cormorant.variable}`}>
       {/* Extensions such as Grammarly add body attributes before hydration.
           Suppress only this element's attribute warning, not child mismatches. */}
       <body suppressHydrationWarning>
