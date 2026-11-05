@@ -588,6 +588,11 @@ export const ccEvents = pgTable("cc_events", {
   slug: text("slug").unique(),
   /** Optional picture, admin-only: an uploaded file's URL or a media library reference (media://slot). */
   imageUrl: text("image_url"),
+  /** Counters for Admin → Events (src/lib/event-stats.ts): page views by people, Register clicks, calendar downloads, share clicks. */
+  viewCount: integer("view_count").notNull().default(0),
+  registerClicks: integer("register_clicks").notNull().default(0),
+  calendarAdds: integer("calendar_adds").notNull().default(0),
+  shareClicks: integer("share_clicks").notNull().default(0),
   status: moderationStatusEnum("status").notNull().default("pending"),
   submittedByName: text("submitted_by_name"),
   submittedByEmail: text("submitted_by_email"),

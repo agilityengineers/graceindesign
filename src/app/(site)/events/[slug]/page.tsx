@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import SiteFrame from "@/components/site/SiteFrame";
-import ShareEvent from "@/components/site/ShareEvent";
+import ShareEvent, { EventViewBeacon } from "@/components/site/ShareEvent";
+import { safeRegistrationUrl } from "@/lib/event-stats";
 import { getEventBySlug } from "@/lib/data/site";
 import { env } from "@/lib/env";
 import { fmtDate } from "@/lib/utils";
@@ -30,7 +31,8 @@ function jsonLd(e: CcEvent, pageUrl: string) {
   const place = { "@type": "Place", name: e.whereLabel, address: e.region === "us"
     ? { "@type": "PostalAddress", addressLocality: e.city || undefined, addressRegion: usState(e.state)?.[0], addressCountry: "US" }
     : { "@type": "PostalAddress", addressCountry: e.country || undefined } };
-  const online = { "@type": "VirtualLocation", url: e.url || pageUrl };
+  const reg = safeRegistrationUrl(e.url);
+  const online = { "@type": "VirtualLocation", url: reg || pageUrl };
   const free = /^free$/i.test(e.cost.trim());
   return {
     "@context": "https://schema.org", "@type": "Event", name: e.title, description: e.description, url: pageUrl, ...(e.imageUrl ? { image: [new URL(e.imageUrl, pageUrl).href] } : {}),
@@ -38,7 +40,7 @@ function jsonLd(e: CcEvent, pageUrl: string) {
     eventAttendanceMode: `https://schema.org/${e.format === "virtual" ? "Online" : e.format === "hybrid" ? "Mixed" : "Offline"}EventAttendanceMode`,
     location: e.format === "virtual" ? online : e.format === "hybrid" ? [place, online] : place,
     organizer: { "@type": "Organization", name: e.host },
-    ...(e.url ? { offers: { "@type": "Offer", url: e.url, availability: "https://schema.org/InStock", ...(free ? { price: 0, priceCurrency: "USD" } : {}) } } : {}),
+    ...(reg ? { offers: { "@type": "Offer", url: reg, availability: "https://schema.org/InStock", ...(free ? { price: 0, priceCurrency: "USD" } : {}) } } : {}),
   };
 }
 
@@ -46,6 +48,7 @@ export default async function EventPage({ params }: Params) {
   const { slug } = await params; const e = await getEventBySlug(slug); if (!e) notFound();
   const pageUrl = `${env.baseUrl}${eventPath(e.slug!)}`;
   const upcoming = isUpcomingEvent(e);
+  const registerUrl = safeRegistrationUrl(e.url);
   const caribbean = e.region === "caribbean";
   const back = caribbean ? { href: "/caribbean-connection#events", label: "Caribbean Connection events" } : { href: eventsHref({ region: e.region, state: e.state }), label: `${eventFilterLabel({ region: e.region, state: e.state })} events` };
   const facts: [string, string][] = [
@@ -57,6 +60,7 @@ export default async function EventPage({ params }: Params) {
   ];
   return (
     <SiteFrame label={caribbean ? "Caribbean Connection" : "Events"} active={caribbean ? "caribbean" : "none"} sourceKey={caribbean ? "caribbean" : "general"}>
+      <EventViewBeacon slug={e.slug!} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(e, pageUrl)).replace(/</g, "\\u003c") }} />
       <article className="gx" style={{ paddingTop: 72, paddingBottom: 104, maxWidth: 900 }}>
         <Link href={back.href} className="eyebrow">← {back.label}</Link>
@@ -79,13 +83,14 @@ export default async function EventPage({ params }: Params) {
           {facts.map(([k, v]) => <div key={k} style={{ display: "contents" }}><dt style={{ fontWeight: 600, color: "#6b7486" }}>{k}</dt><dd style={{ margin: 0 }}>{v}</dd></div>)}
         </dl>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 36 }}>
-          {upcoming && e.url && <a href={e.url} target="_blank" rel="noopener noreferrer" className="btn btn-navy" style={{ fontWeight: 700 }}>Register / Details ↗</a>}
+          {/* Goes through /register, which counts the click and forwards to the registration site. */}
+          {upcoming && registerUrl && <a href={`${eventPath(e.slug!)}/register`} target="_blank" rel="noopener nofollow" className="btn btn-navy" style={{ fontWeight: 700 }}>Register / Details ↗</a>}
           {upcoming && <a href={`${eventPath(e.slug!)}/calendar.ics`} className="btn btn-ghost">Add to calendar</a>}
         </div>
         <div className="prose" style={{ fontSize: 17, lineHeight: 1.75, color: "#4b5569", whiteSpace: "pre-line", marginBottom: 40 }}>{e.description}</div>
         <div style={{ borderTop: "1px solid #e9ecf1", paddingTop: 24, display: "flex", flexDirection: "column", gap: 12 }}>
           <span className="eyebrow eyebrow-sm">Share this event</span>
-          <ShareEvent url={pageUrl} title={e.title} />
+          <ShareEvent url={pageUrl} title={e.title} slug={e.slug!} />
         </div>
       </article>
     </SiteFrame>

@@ -12,6 +12,7 @@ import { fmtDate, relativeDay } from "@/lib/utils";
 import { isUpcomingEvent } from "@/lib/cc-events";
 import { EVENT_REGIONS, eventLocation, eventPath, isEventRegion, regionLabel } from "@/lib/events";
 import { env } from "@/lib/env";
+import { clickRate } from "@/lib/event-stats";
 import ImagePicker from "@/components/admin/ImagePicker";
 import { getMediaMap, resolveImg } from "@/lib/data/media";
 
@@ -41,6 +42,8 @@ export default async function EventsAdmin({ searchParams }: { searchParams: Prom
   const back = qs({});
   const Hidden = ({ id }: { id: number }) => <><input type="hidden" name="eventId" value={id} /><input type="hidden" name="_back" value={back} /></>;
   const upcoming = all.filter((e) => e.status === "published" && isUpcomingEvent(e));
+  const sum = (k: "viewCount" | "registerClicks") => all.reduce((n, e) => n + e[k], 0);
+  const [views, clicks] = [sum("viewCount"), sum("registerClicks")];
 
   return (
     <AdminShell user={user} active="events" title="Events" subtitle="Review submissions, add events in the Caribbean or the United States, and share each event's own page">
@@ -48,7 +51,7 @@ export default async function EventsAdmin({ searchParams }: { searchParams: Prom
       <div className="g3" style={{ gap: 16 }}>
         <Stat label="Awaiting review" value={Number(pending.n)} delta="public submissions" deltaColor={Number(pending.n) ? "#9a3c1e" : "#6b7486"} />
         <Stat label="Upcoming events" value={upcoming.length} delta={EVENT_REGIONS.map((r) => `${upcoming.filter((e) => e.region === r.key).length} ${r.label}`).join(" · ")} />
-        <Stat label="Event pages" value={all.filter((e) => e.slug && e.status === "published").length} delta="published, with a shareable link" />
+        <Stat label="Event page views" value={views.toLocaleString("en-US")} delta={`${clicks.toLocaleString("en-US")} Register clicks · ${clickRate(views, clicks)} click rate`} />
       </div>
 
       <Card title="Events" sub="Approving gives an event its own page at /events/<name-of-event>. The link never changes, even if you edit the title later. Events leave the public lists by themselves at midnight (their own time zone) once their date has passed; their page stays up so shared links keep working."
@@ -65,6 +68,9 @@ export default async function EventsAdmin({ searchParams }: { searchParams: Prom
               <div style={{ display: "flex", flexDirection: "column", minWidth: 0, gap: 2 }}>
                 <span style={{ fontWeight: 600 }}>{e.title}</span>
                 <span style={{ fontSize: 12, color: "#6b7486" }}>{regionLabel(e.region)} · {eventLocation(e)} · {e.format.replace("_", " ")}{e.timeLabel ? ` · ${e.timeLabel}` : ""}</span>
+                {e.slug && e.status === "published" && <span style={{ fontSize: 12, color: "#4b5569" }} title="Views are people opening the event page (once per browser tab session; search engines and link previews don't count). Register clicks are clicks on its Register button.">
+                  <strong>{e.viewCount.toLocaleString("en-US")}</strong> views · <strong>{e.registerClicks.toLocaleString("en-US")}</strong> Register clicks{e.viewCount ? ` (${clickRate(e.viewCount, e.registerClicks)})` : ""} · {e.calendarAdds} calendar · {e.shareClicks} shares
+                </span>}
                 {e.slug && e.status === "published" && <span style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 12 }}><a href={eventPath(e.slug)} target="_blank" rel="noreferrer" className="link-btn" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 260 }}>{eventPath(e.slug)} ↗</a><CopyEventLink url={`${env.baseUrl}${eventPath(e.slug)}`} /></span>}
               </div>
               <span style={{ fontSize: 12 }}>{e.host}</span>

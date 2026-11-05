@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { eventSlug, eventTimeZone, eventLocation, eventPath, isEventRegion, regionLabel, usState, US_STATES, cleanEventFilter, eventFilterLabel, eventsHref, eventsSection } from "../src/lib/events";
 import { isUpcomingEvent } from "../src/lib/cc-events";
+import { isBot, clickRate, safeRegistrationUrl, isBeaconKind } from "../src/lib/event-stats";
 
 test("the link is made from the title", () => {
   assert.equal(eventSlug("Fall-Prevention Workshop for Seniors", "2026-11-14", new Set()), "fall-prevention-workshop-for-seniors");
@@ -87,4 +88,37 @@ test("Add block presets: United States, Caribbean, or every region", () => {
   assert.equal(eventsSection("nonsense").region, "");
   const c = eventsSection("us");
   for (const k of ["state", "city", "limit", "showForm", "formEyebrow", "formBody"]) assert.ok(k in c, k); // every setting shows in the block editor
+});
+
+// --- View and click counts (src/lib/event-stats.ts) --------------------------------------
+
+test("people count; crawlers, link previews and scripts don't", () => {
+  assert.equal(isBot("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"), false);
+  assert.equal(isBot("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"), false);
+  for (const ua of ["Googlebot/2.1 (+http://www.google.com/bot.html)", "facebookexternalhit/1.1", "WhatsApp/2.23.20.0", "Slackbot-LinkExpanding 1.0", "LinkedInBot/1.0", "curl/8.4.0", "python-requests/2.31", "Mozilla/5.0 HeadlessChrome/120", "", null])
+    assert.equal(isBot(ua), true, String(ua));
+});
+
+test("click rate is Register clicks over views", () => {
+  assert.equal(clickRate(0, 0), "—");
+  assert.equal(clickRate(0, 3), "—");
+  assert.equal(clickRate(200, 0), "0%");
+  assert.equal(clickRate(200, 24), "12%");
+  assert.equal(clickRate(300, 7), "2.3%");
+});
+
+test("the Register redirect only follows http(s) links, adding https:// when it was left off", () => {
+  assert.equal(safeRegistrationUrl("https://www.eventbrite.com/e/123"), "https://www.eventbrite.com/e/123");
+  assert.equal(safeRegistrationUrl("www.eventbrite.com/e/123"), "https://www.eventbrite.com/e/123");
+  assert.equal(safeRegistrationUrl("  zoom.us/j/999?pwd=x "), "https://zoom.us/j/999?pwd=x");
+  assert.equal(safeRegistrationUrl("javascript:alert(1)"), null);
+  assert.equal(safeRegistrationUrl("mailto:host@example.com"), null);
+  assert.equal(safeRegistrationUrl("Call 876-555-0100 to register"), null);
+  assert.equal(safeRegistrationUrl(""), null);
+  assert.equal(safeRegistrationUrl(null), null);
+});
+
+test("the page can only report views and shares", () => {
+  assert.ok(isBeaconKind("view") && isBeaconKind("share"));
+  assert.ok(!isBeaconKind("register") && !isBeaconKind("calendar") && !isBeaconKind(undefined));
 });
