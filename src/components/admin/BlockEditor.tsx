@@ -16,6 +16,13 @@ const setAt = (obj: Json, path: (string | number)[], value: Json): Json => {
   if (Array.isArray(obj)) { const n = [...obj]; n[h as number] = setAt(n[h as number] ?? null, rest, value); return n; }
   const o = { ...((obj as Record<string, Json>) || {}) }; o[h as string] = setAt(o[h as string] ?? null, rest, value); return o;
 };
+/** Shape of a new item for lists that can be empty (an empty list has no item to copy), keyed by field name. */
+const TEMPLATES: Record<string, Record<string, Json>> = {
+  resources: { kind: "Guide", title: "", desc: "", img: "", href: "" },
+  groups: { letter: "", title: "", sub: "", resources: [] },
+};
+/** Link fields that may point at an uploaded document (a PDF guide, a checklist) as well as a page. */
+const isFileKey = (k: string) => /^(href|pdf|download|file)$/i.test(k);
 const blank = (v: Json): Json => (typeof v === "string" ? "" : typeof v === "number" ? 0 : typeof v === "boolean" ? false : Array.isArray(v) ? v.map(blank) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, blank(x)])) : null);
 
 /** Generic editor for a block's JSON content: strings, numbers, booleans, string lists, tuple rows, object lists and nested objects. */
@@ -49,6 +56,12 @@ function Field({ k, v, path, update }: { k: string; v: Json; path: (string | num
     if (String(k) === "region") return <label className="label label-caps">Region (which events show)<select value={s} onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm"><option value="">All regions</option>{EVENT_REGIONS.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}</select></label>;
     if (String(k) === "state") return <label className="label label-caps">State (United States events only)<select value={s} onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm"><option value="">Every state</option>{US_STATES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}</select></label>;
     if (String(k) === "city") return <label className="label label-caps">City (United States events only; blank = every city)<input value={s} placeholder="e.g. Atlanta" onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm" /></label>;
+    if (isFileKey(String(k))) return (
+      <div style={{ ...full, display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 8, alignItems: "end" }}>
+        <label className="label label-caps">{String(k).toLowerCase() === "href" ? "Link (a page, a website, or an uploaded PDF)" : String(k).toLowerCase() === "pdf" ? "Your own PDF (optional; replaces the generated one)" : `${label} (PDF)`}<input value={s} placeholder={String(k).toLowerCase() === "href" ? "e.g. /news/my-article or upload a PDF →" : "Upload a PDF →"} onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm" /></label>
+        <label className="btn btn-ghost btn-xs" style={{ borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap" }}>Upload PDF<input type="file" name={`file::${name}`} accept=".pdf,application/pdf" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) update(path, `(uploading ${f.name} on save)`); }} /></label>
+        {s && /\.pdf(\?|#|$)/i.test(s) && <a href={s} target="_blank" rel="noreferrer" style={{ gridColumn: "1/-1", fontSize: 11 }}>Open current PDF ↗</a>}
+      </div>);
     if (isImageKey(String(k)) || isImageVal(s)) return (
       <div style={{ ...full, padding: 8, borderRadius: 10, background: "#fff", border: "1px solid #eef0f4" }}>
         <ImagePicker label={label} fileName={`file::${name}`} value={s} onChange={(next) => update(path, next)} showUrl width={96} height={64} />
@@ -57,6 +70,11 @@ function Field({ k, v, path, update }: { k: string; v: Json; path: (string | num
     return <label className="label label-caps">{label}<input value={s} onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm" /></label>;
   }
   if (Array.isArray(v)) {
+    const tpl = TEMPLATES[String(k)];
+    if (tpl && v.length === 0) return (
+      <div style={{ ...full, display: "flex", flexDirection: "column", gap: 8 }}><span className="label-caps">{label} (0)</span>
+        <button type="button" className="link-btn" style={{ alignSelf: "flex-start" }} onClick={() => update(path, [blank(tpl)])}>+ Add {label.toLowerCase().replace(/s$/, "")}</button>
+      </div>);
     if (v.every((x) => typeof x === "string")) {
       if (isImageKey(String(k))) return <div style={full}><span className="label-caps">{label}</span><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 6 }}>{v.map((x, i) => <Field key={i} k={`${k} ${i + 1}`} v={x} path={[...path, i]} update={update} />)}</div></div>;
       return <label className="label label-caps" style={full}>{label} (one per line)<textarea value={(v as string[]).join("\n")} rows={Math.min(8, v.length + 1)} onChange={(e) => update(path, e.target.value.split("\n"))} className="admin-input" /></label>;
@@ -74,7 +92,7 @@ function Field({ k, v, path, update }: { k: string; v: Json; path: (string | num
       return (
         <div style={{ ...full, display: "flex", flexDirection: "column", gap: 8 }}><span className="label-caps">{label} ({items.length})</span>
           {items.map((it, i) => <div key={i} style={{ padding: 10, borderRadius: 10, border: "1px solid #e3e6ec", background: "#fff", display: "flex", flexDirection: "column", gap: 8 }}><div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#8c95a8" }}><span>{label} {i + 1}</span><span style={{ display: "flex", gap: 10 }}>{i > 0 && <button type="button" className="link-btn link-muted" onClick={() => { const n = [...items]; [n[i - 1], n[i]] = [n[i], n[i - 1]]; update(path, n); }}>↑</button>}{i < items.length - 1 && <button type="button" className="link-btn link-muted" onClick={() => { const n = [...items]; [n[i + 1], n[i]] = [n[i], n[i + 1]]; update(path, n); }}>↓</button>}<button type="button" className="link-btn link-danger" onClick={() => update(path, items.filter((_, j) => j !== i))}>Remove</button></span></div><Fields value={it} path={[...path, i]} update={update} /></div>)}
-          <button type="button" className="link-btn" style={{ alignSelf: "flex-start" }} onClick={() => update(path, [...items, blank(items[items.length - 1]) as Record<string, Json>])}>+ Add {label.toLowerCase().replace(/s$/, "")}</button>
+          <button type="button" className="link-btn" style={{ alignSelf: "flex-start" }} onClick={() => update(path, [...items, blank(tpl || items[items.length - 1]) as Record<string, Json>])}>+ Add {label.toLowerCase().replace(/s$/, "")}</button>
         </div>);
     }
     return <label className="label label-caps" style={full}>{label} (JSON)<textarea defaultValue={JSON.stringify(v, null, 2)} rows={4} onChange={(e) => { try { update(path, JSON.parse(e.target.value)); } catch { /* keep typing */ } }} className="admin-input" style={{ fontFamily: "monospace", fontSize: 12 }} /></label>;
