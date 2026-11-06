@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — AIP Partners directory
+- **Admin → Content → AIP Partners** (owners and editors): add, edit, hide/show, reorder (drag) and remove the professionals listed on the AIP Partners page. Each listing has a business or professional name, a category, a type of service, a relationship (*GID collaborator* or *Known professional*), a service area (city, region or "Virtual"), a short description, a website and an optional logo or photo (upload or media library). Websites typed without `https://` get it added; anything that isn't an http(s) address is refused.
+- Six categories: Home Modification, Healthcare & Therapy, Home Care & Support, Real Estate & Relocation, Home Organization, Specialized Services (`src/lib/aip-partners.ts`).
+- **`/healthy-home-resources/aip-partners`** gains an *Our trusted partners* section (`#partners`) above the partner sign-up form: cards with the category, a relationship badge, type of service, description, service area and a *Visit website* link (new tab), filtered by category pills that only list categories with at least one shown partner. The section stays off the page until a partner is shown, so the page is unchanged until the first listing goes in.
+- New table `aip_partners` (`drizzle/0011_aip_partners.sql`). `npm run db:seed -- --demo` plants four clearly labelled sample partners; a normal seed plants none. `npm run test:aip-partners` covers categories, relationships and website checks.
+
 ## Unreleased — fixes
 - **Hiding a testimonial or team member works again.** In Admin → Content → Testimonials and → About & team, unchecking *Visible* / *Shown on the About page* and saving left the item on the site, because an unchecked box isn't sent with the form and the save treated "missing" as "visible". A missing box now means hidden; new items still start visible (the box is pre-checked).
 

@@ -135,6 +135,7 @@ async function main() {
   }
   if (DEMO) for (const [email, segment, location, ago] of D.CC_SUBSCRIBERS) await db.insert(S.ccSubscribers).values({ email, segment, location, country: location.includes("Jamaica") ? "Jamaica" : "Diaspora", consentedAt: daysAgo(ago), createdAt: daysAgo(ago) });
 
+  if (DEMO) for (const [i, [name, category, serviceType, relationship, serviceArea, description, website]] of D.DEMO_AIP_PARTNERS.entries()) await db.insert(S.aipPartners).values({ name, category, serviceType, relationship, serviceArea, description, websiteUrl: website || null, sort: i });
   if (!DEMO) { console.log("Seed complete (content only; add --demo for sample leads, projects and social data)."); await pool.end(); return; }
 
   // --- Demo operations data (only with --demo) ---------------------------

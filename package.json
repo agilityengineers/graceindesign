@@ -32,6 +32,7 @@
     "test:amazon": "tsx --test tests/amazon.test.ts",
     "test:google": "tsx --test tests/google.test.ts",
     "test:shelves": "tsx --test tests/shelves.test.ts",
+    "test:aip-partners": "tsx --test tests/aip-partners.test.ts",
     "test:cc-events": "tsx --test tests/cc-events.test.ts",
     "test:events": "tsx --test tests/events.test.ts",
     "test:newsletter": "tsx --test tests/newsletter.test.ts",
