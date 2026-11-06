@@ -84,6 +84,8 @@ const SERVICE_RULES: Record<string, { all?: Rules; cols?: Partial<Record<"plan" 
 
 const PAGE_BLOCK_RULES: Record<string, Rules> = {
   home: { exact: {
+    // AIP Partners became a curated directory (November 2026): cards stop recruiting partners.
+    "A vetted network of contractors, occupational therapists and installers who share our commitment to livable, lifetime homes.": "A directory of occupational therapists, contractors, installers and other professionals we know and trust for livable, lifetime homes.",
     "Get Started — It's Free": "Book a Free 15-Minute Call",
     "Planning, budgeting, scheduling and quality control from start to finish — on time, within budget and to the standard you expect.": "Owner-side planning, budgeting, scheduling and coordination from start to finish — one point of contact who keeps you informed.",
   } },
@@ -92,6 +94,10 @@ const PAGE_BLOCK_RULES: Record<string, Rules> = {
     "Every product links to our Etsy shop. Admins add new listings from the dashboard — paste the Etsy link and it appears here.": "Every product links to our Etsy shop, where checkout and delivery are handled securely.",
   } },
   news: { exact: { "Synced from RSS · updated hourly": "Articles and curated reads" } },
+  hhr: { exact: {
+    "Contractors, therapists and realtors — join our Aging In Place network.": "Therapists, contractors, installers and realtors we know and trust for Aging In Place projects.",
+    "Become a partner": "Browse the directory",
+  } },
 };
 
 /** New meta descriptions. Applied when the page has none, or still has the prototype's one-liner. */

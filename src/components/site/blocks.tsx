@@ -5,7 +5,7 @@ import Carousel from "./Carousel";
 import Reveal from "./Reveal";
 import { ConsultButton } from "./ConsultContext";
 import { ArrowRight, ArrowUpRight, Heart, Rss, Play, Globe, Check } from "@/components/ui/Icons";
-import { getProducts, getPublishedPosts, getFounder, getServiceList, getCaribbeanData } from "@/lib/data/site";
+import { getProducts, getPublishedPosts, getFounder, getServiceList, getCaribbeanData, getAipPartners } from "@/lib/data/site";
 import { getMediaMap, resolveDeep } from "@/lib/data/media";
 import { EPISODES } from "@/lib/seed-data/demo";
 import { wellGroupsOf, isDownload, type WellGroup } from "@/lib/wellness";
@@ -329,6 +329,13 @@ async function BlockView({ block: b, ctx, wellGroups }: { block: Block; ctx: Blo
             <span style={{ fontSize: 12, color: "#8c95a8", lineHeight: 1.6 }}>{c.regionalNote}</span>
           </aside>
         </div>
+      </section>); }
+    // AIP Partners: the directory from Admin → Content → AIP Partners (shown partners only), with the independence note under it.
+    case "partner_directory": { const { partners, categories } = await getAipPartners(); const Dir = (await import("./PartnerDirectory")).default; return (
+      <section id="directory" className="gx" style={{ paddingTop: 72, paddingBottom: 104, display: "flex", flexDirection: "column", gap: 28, scrollMarginTop: 24 }}>
+        {(c.eyebrow || c.title) && <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 720 }}>{c.eyebrow && <span className="eyebrow">{c.eyebrow}</span>}{c.title && <h2 className="h2">{c.title}</h2>}{c.body && <p style={{ fontSize: 15, lineHeight: 1.7, color: "#6b7486" }}>{c.body}</p>}</div>}
+        {partners.length ? <Dir categories={categories} partners={partners} /> : <p style={{ color: "#6b7486", fontSize: 15, lineHeight: 1.6 }}>{c.empty || "Our partner directory is being put together. Check back soon."}</p>}
+        {c.note && partners.length > 0 && <p style={{ fontSize: 13, lineHeight: 1.65, color: "#6b7486", maxWidth: 860, padding: "18px 22px", borderRadius: 14, background: "#f7f8fa", border: "1px solid #e9ecf1" }}>{c.note}</p>}
       </section>); }
     case "cc_directory": { const { resources } = await getCaribbeanData(); const Dir = (await import("./CaribbeanDirectory")).default; return (
       <section id="directory" className="gx" style={{ paddingTop: 104, paddingBottom: 104, display: "flex", flexDirection: "column", gap: 40 }}>

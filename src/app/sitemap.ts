@@ -6,7 +6,7 @@ import { serviceHref } from "@/lib/data/site";
 
 export const dynamic = "force-dynamic";
 
-const CORE_KEYS = new Set(["home", "about", "services", "hhr", "aip-products", "wellness", "home-health", "caribbean", "news", "contact", "privacy", "terms", "accessibility"]);
+const CORE_KEYS = new Set(["home", "about", "services", "hhr", "aip-products", "aip-partners", "wellness", "home-health", "caribbean", "news", "contact", "privacy", "terms", "accessibility"]);
 
 /** Published CMS pages, service landings, news articles and event pages. Read at request time so admin changes show up without a rebuild. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -21,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
     const svc = await db.select({ id: services.id, slug: services.slug, parentId: services.parentId, updatedAt: services.updatedAt }).from(services).where(eq(services.status, "published")).orderBy(asc(services.sort));
     for (const s of svc) {
-      if (s.slug === "general") continue;
+      if (s.slug === "general" || s.slug === "aip-partners") continue; // AIP Partners is listed as a CMS page now
       const parent = s.parentId ? svc.find((x) => x.id === s.parentId) : null;
       out.push({ url: url(serviceHref(s.slug, parent?.slug)), lastModified: s.updatedAt, changeFrequency: "monthly", priority: 0.8 });
     }

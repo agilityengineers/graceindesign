@@ -1,9 +1,10 @@
 import "server-only";
 import { cache } from "react";
 import { and, asc, desc, eq, gte, inArray, isNull, or, sql } from "drizzle-orm";
-import { db, pages, pageBlocks, services, posts, products, testimonials, teamMembers, ccResources, ccEvents, ccCountries, rssSources, socialFeedItems, type Service } from "@/lib/db";
+import { db, pages, pageBlocks, services, posts, products, testimonials, teamMembers, aipPartners, ccResources, ccEvents, ccCountries, rssSources, socialFeedItems, type Service } from "@/lib/db";
 import { getSettings } from "@/lib/server/settings";
-import { getMediaMap, resolveDeep } from "./media";
+import { getMediaMap, resolveDeep, resolveImg } from "./media";
+import { AIP_PARTNER_CATEGORIES, aipPartnerCategoryLabel, aipPartnerRelationshipLabel, isAipPartnerCategory, partnerImageKind } from "@/lib/aip-partners";
 import { UPCOMING_EVENTS_LOOKBACK_MS, upcomingEvents } from "@/lib/cc-events";
 
 export const getSiteChrome = cache(async () => {
@@ -80,6 +81,18 @@ export const getProducts = cache(async (featuredOnly = false) => {
 
 export const getTestimonials = cache(async () => db.select().from(testimonials).where(eq(testimonials.visible, true)).orderBy(asc(testimonials.sort)));
 export const getFounder = cache(async () => { const map = await getMediaMap(); const t = await db.query.teamMembers.findFirst({ where: eq(teamMembers.visible, true), orderBy: asc(teamMembers.sort) }); return t ? { ...t, photoUrl: resolveDeep(map, t.photoUrl) } : null; });
+
+/**
+ * The AIP Partners directory (Admin → Content → AIP Partners): shown partners in admin order, shaped for the cards,
+ * plus the categories that have at least one of them (the filter pills).
+ */
+export const getAipPartners = cache(async () => {
+  const rows = await db.select().from(aipPartners).where(eq(aipPartners.visible, true)).orderBy(asc(aipPartners.sort), asc(aipPartners.id));
+  const map = rows.some((p) => p.logoUrl) ? await getMediaMap() : null;
+  const partners = rows.map((p) => ({ id: p.id, name: p.name, category: isAipPartnerCategory(p.category) ? p.category : "specialized", categoryLabel: aipPartnerCategoryLabel(p.category), serviceType: p.serviceType, relationship: p.relationship, relationshipLabel: aipPartnerRelationshipLabel(p.relationship), serviceArea: p.serviceArea, description: p.description || "", websiteUrl: p.websiteUrl, logo: p.logoUrl && map ? resolveImg(map, p.logoUrl) : null, imageKind: partnerImageKind(p.imageKind) }));
+  const categories = AIP_PARTNER_CATEGORIES.filter((c) => partners.some((p) => p.category === c.key)).map((c) => ({ key: c.key, label: c.label }));
+  return { partners, categories };
+});
 
 export const getCaribbeanData = cache(async () => {
   const liveCountries = await db.select().from(ccCountries).orderBy(asc(ccCountries.sort));

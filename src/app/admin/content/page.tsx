@@ -22,10 +22,10 @@ const BLOCK_OPTIONS: [string, string][] = [
   ["wellness_groups", "WELL concepts & resource cards (with checklist sidebar)"], ["guide_carousel", "WELLness guide carousel (cards from the WELL concepts block)"], ["featured_products", "Featured products (homepage row)"], ["consult_form", "Consultation form"], ["google_map", "Google map (set in Site settings → Google & SEO)"],
   ...SHELF_KEYS.map((k): [string, string] => [`product_shelf:${k}`, `${SHELVES[k].name} section`]),
   ["events:caribbean", "Caribbean events section"], ["events:us", "United States events section"], ["events", "Events (choose region, state or city)"],
-  ["product_shelf", "Product shelf (every product, or pick a shelf)"], ["product_grid", "Product grid with category filters"], ["service_list", "Service list"], ["contact_steps", "Contact steps"],
+  ["partner_directory", "AIP Partners directory (listings from Content → AIP Partners)"], ["product_shelf", "Product shelf (every product, or pick a shelf)"], ["product_grid", "Product grid with category filters"], ["service_list", "Service list"], ["contact_steps", "Contact steps"],
 ];
 const CORE = ["home", "about", "services", "hhr", "caribbean", "news", "contact"];
-const PAGE_HREF: Record<string, string> = { home: "/", about: "/about", services: "/services", hhr: "/healthy-home-resources", caribbean: "/caribbean-connection", news: "/news", contact: "/contact", "aip-products": "/healthy-home-resources/aip-products", wellness: "/healthy-home-resources/wellness", "home-health": "/healthy-home-resources/home-health-series", privacy: "/privacy", terms: "/terms", accessibility: "/accessibility" };
+const PAGE_HREF: Record<string, string> = { home: "/", about: "/about", services: "/services", hhr: "/healthy-home-resources", caribbean: "/caribbean-connection", news: "/news", contact: "/contact", "aip-products": "/healthy-home-resources/aip-products", "aip-partners": "/healthy-home-resources/aip-partners", wellness: "/healthy-home-resources/wellness", "home-health": "/healthy-home-resources/home-health-series", privacy: "/privacy", terms: "/terms", accessibility: "/accessibility" };
 /**
  * Fields a block saved before they existed still gets in the editor, so admins can see and use them:
  * the WELL concepts (and the checklist's PDF and items) on `wellness_groups`, a category filter on post rows, a card limit on the guide carousel.

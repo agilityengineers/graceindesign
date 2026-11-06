@@ -33,6 +33,14 @@ test("relationship labels resolve with a safe fallback", () => {
   assert.equal(aipPartnerRelationshipLabel("anything-else"), "Known professional");
 });
 
+test("the AIP Partners page is a directory, not a recruiting page", async () => {
+  const { PARTNERS_PAGE } = await import("../src/lib/aip-partners");
+  const text = JSON.stringify(PARTNERS_PAGE);
+  assert.match(text, /partner_directory/);
+  assert.doesNotMatch(text, /become a partner|join our|consult_form/i);
+  assert.equal(PARTNERS_PAGE.slug, "/healthy-home-resources/aip-partners");
+});
+
 test("image kind is photo only when asked for, otherwise logo", () => {
   assert.equal(partnerImageKind("photo"), "photo");
   assert.equal(partnerImageKind("logo"), "logo");

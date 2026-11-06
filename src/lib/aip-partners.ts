@@ -59,3 +59,18 @@ export type AipPartnerImageKind = "logo" | "photo";
 export function partnerImageKind(v: string | null | undefined): AipPartnerImageKind {
   return v === "photo" ? "photo" : "logo";
 }
+
+/** The page AIP Partners renders from (Admin → Content → Pages), created on first visit when a database predates it. */
+export const PARTNERS_PAGE = {
+  key: "aip-partners",
+  slug: "/healthy-home-resources/aip-partners",
+  title: "AIP Partners",
+  navLabel: "Healthy Home Resources · AIP Partners",
+  parentKey: "hhr",
+  seoTitle: "AIP Partners · Grace In Design",
+  seoDescription: "A curated directory of Aging In Place professionals Grace In Design knows or has worked with: occupational therapists, contractors, installers, realtors and more.",
+  blocks: [
+    { type: "page_header", content: { crumb: "Healthy Home Resources", crumbHref: "/healthy-home-resources", eyebrow: "Healthy Home Resources", title: "AIP Partners", body: "Professionals and businesses we know or have worked with, who share our commitment to safe, comfortable homes for every stage of life. Browse by specialty and reach out to them directly." } },
+    { type: "partner_directory", content: { eyebrow: "Partner Directory", title: "Trusted Aging In Place professionals", note: "Each professional listed here runs an independent business. Grace In Design does not employ, manage or guarantee their services — please contact them directly and confirm licensing, insurance and pricing for your project.", empty: "Our partner directory is being put together. Check back soon." } },
+  ],
+} as const;

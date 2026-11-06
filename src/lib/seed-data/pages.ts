@@ -1,6 +1,7 @@
 /** Page + block seeds. Copy is verbatim from the design/*.dc.html prototypes. */
 import { mediaRef as m } from "./media";
 import { shelfSection } from "../shelves";
+import { PARTNERS_PAGE } from "../aip-partners";
 import { wellnessGroupsStarter, wellnessNewsStarter } from "../wellness";
 
 export type SeedBlock = { type: string; content: Record<string, unknown> };
@@ -27,7 +28,7 @@ export const PAGES: SeedPage[] = [
         cards: [
           { kicker: "Residential", title: "Residential Interior Design", blurb: "Kitchens, baths, bedrooms and living rooms designed around your goals, your budget and your style — spaces you'll love for years to come.", img: m("int.bright-apartment"), href: "/services/residential" },
           { kicker: "Aging In Place", title: "Aging In Place & Home Assessments", blurb: "Our Certified Aging-in-Place Specialists evaluate your home and recommend modifications so you can live independently, safely and comfortably.", img: m("brand.couple-autumn"), href: "/services/aging-in-place" },
-          { kicker: "Healthy Home Resources", title: "AIP Partners", blurb: "A vetted network of contractors, occupational therapists and installers who share our commitment to livable, lifetime homes.", img: m("brand.aip-planning"), href: "/healthy-home-resources/aip-partners" },
+          { kicker: "Healthy Home Resources", title: "AIP Partners", blurb: "A directory of occupational therapists, contractors, installers and other professionals we know and trust for livable, lifetime homes.", img: m("brand.aip-planning"), href: "/healthy-home-resources/aip-partners" },
           { kicker: "Commercial", title: "Commercial Interior Design", blurb: "Offices, clinics and hospitality spaces that reflect your brand, support your people and welcome every client who walks in.", img: m("brand.com-meeting"), href: "/services/commercial" },
           { kicker: "Residential · Refresh", title: "Design Refresh", blurb: "Give your home a new look without a full renovation — space re-planning, color, lighting and styling with the pieces you already own.", img: m("int.plants-deco"), href: "/services/residential/design-refresh" },
           { kicker: "Build", title: "Project Management", blurb: "Owner-side planning, budgeting, scheduling and coordination from start to finish — one point of contact who keeps you informed.", img: m("brand.pm-site-1"), href: "/services/project-management" },
@@ -73,13 +74,16 @@ export const PAGES: SeedPage[] = [
         { kicker: "Shop", title: "AIP Products", body: "Home-safety essentials our specialists recommend, with links to buy on Amazon.", cta: "Browse products", href: "/healthy-home-resources/aip-products", img: m("aip.shower-grab-bar") },
         { kicker: "Learn", title: "WELLness Resources", body: "Guides and downloads on light, air, water and materials for a healthier home.", cta: "Explore resources", href: "/healthy-home-resources/wellness", img: m("int.minimal-green-art") },
         { kicker: "Watch & read", title: "Home Health Series", body: "Short episodes on the small changes that make a home safer and calmer.", cta: "Start the series", href: "/healthy-home-resources/home-health-series", img: m("brand.couple-hammock") },
-        { kicker: "Partner", title: "AIP Partners", body: "Contractors, therapists and realtors — join our Aging In Place network.", cta: "Become a partner", href: "/healthy-home-resources/aip-partners", img: m("brand.aip-planning") },
+        { kicker: "Partner", title: "AIP Partners", body: "Therapists, contractors, installers and realtors we know and trust for Aging In Place projects.", cta: "Browse the directory", href: "/healthy-home-resources/aip-partners", img: m("brand.aip-planning") },
       ] } },
       { type: "assessment_cta", content: { title: "Not sure where to start? Begin with a home assessment.", body: "A room-by-room review of safety, access and comfort — the foundation of every Healthy Home Resources plan.", cta: "Request an Assessment", ctaHref: "/contact?from=aging-in-place" } },
       // WELLness-Products: the catalog listings ticked for the "wellness" shelf in Admin → Products. The same block can be added to any other page from Content → Pages → Add block.
       { type: "product_shelf", content: shelfSection("wellness") },
     ],
   },
+  // AIP Partners: a curated directory (Admin → Content → AIP Partners), not a recruiting page. Existing databases get
+  // the same page on first visit (src/lib/server/partners.ts).
+  { ...PARTNERS_PAGE, heroStyle: "classic", sort: 4, blocks: PARTNERS_PAGE.blocks.map((b) => ({ type: b.type, content: { ...b.content } })) },
   {
     key: "aip-products", slug: "/healthy-home-resources/aip-products", title: "AIP Products", navLabel: "Healthy Home Resources · AIP Products", parentKey: "hhr", sort: 4, seoDescription: "Home-safety and Aging In Place products recommended by Grace In Design's Certified Aging-in-Place Specialists, with links to buy on Amazon.",
     blocks: [

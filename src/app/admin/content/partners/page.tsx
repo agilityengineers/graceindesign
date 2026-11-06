@@ -49,7 +49,7 @@ export default async function AipPartnersAdmin() {
     <AdminShell user={user} active="cms" title="AIP Partners" subtitle="Trusted professionals listed on the AIP Partners page" actions={<ContentTabs active="partners" />}>
       <Toast />
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 1fr)", gap: 20, alignItems: "start" }} className="g2">
-        <Card title="Directory" sub={rows.length ? `${shown} of ${rows.length} shown · drag to reorder` : "No partners yet"} action={<a href="/healthy-home-resources/aip-partners#partners" target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#3f9ad9" }}>View page →</a>}>
+        <Card title="Directory" sub={rows.length ? `${shown} of ${rows.length} shown · drag to reorder` : "No partners yet"} action={<a href="/healthy-home-resources/aip-partners#directory" target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#3f9ad9" }}>View page →</a>}>
           {rows.length ? (
             <Sortable ids={rows.map((r) => r.id)} onReorder={reorderAipPartners} handleTop>
               {rows.map((p) => (
@@ -62,10 +62,11 @@ export default async function AipPartnersAdmin() {
                   </div>
                 </div>))}
             </Sortable>
-          ) : <p style={{ fontSize: 13, color: "#6b7486" }}>Add your first partner on the right. The directory section stays off the public page until at least one partner is shown.</p>}
+          ) : <p style={{ fontSize: 13, color: "#6b7486" }}>Add your first partner on the right. Until at least one partner is shown, the AIP Partners page says the directory is being put together.</p>}
         </Card>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <Card title="Add a partner"><Form compact /></Card>
+          <Card title="The page around the directory"><span style={{ fontSize: 13, color: "#4b5569", lineHeight: 1.6 }}>The AIP Partners page's heading, intro and the note about partners being independent businesses are blocks under <a href="/admin/content?page=aip-partners" style={{ color: "#3f9ad9", fontWeight: 600 }}>Pages → AIP Partners</a>.</span></Card>
           <Card title="Relationship" sub="Shown as a badge on each card">
             <ul style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13, color: "#4b5569", listStyle: "none", padding: 0, margin: 0 }}>
               {AIP_PARTNER_RELATIONSHIPS.map((r) => <li key={r.key}><strong style={{ color: "#1a2238" }}>{r.label}</strong> — {r.hint}</li>)}
