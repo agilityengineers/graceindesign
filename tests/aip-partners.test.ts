@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { AIP_PARTNER_CATEGORIES, aipPartnerCategoryLabel, aipPartnerRelationshipLabel, isAipPartnerCategory, isAipPartnerRelationship, normalizeWebsite } from "../src/lib/aip-partners";
+import { AIP_PARTNER_CATEGORIES, aipPartnerCategoryLabel, aipPartnerRelationshipLabel, isAipPartnerCategory, isAipPartnerRelationship, normalizeWebsite, partnerImageKind } from "../src/lib/aip-partners";
 import { DEMO_AIP_PARTNERS } from "../src/lib/seed-data/demo";
 
 test("normalizeWebsite adds https and keeps full URLs", () => {
@@ -31,4 +31,12 @@ test("demo partners use real category keys and are marked as samples", () => {
 test("relationship labels resolve with a safe fallback", () => {
   assert.equal(aipPartnerRelationshipLabel("collaborator"), "GID collaborator");
   assert.equal(aipPartnerRelationshipLabel("anything-else"), "Known professional");
+});
+
+test("image kind is photo only when asked for, otherwise logo", () => {
+  assert.equal(partnerImageKind("photo"), "photo");
+  assert.equal(partnerImageKind("logo"), "logo");
+  assert.equal(partnerImageKind(""), "logo");
+  assert.equal(partnerImageKind(null), "logo");
+  assert.equal(partnerImageKind("banner"), "logo");
 });

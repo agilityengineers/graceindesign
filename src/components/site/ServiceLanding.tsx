@@ -9,7 +9,7 @@ import { Star, Check } from "@/components/ui/Icons";
 import { serviceHref } from "@/lib/data/site";
 import { db, formFields, aipPartners } from "@/lib/db";
 import { getMediaMap, resolveImg } from "@/lib/data/media";
-import { AIP_PARTNER_CATEGORIES, aipPartnerCategoryLabel, aipPartnerRelationshipLabel, isAipPartnerCategory } from "@/lib/aip-partners";
+import { AIP_PARTNER_CATEGORIES, aipPartnerCategoryLabel, aipPartnerRelationshipLabel, isAipPartnerCategory, partnerImageKind } from "@/lib/aip-partners";
 import { and, asc, eq } from "drizzle-orm";
 import type { Service } from "@/lib/db";
 
@@ -23,7 +23,7 @@ export default async function ServiceLanding({ s, all, heroStyle }: { s: Svc; al
   // AIP Partners directory (Admin → Content → AIP Partners): only shown partners, in admin order; the section is left out until there is one.
   const partnerRows = isPartners ? await db.select().from(aipPartners).where(eq(aipPartners.visible, true)).orderBy(asc(aipPartners.sort), asc(aipPartners.id)) : [];
   const mediaMap = partnerRows.some((p) => p.logoUrl) ? await getMediaMap() : null;
-  const partners = partnerRows.map((p) => ({ id: p.id, name: p.name, category: isAipPartnerCategory(p.category) ? p.category : "specialized", categoryLabel: aipPartnerCategoryLabel(p.category), serviceType: p.serviceType, relationship: p.relationship, relationshipLabel: aipPartnerRelationshipLabel(p.relationship), serviceArea: p.serviceArea, description: p.description || "", websiteUrl: p.websiteUrl, logo: p.logoUrl && mediaMap ? resolveImg(mediaMap, p.logoUrl) : null }));
+  const partners = partnerRows.map((p) => ({ id: p.id, name: p.name, category: isAipPartnerCategory(p.category) ? p.category : "specialized", categoryLabel: aipPartnerCategoryLabel(p.category), serviceType: p.serviceType, relationship: p.relationship, relationshipLabel: aipPartnerRelationshipLabel(p.relationship), serviceArea: p.serviceArea, description: p.description || "", websiteUrl: p.websiteUrl, logo: p.logoUrl && mediaMap ? resolveImg(mediaMap, p.logoUrl) : null, imageKind: partnerImageKind(p.imageKind) }));
   const partnerCategories = AIP_PARTNER_CATEGORIES.filter((c) => partners.some((p) => p.category === c.key)).map((c) => ({ key: c.key, label: c.label }));
   const others: { title: string; href: string }[] = isPartners
     ? [{ title: "AIP Products", href: "/healthy-home-resources/aip-products" }, { title: "WELLness Resources", href: "/healthy-home-resources/wellness" }, { title: "Home Health Series", href: "/healthy-home-resources/home-health-series" }, { title: "Aging In Place & Home Assessments", href: "/services/aging-in-place" }]
