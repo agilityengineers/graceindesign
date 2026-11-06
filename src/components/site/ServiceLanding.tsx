@@ -3,10 +3,13 @@ import CineHero, { Marquee } from "./CineHero";
 import { ServiceClassicHero } from "./ClassicHero";
 import BeforeAfter from "./BeforeAfter";
 import ServiceLeadForm from "./ServiceLeadForm";
+import PartnerDirectory from "./PartnerDirectory";
 import { ConsultButton } from "./ConsultContext";
 import { Star, Check } from "@/components/ui/Icons";
 import { serviceHref } from "@/lib/data/site";
-import { db, formFields } from "@/lib/db";
+import { db, formFields, aipPartners } from "@/lib/db";
+import { getMediaMap, resolveImg } from "@/lib/data/media";
+import { AIP_PARTNER_CATEGORIES, aipPartnerCategoryLabel, aipPartnerRelationshipLabel, isAipPartnerCategory, partnerImageKind } from "@/lib/aip-partners";
 import { and, asc, eq } from "drizzle-orm";
 import type { Service } from "@/lib/db";
 
@@ -17,6 +20,11 @@ export default async function ServiceLanding({ s, all, heroStyle }: { s: Svc; al
   const slug = s.slug;
   const extras = s.pathId ? await db.select().from(formFields).where(and(eq(formFields.scope, "path"), eq(formFields.pathId, s.pathId), eq(formFields.visible, true))).orderBy(asc(formFields.sort)) : [];
   const isPartners = slug === "aip-partners";
+  // AIP Partners directory (Admin → Content → AIP Partners): only shown partners, in admin order; the section is left out until there is one.
+  const partnerRows = isPartners ? await db.select().from(aipPartners).where(eq(aipPartners.visible, true)).orderBy(asc(aipPartners.sort), asc(aipPartners.id)) : [];
+  const mediaMap = partnerRows.some((p) => p.logoUrl) ? await getMediaMap() : null;
+  const partners = partnerRows.map((p) => ({ id: p.id, name: p.name, category: isAipPartnerCategory(p.category) ? p.category : "specialized", categoryLabel: aipPartnerCategoryLabel(p.category), serviceType: p.serviceType, relationship: p.relationship, relationshipLabel: aipPartnerRelationshipLabel(p.relationship), serviceArea: p.serviceArea, description: p.description || "", websiteUrl: p.websiteUrl, logo: p.logoUrl && mediaMap ? resolveImg(mediaMap, p.logoUrl) : null, imageKind: partnerImageKind(p.imageKind) }));
+  const partnerCategories = AIP_PARTNER_CATEGORIES.filter((c) => partners.some((p) => p.category === c.key)).map((c) => ({ key: c.key, label: c.label }));
   const others: { title: string; href: string }[] = isPartners
     ? [{ title: "AIP Products", href: "/healthy-home-resources/aip-products" }, { title: "WELLness Resources", href: "/healthy-home-resources/wellness" }, { title: "Home Health Series", href: "/healthy-home-resources/home-health-series" }, { title: "Aging In Place & Home Assessments", href: "/services/aging-in-place" }]
     : all.filter((x) => x.slug !== slug && x.navGroup === "services" && !x.parentId).map((x) => ({ title: x.title, href: serviceHref(x.slug) }));
@@ -41,6 +49,12 @@ export default async function ServiceLanding({ s, all, heroStyle }: { s: Svc; al
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", padding: "24px 28px", borderRadius: 16, background: "#e6f3fc" }}><div style={{ width: 40, height: 40, flex: "none", borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}><Star /></div><p style={{ fontSize: 15, lineHeight: 1.65 }}>{s.authority}</p></div>
       </div>
     </section>
+
+    {partners.length > 0 && (
+      <section id="partners" className="gx" style={{ paddingBottom: 104, display: "flex", flexDirection: "column", gap: 28 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 700 }}><span className="eyebrow">Partner directory</span><h2 className="h2" style={{ fontSize: 44 }}>Our trusted partners</h2><p style={{ fontSize: 15, lineHeight: 1.7, color: "#6b7486" }}>Professionals we work alongside to help families make their homes safer, more comfortable and easier to live in.</p></div>
+        <PartnerDirectory categories={partnerCategories} partners={partners} />
+      </section>)}
 
     {hasBA && <BeforeAfter before={s.beforeAfter!.before} after={s.beforeAfter!.after} title={s.beforeAfter!.title} beforeAlt={s.beforeAfter!.beforeAlt} afterAlt={s.beforeAfter!.afterAlt} />}
 

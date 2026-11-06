@@ -500,6 +500,26 @@ export const testimonials = pgTable("testimonials", {
   ...timestamps,
 });
 
+/** AIP Partners directory: trusted professionals listed on /healthy-home-resources/aip-partners (Admin → Content → AIP Partners). `category` is a key from src/lib/aip-partners.ts. */
+export const aipPartners = pgTable("aip_partners", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  serviceType: text("service_type"), // e.g. "Occupational therapy", "Bathroom remodels"
+  relationship: text("relationship").notNull().default("known"), // "collaborator" = a GID collaborator, "known" = a known professional (src/lib/aip-partners.ts)
+  serviceArea: text("service_area"), // city, region or "Virtual"
+  description: text("description"),
+  websiteUrl: text("website_url"),
+  logoUrl: text("logo_url"),
+  imageKind: text("image_kind").notNull().default("logo"), // "logo" = shown whole on a light tile, "photo" = cropped to fill it (src/lib/aip-partners.ts)
+  // A record that we may reproduce the logo/photo (e.g. one taken from the partner's website), and where it came from.
+  imagePermission: boolean("image_permission").notNull().default(false),
+  imageSource: text("image_source"),
+  visible: boolean("visible").notNull().default(true),
+  sort: integer("sort").notNull().default(0),
+  ...timestamps,
+});
+
 export const teamMembers = pgTable("team_members", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -855,6 +875,7 @@ export type Post = typeof posts.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Testimonial = typeof testimonials.$inferSelect;
 export type TeamMember = typeof teamMembers.$inferSelect;
+export type AipPartner = typeof aipPartners.$inferSelect;
 export type Media = typeof media.$inferSelect;
 export type PathRow = typeof paths.$inferSelect;
 export type FormField = typeof formFields.$inferSelect;

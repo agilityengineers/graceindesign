@@ -78,6 +78,20 @@
       "when": 1793700200000,
       "tag": "0010_event_stats",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793700300000,
+      "tag": "0011_aip_partners",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793700400000,
+      "tag": "0012_aip_partner_images",
+      "breakpoints": true
     }
   ]
 }
