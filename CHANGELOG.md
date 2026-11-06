@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased — fixes
+- **Hiding a testimonial or team member works again.** In Admin → Content → Testimonials and → About & team, unchecking *Visible* / *Shown on the About page* and saving left the item on the site, because an unchecked box isn't sent with the form and the save treated "missing" as "visible". A missing box now means hidden; new items still start visible (the box is pre-checked).
+
 ## Unreleased — Google & SEO settings, Google Business Profile on the site
 - **Admin → Site settings → Google & SEO** (owners and editors): the GA4 Measurement ID, an optional Tag Manager container and the Search Console "HTML tag" verification code are entered in the admin and go live on save — no republish. `NEXT_PUBLIC_GA_MEASUREMENT_ID` still works as a fallback until an ID is saved. Pasted values are normalised and only Google's exact ID shapes are accepted (`src/lib/google.ts`), and they are re-checked when a page renders.
 - Analytics now loads on public pages only (from `SiteFrame`, no longer the root layout): never on admin, login, client portal, proposal, booking, unsubscribe or roadmap pages (`SiteFrame privatePage`), so per-client links with tokens are never sent to Google. "Don't count visits from signed-in team members" is on by default.
