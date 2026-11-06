@@ -1,5 +1,6 @@
 /**
- * Launch content patch — applies the October 2026 pre-launch review to an ALREADY-SEEDED database without wiping it.
+ * Launch content patch — applies the October 2026 pre-launch review (and the November 2026 WELLness Resources upgrade)
+ * to an ALREADY-SEEDED database without wiping it.
  *
  *   npm run content:launch -- --dry-run      # print every change, write nothing
  *   npm run content:launch                   # apply the content corrections
@@ -18,6 +19,7 @@ import { and, eq, inArray, isNull, like, or, sql } from "drizzle-orm";
 import { db, pool } from "../src/lib/db";
 import * as S from "../src/lib/db/schema";
 import { isSeedSocialAccount, isSeedSocialPost, isSeedSubscriber } from "./launch-cleanup-matches";
+import { DEFAULT_WELL_GROUPS, DEFAULT_WALKTHROUGH_ITEMS, WELLNESS_CATEGORY, wellnessNewsStarter } from "../src/lib/wellness";
 
 const args = process.argv.slice(2);
 const DRY = args.includes("--dry-run");
@@ -201,6 +203,25 @@ async function main() {
       const n = fixDeep(b.content, rules);
       if (!same(n, b.content)) await write(`page_blocks.${p.key}/${b.type}: content text`, () => db.update(S.pageBlocks).set({ content: n, updatedAt: new Date() }).where(eq(S.pageBlocks.id, b.id)));
     }
+  }
+
+  // --- WELLness Resources (Nov 2026): editable WELL concepts, the WELLness articles row, the walk-through PDF fields ----
+  const wellness = pages.find((p) => p.key === "wellness");
+  if (wellness) {
+    const blocks = await db.select().from(S.pageBlocks).where(eq(S.pageBlocks.pageId, wellness.id));
+    // The concepts and cards used to be fixed in code; copy them into the block so Admin → Content can edit them. Blocks that already have `groups` are left alone.
+    const upgrade = (c: unknown) => {
+      const v = (c && typeof c === "object" ? c : {}) as Record<string, unknown>;
+      if (Array.isArray(v.groups)) return null;
+      const lm = (v.leadMagnet && typeof v.leadMagnet === "object" ? v.leadMagnet : {}) as Record<string, unknown>;
+      return { groups: DEFAULT_WELL_GROUPS, ...v, leadMagnet: { pdf: "", items: DEFAULT_WALKTHROUGH_ITEMS, ...lm, linkHref: lm.linkHref === "/contact?from=aging-in-place" ? "/contact?from=wellness" : lm.linkHref } };
+    };
+    for (const b of blocks.filter((x) => x.type === "wellness_groups")) {
+      const next = upgrade(b.content); const nextDraft = b.draftContent ? upgrade(b.draftContent) : null;
+      if (next || nextDraft) await write("page_blocks.wellness/wellness_groups: move the 10 WELL concepts and resource cards into the block (editable in Admin → Content)", () => db.update(S.pageBlocks).set({ ...(next ? { content: next } : {}), ...(nextDraft ? { draftContent: nextDraft } : {}), updatedAt: new Date() }).where(eq(S.pageBlocks.id, b.id)));
+    }
+    const hasRow = blocks.some((b) => b.type === "news" && JSON.stringify((b.content as Record<string, unknown>)?.categories || []).toLowerCase().includes(WELLNESS_CATEGORY.toLowerCase()));
+    if (!hasRow) await write("page_blocks.wellness: add the “WELLness articles” row (posts in the WELLness category; hidden until one is published)", () => db.insert(S.pageBlocks).values({ pageId: wellness.id, type: "news", sort: blocks.length, content: wellnessNewsStarter(), visible: true }));
   }
 
   // --- Products --------------------------------------------------------------------------------------------------

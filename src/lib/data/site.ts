@@ -55,9 +55,14 @@ export const getServiceList = cache(async () => {
   return rows.map((s) => ({ ...s, img: resolveDeep(map, s.img), children: children.filter((c) => c.parentId === s.id) }));
 });
 
-export const getPublishedPosts = cache(async (scope: "news" | "caribbean" = "news", limit = 20) => {
+/**
+ * Published posts for a section, featured first then newest. `categories` (matched case-insensitively, so
+ * "WELLness" and "Wellness" are the same) narrows it to those categories; `writtenOnly` leaves out RSS imports.
+ */
+export const getPublishedPosts = cache(async (scope: "news" | "caribbean" = "news", limit = 20, categories: string[] = [], writtenOnly = false) => {
   const map = await getMediaMap();
-  const rows = await db.select().from(posts).where(and(eq(posts.status, "published"), eq(posts.scope, scope))).orderBy(desc(posts.featured), desc(posts.publishedAt)).limit(limit);
+  const cats = categories.map((c) => c.trim().toLowerCase()).filter(Boolean);
+  const rows = await db.select().from(posts).where(and(eq(posts.status, "published"), eq(posts.scope, scope), cats.length ? inArray(sql`lower(${posts.category})`, cats) : undefined, writtenOnly ? eq(posts.origin, "written") : undefined)).orderBy(desc(posts.featured), desc(posts.publishedAt)).limit(limit);
   return rows.map((p) => ({ ...p, imageUrl: resolveDeep(map, p.imageUrl) }));
 });
 

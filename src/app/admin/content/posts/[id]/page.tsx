@@ -10,9 +10,10 @@ import { Card } from "@/components/admin/ui";
 import Toast from "@/components/admin/Toast";
 import ContentTabs from "@/components/admin/ContentTabs";
 import { savePost } from "@/lib/actions/content";
+import { WELLNESS_CATEGORY } from "@/lib/wellness";
 
 export const dynamic = "force-dynamic";
-const CATEGORIES = ["Healthy Home Resources", "Aging In Place", "Design", "Commercial", "Project Management", "Caribbean", "News", "Company"];
+const CATEGORIES = ["Healthy Home Resources", WELLNESS_CATEGORY, "Aging In Place", "Design", "Commercial", "Project Management", "Caribbean", "News", "Company"];
 
 export default async function PostEdit({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireArea("posts");
@@ -20,7 +21,9 @@ export default async function PostEdit({ params }: { params: Promise<{ id: strin
   const isNew = id === "new";
   const p = isNew ? null : await db.query.posts.findFirst({ where: eq(posts.id, Number(id)) });
   if (!isNew && !p) notFound();
-  const map = await getMediaMap();
+  const [map, used] = await Promise.all([getMediaMap(), db.selectDistinct({ category: posts.category }).from(posts)]);
+  // Suggestions: the usual categories plus any already in use, so a new one (typed once) is offered next time.
+  const categories = Array.from(new Set([...CATEGORIES, ...used.map((r) => r.category)])).filter(Boolean);
   return (
     <AdminShell user={user} active="cms" title={isNew ? "Write a post" : p!.title} subtitle={isNew ? "Drafts are private until you publish" : p!.origin === "rss" ? `Imported from ${p!.sourceName}` : "Written post"} actions={<ContentTabs active="posts" />}>
       <Toast />
@@ -35,7 +38,7 @@ export default async function PostEdit({ params }: { params: Promise<{ id: strin
           <Card title="Publishing">
             <label className="label label-caps">Status<select name="status" defaultValue={p?.status || "draft"} className="admin-input admin-input-sm"><option value="draft">Draft</option><option value="published">Published</option></select></label>
             <label className="label label-caps">Section<select name="scope" defaultValue={p?.scope || "news"} className="admin-input admin-input-sm"><option value="news">News & Insights</option><option value="caribbean">Caribbean Blog</option></select></label>
-            <label className="label label-caps">Category<input name="category" list="cats" defaultValue={p?.category || "Healthy Home Resources"} className="admin-input admin-input-sm" /><datalist id="cats">{CATEGORIES.map((c) => <option key={c} value={c} />)}</datalist></label>
+            <label className="label label-caps">Category<input name="category" list="cats" defaultValue={p?.category || "Healthy Home Resources"} className="admin-input admin-input-sm" /><datalist id="cats">{categories.map((c) => <option key={c} value={c} />)}</datalist><span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, fontSize: 11, color: "#8c95a8" }}>Use “{WELLNESS_CATEGORY}” to show the article on the WELLness Resources page and in its RSS feed.</span></label>
             <label className="label label-caps">Slug<input name="slug" defaultValue={p?.slug || ""} placeholder="auto from title" className="admin-input admin-input-sm" /></label>
             <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}><input type="checkbox" name="featured" defaultChecked={p?.featured} />Featured (pinned first on the homepage row)</label>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
