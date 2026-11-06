@@ -415,3 +415,7 @@ textarea.admin-input { height: auto; padding: 10px; line-height: 1.5; resize: ve
 .prose a { color: var(--link); font-weight: 600; }
 .admin-preview-pill { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 14px; padding: 8px 8px 8px 16px; border-radius: 999px; background: var(--navy); color: #fff; box-shadow: 0 18px 44px rgba(26,34,56,.35); font-size: 12px; white-space: nowrap; }
 @media (max-width: 720px) { .admin-preview-pill { left: 12px; right: 12px; transform: none; justify-content: space-between; } }
+/* AIP Partners directory cards: logo/photo tile beside the name, stacked above it on small phones. */
+@media (max-width: 440px) {
+  .partner-card-head { grid-template-columns: minmax(0, 1fr) !important; padding: 20px !important; }
+}

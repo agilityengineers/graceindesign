@@ -511,6 +511,10 @@ export const aipPartners = pgTable("aip_partners", {
   description: text("description"),
   websiteUrl: text("website_url"),
   logoUrl: text("logo_url"),
+  imageKind: text("image_kind").notNull().default("logo"), // "logo" = shown whole on a light tile, "photo" = cropped to fill it (src/lib/aip-partners.ts)
+  // A record that we may reproduce the logo/photo (e.g. one taken from the partner's website), and where it came from.
+  imagePermission: boolean("image_permission").notNull().default(false),
+  imageSource: text("image_source"),
   visible: boolean("visible").notNull().default(true),
   sort: integer("sort").notNull().default(0),
   ...timestamps,
