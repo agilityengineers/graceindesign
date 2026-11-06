@@ -7,7 +7,8 @@ import { ConsultButton } from "./ConsultContext";
 import { ArrowRight, ArrowUpRight, Heart, Rss, Play, Globe, Check } from "@/components/ui/Icons";
 import { getProducts, getPublishedPosts, getFounder, getServiceList, getCaribbeanData, getAipPartners } from "@/lib/data/site";
 import { getMediaMap, resolveDeep } from "@/lib/data/media";
-import { WELLNESS_GROUPS, EPISODES } from "@/lib/seed-data/demo";
+import { EPISODES } from "@/lib/seed-data/demo";
+import { wellGroupsOf, isDownload, type WellGroup } from "@/lib/wellness";
 import { fmtDate } from "@/lib/utils";
 import { env } from "@/lib/env";
 import { retailerLabel, asinFromUrl, amazonCartUrl, withAssociateTag } from "@/lib/retailers";
@@ -24,6 +25,12 @@ function shopFields(p: ProductRow, shop: AmazonShop) {
   const asin = p.retailer === "amazon" ? asinFromUrl(p.url) : null;
   return { url: withAssociateTag(p.url, shop.tag), asin, cartUrl: asin && shop.tag && shop.cartButtons ? amazonCartUrl([asin], shop.tag, shop.marketplace) : "" };
 }
+/** Link props for a WELLness resource card: a PDF opens in a new tab, a page link navigates, no link stays on the guides section. */
+function resourceLink(href: string) {
+  if (!href) return { href: "#guides" };
+  if (isDownload(href) || /^https?:\/\//.test(href)) return { href, target: "_blank", rel: "noreferrer" };
+  return { href };
+}
 import CaribbeanForms, { NewsletterForm, SuggestResourceForm, LeadMagnetForm } from "./CaribbeanForms";
 import EventsSection from "./EventsSection";
 import dynamic from "next/dynamic";
@@ -31,14 +38,20 @@ import dynamic from "next/dynamic";
 const ConsultForm = dynamic(() => import("./ConsultForm"));
 export type Block = { id: number; type: string; content: Record<string, any> };
 
-export async function RenderBlocks({ blocks, ctx }: { blocks: Block[]; ctx: { pageKey: string; heroStyle: "classic" | "cinematic"; sourceKey: string } }) {
+/** `category` is the `?category=` filter on the page URL (News & Insights archive view). */
+export type BlockCtx = { pageKey: string; heroStyle: "classic" | "cinematic"; sourceKey: string; category?: string };
+const strList = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && !!x.trim()) : []);
+
+export async function RenderBlocks({ blocks, ctx }: { blocks: Block[]; ctx: BlockCtx }) {
+  // The guide carousel shows the cards from this page's WELL concepts block, so the two never drift apart.
+  const wellGroups = wellGroupsOf(blocks.find((b) => b.type === "wellness_groups")?.content);
   return (<>
-    {blocks.map((b) => <BlockView key={b.id} block={b} ctx={ctx} />)}
+    {blocks.map((b) => <BlockView key={b.id} block={b} ctx={ctx} wellGroups={wellGroups} />)}
     <Reveal />
   </>);
 }
 
-async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: string; heroStyle: "classic" | "cinematic"; sourceKey: string } }) {
+async function BlockView({ block: b, ctx, wellGroups }: { block: Block; ctx: BlockCtx; wellGroups: WellGroup[] }) {
   const c = b.content;
   switch (b.type) {
     case "hero": {
@@ -114,11 +127,12 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
         </div>
         <div className="g4" style={{ gap: 24 }}>{products.map((p) => <ProductCard key={p.id} p={p} />)}</div>
       </section>); }
-    case "news": { const posts = (await getPublishedPosts("news", c.count || 3)).slice(0, c.count || 3); if (posts.length === 0) return null; return (
+    // `categories` (optional) limits the row to those post categories, e.g. ["WELLness"] on the WELLness Resources page.
+    case "news": { const posts = (await getPublishedPosts("news", c.count || 3, strList(c.categories))).slice(0, c.count || 3); if (posts.length === 0) return null; return (
       <section className="gx" style={{ paddingTop: 104, paddingBottom: 112, display: "flex", flexDirection: "column", gap: 48 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 40, flexWrap: "wrap" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 600 }}><span className="eyebrow">{c.eyebrow}</span><h2 className="h2">{c.title}</h2></div>
-          <Link href={c.linkHref} style={{ fontSize: 14, fontWeight: 600, borderBottom: "1.5px solid #1a2238", paddingBottom: 2 }}>{c.linkLabel}</Link>
+          {c.linkHref && c.linkLabel && <Link href={c.linkHref} style={{ fontSize: 14, fontWeight: 600, borderBottom: "1.5px solid #1a2238", paddingBottom: 2 }}>{c.linkLabel}</Link>}
         </div>
         <div className="g3" style={{ gap: 32 }}>{posts.map((a) => <PostCard key={a.id} post={a} height={260} />)}</div>
       </section>); }
@@ -201,20 +215,22 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
       </section>); }
     case "product_carousel": { const shop = await getAmazonShop(); const all = shelfOnly(await getProducts(), c.shelf); if (all.length === 0) return null; return <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={306} count={all.length}>{all.map((p) => <ProductCard key={p.id} p={{ ...p, ...shopFields(p, shop) }} compact />)}</Carousel>; }
     case "product_grid": { const shop = await getAmazonShop(); const all = shelfOnly(await getProducts(), c.shelf); const ProductGrid = (await import("./ProductGrid")).default; return <ProductGrid title={c.title} categories={c.categories} disclosure={c.disclosure} shop={shop} products={all.map((p) => { const f = shopFields(p, shop); return { id: p.id, title: p.title, description: p.description || "", category: p.category, price: p.price, reviews: p.reviews, synced: !!p.lastSyncedAt, type: p.type, tag: p.tag || "", img: p.imageUrl || "", url: f.url, asin: f.asin, cartUrl: f.cartUrl, retailer: p.retailer, retailerLabel: retailerLabel(p.retailer) }; })} shopUrl={env.etsyShopUrl} />; }
-    case "guide_carousel": { const map = await getMediaMap(); const items = WELLNESS_GROUPS.flatMap((g) => g.items.map((r) => ({ concept: g.title, kind: r[0], title: r[1], desc: r[2], img: resolveDeep(map, r[3]) }))).slice(0, 6); return (
+    // Cards come from this page's WELL concepts block (see RenderBlocks); `limit` caps how many (default 6).
+    case "guide_carousel": { const map = await getMediaMap(); const items = wellGroups.flatMap((g) => g.resources.map((r) => ({ ...r, concept: g.title, img: resolveDeep(map, r.img) }))).slice(0, Number(c.limit) > 0 ? Number(c.limit) : 6); if (items.length === 0) return null; return (
       <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={416} count={items.length}>{items.map((r, k) => (
-        <a key={k} href="#guides" className="card-hover" style={{ display: "flex", flexDirection: "column", borderRadius: 16, overflow: "hidden", border: "1px solid #e9ecf1", color: "#1a2238" }}>
-          <div style={{ position: "relative", height: 240 }}><img src={r.img} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /><span style={{ position: "absolute", top: 12, left: 12, padding: "5px 10px", borderRadius: 999, background: "#fff", fontSize: 11, fontWeight: 600 }}>{r.kind}</span></div>
+        <a key={k} {...resourceLink(r.href)} className="card-hover" style={{ display: "flex", flexDirection: "column", borderRadius: 16, overflow: "hidden", border: "1px solid #e9ecf1", color: "#1a2238" }}>
+          <div style={{ position: "relative", height: 240, background: "#e6f3fc" }}>{r.img && <img src={r.img} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}<span style={{ position: "absolute", top: 12, left: 12, padding: "5px 10px", borderRadius: 999, background: "#fff", fontSize: 11, fontWeight: 600 }}>{r.kind}</span></div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "20px 22px 22px" }}><span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".14em" }}>{r.concept}</span><span style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.3 }}>{r.title}</span><span style={{ fontSize: 13.5, lineHeight: 1.55, color: "#6b7486" }}>{r.desc}</span></div>
         </a>))}</Carousel>); }
-    case "wellness_groups": { const map = await getMediaMap(); const lm = c.leadMagnet; return (
+    // `groups` = the WELL concepts and their resource cards (edited in Admin → Content). Concepts with no resources yet are hidden.
+    case "wellness_groups": { const map = await getMediaMap(); const lm = c.leadMagnet || {}; const groups = wellGroupsOf(c).filter((g) => g.resources.length > 0); return (
       <section id="guides" className="gx wellness-grid" style={{ paddingTop: 80, paddingBottom: 104, display: "grid", gridTemplateColumns: "minmax(0,1fr) 360px", gap: 64, alignItems: "start" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 56 }}>
-          {WELLNESS_GROUPS.map((g) => (
-            <div key={g.letter} className="reveal" style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          {groups.map((g, gi) => (
+            <div key={`${g.title}-${gi}`} className="reveal" style={{ display: "flex", flexDirection: "column", gap: 22 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 18 }}><span className="display" style={{ width: 52, height: 52, borderRadius: 14, background: "#e6f3fc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 600, color: "#3f9ad9" }}>{g.letter}</span><div style={{ display: "flex", flexDirection: "column", gap: 2 }}><h2 className="display t-display-lg" style={{ fontSize: 34, fontWeight: 600 }}>{g.title}</h2><span style={{ fontSize: 14, color: "#6b7486" }}>{g.sub}</span></div></div>
               <div className="g2 g2-stack-sm" style={{ gap: 16 }}>
-                {g.items.map(([kind, title, desc, img]) => <a key={title} href="#guides" className="card-hover" style={{ display: "flex", gap: 16, padding: 20, borderRadius: 14, border: "1px solid #e9ecf1", color: "#1a2238" }}><div style={{ width: 96, height: 96, flex: "none", borderRadius: 10, overflow: "hidden", position: "relative" }}><img src={resolveDeep(map, img)} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div><div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}><span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".14em" }}>{kind}</span><span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.35 }}>{title}</span><span style={{ fontSize: 13, lineHeight: 1.55, color: "#6b7486" }}>{desc}</span></div></a>)}
+                {g.resources.map(({ kind, title, desc, img, href }, ri) => <a key={`${title}-${ri}`} {...resourceLink(href)} className="card-hover" style={{ display: "flex", gap: 16, padding: 20, borderRadius: 14, border: "1px solid #e9ecf1", color: "#1a2238" }}><div style={{ width: 96, height: 96, flex: "none", borderRadius: 10, overflow: "hidden", position: "relative", background: "#e6f3fc" }}>{img && <img src={resolveDeep(map, img)} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}</div><div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}><span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".14em" }}>{kind}{isDownload(href) ? " · PDF" : ""}</span><span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.35 }}>{title}</span><span style={{ fontSize: 13, lineHeight: 1.55, color: "#6b7486" }}>{desc}</span></div></a>)}
               </div>
             </div>))}
         </div>
@@ -223,7 +239,7 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
           <h3 className="display" style={{ fontSize: 30, fontWeight: 500, lineHeight: 1.15 }}>{lm.title}</h3>
           <p style={{ fontSize: 14, lineHeight: 1.65, color: "#c6cbd6" }}>{lm.body}</p>
           <LeadMagnetForm cta={lm.cta} />
-          <Link href={lm.linkHref} style={{ fontSize: 13, color: "#c6cbd6", textAlign: "center" }}>{lm.link}</Link>
+          {lm.linkHref && lm.link && <Link href={lm.linkHref} style={{ fontSize: 13, color: "#c6cbd6", textAlign: "center" }}>{lm.link}</Link>}
         </aside>
       </section>); }
     case "featured_episode": { const map = await getMediaMap(); const ep = EPISODES.find((e) => e.featured) || EPISODES[0]; return (
@@ -244,19 +260,20 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
         <h3 className="display" style={{ fontSize: 26, fontWeight: 600, lineHeight: 1.2 }}>{e.title}</h3>
         <p style={{ fontSize: 14, lineHeight: 1.6, color: "#6b7486" }}>{e.desc}</p>
       </a>))}</Carousel><div style={{ height: 104 }} /></div>); }
-    case "news_grid": { const all = await getPublishedPosts("news", (c.count || 6) + 1); const [feat, ...rest] = all; if (all.length === 0) return (
+    // The block's own `categories`, else the page's `?category=` filter (e.g. /news?category=WELLness).
+    case "news_grid": { const cats = strList(c.categories).length ? strList(c.categories) : ctx.category ? [ctx.category] : []; const all = await getPublishedPosts("news", (c.count || 6) + 1, cats); const [feat, ...rest] = all; const filter = ctx.category && !strList(c.categories).length ? <div className="gx" style={{ paddingTop: 40, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", fontSize: 14, color: "#4b5569" }}><span>Showing <strong style={{ color: "#1a2238" }}>{ctx.category}</strong> articles</span><Link href="/news" style={{ fontWeight: 600, borderBottom: "1.5px solid #1a2238", paddingBottom: 2, color: "#1a2238" }}>All articles</Link><a href={`/news/rss.xml?category=${encodeURIComponent(ctx.category)}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#6b7486" }}><Rss /> RSS feed</a></div> : null; if (all.length === 0) return (<>{filter}
       <section className="gx" style={{ paddingTop: 72, paddingBottom: 104, display: "flex", flexDirection: "column", gap: 18, maxWidth: 720 }}>
         <h2 className="h2" style={{ fontSize: 36 }}>New articles are on the way.</h2>
         <p style={{ fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>We're preparing our first pieces on healthy, accessible homes. In the meantime, explore our guides and the Home Health Series.</p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}><Link href="/healthy-home-resources" className="btn btn-navy">Healthy Home Resources</Link><Link href="/caribbean-connection#blog" className="btn btn-ghost">Caribbean Connection</Link></div>
-      </section>); return (
+      </section></>); return (<>{filter}
       <section className="gx" style={{ paddingTop: 72, paddingBottom: 104, display: "flex", flexDirection: "column", gap: 56 }}>
         {feat && <Link href={`/news/${feat.slug}`} className="g2 g2-stack-sm" style={{ gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)", gap: 48, alignItems: "center", color: "#1a2238" }}>
           <div className="media-tall" style={{ position: "relative", height: 460, borderRadius: 20, overflow: "hidden" }}><img src={feat.imageUrl || ""} alt={feat.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /></div>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}><PostMeta post={feat} /><h2 className="display t-display-lg" style={{ fontSize: 44, fontWeight: 600, lineHeight: 1.1, textWrap: "pretty" }}>{feat.title}</h2><p style={{ fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>{feat.excerpt}</p><span style={{ fontSize: 14, fontWeight: 600 }}>Read article →</span></div>
         </Link>}
         <div className="g3" style={{ gap: 32 }}>{rest.slice(0, c.count || 6).map((p) => <PostCard key={p.id} post={p} height={240} />)}</div>
-      </section>); }
+      </section></>); }
     case "contact_header": return (
       <section className="gx" style={{ padding: "72px var(--gutter) 32px", background: "#f7f8fa", display: "flex", flexDirection: "column", gap: 14 }}>
         <span className="eyebrow">{c.eyebrow}</span><h1 className="h1" style={{ fontSize: 56, maxWidth: 800 }}>{c.title}</h1><p style={{ maxWidth: 600, fontSize: 16, lineHeight: 1.7, color: "#4b5569" }}>{c.body}</p>

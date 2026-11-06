@@ -12,18 +12,30 @@ import BlockEditor from "@/components/admin/BlockEditor";
 import { savePageSeo, blockAction, addBlock, reorderBlocks, publishPage, discardPageDraft, createPage, deletePage } from "@/lib/actions/content";
 import { relativeDay } from "@/lib/utils";
 import { SHELVES, SHELF_KEYS } from "@/lib/shelves";
+import { DEFAULT_WELL_GROUPS, wellnessGroupsStarter } from "@/lib/wellness";
 
 export const metadata = { title: "Content" };
 export const dynamic = "force-dynamic";
 /** The "Add block" menu: block types with plain names, plus ready-made product sections (`product_shelf:<shelf>` arrives pre-filled for that shelf) and events sections (`events:<region>`). */
 const BLOCK_OPTIONS: [string, string][] = [
-  ["rich_text", "Rich text"], ["page_header", "Page header"], ["cta", "Call to action"], ["steps", "Steps"], ["news", "News & Insights row"], ["featured_products", "Featured products (homepage row)"], ["consult_form", "Consultation form"], ["google_map", "Google map (set in Site settings → Google & SEO)"],
+  ["rich_text", "Rich text"], ["page_header", "Page header"], ["cta", "Call to action"], ["steps", "Steps"], ["news", "News & Insights row (optionally one category)"], ["news:wellness", "WELLness articles row (posts in the “WELLness” category)"],
+  ["wellness_groups", "WELL concepts & resource cards (with checklist sidebar)"], ["guide_carousel", "WELLness guide carousel (cards from the WELL concepts block)"], ["featured_products", "Featured products (homepage row)"], ["consult_form", "Consultation form"], ["google_map", "Google map (set in Site settings → Google & SEO)"],
   ...SHELF_KEYS.map((k): [string, string] => [`product_shelf:${k}`, `${SHELVES[k].name} section`]),
   ["events:caribbean", "Caribbean events section"], ["events:us", "United States events section"], ["events", "Events (choose region, state or city)"],
   ["partner_directory", "AIP Partners directory (listings from Content → AIP Partners)"], ["product_shelf", "Product shelf (every product, or pick a shelf)"], ["product_grid", "Product grid with category filters"], ["service_list", "Service list"], ["contact_steps", "Contact steps"],
 ];
 const CORE = ["home", "about", "services", "hhr", "caribbean", "news", "contact"];
 const PAGE_HREF: Record<string, string> = { home: "/", about: "/about", services: "/services", hhr: "/healthy-home-resources", caribbean: "/caribbean-connection", news: "/news", contact: "/contact", "aip-products": "/healthy-home-resources/aip-products", "aip-partners": "/healthy-home-resources/aip-partners", wellness: "/healthy-home-resources/wellness", "home-health": "/healthy-home-resources/home-health-series", privacy: "/privacy", terms: "/terms", accessibility: "/accessibility" };
+/**
+ * Fields a block saved before they existed still gets in the editor, so admins can see and use them:
+ * the WELL concepts (and the checklist's PDF and items) on `wellness_groups`, a category filter on post rows, a card limit on the guide carousel.
+ */
+function withEditableDefaults(type: string, c: Record<string, unknown>): Record<string, unknown> {
+  if (type === "wellness_groups") { const s = wellnessGroupsStarter(); return { groups: Array.isArray(c.groups) ? c.groups : DEFAULT_WELL_GROUPS, ...c, leadMagnet: { ...s.leadMagnet, ...((c.leadMagnet as object) || {}) } }; }
+  if ((type === "news" || type === "news_grid") && !("categories" in c)) return { ...c, categories: [] };
+  if (type === "guide_carousel" && !("limit" in c)) return { ...c, limit: 6 };
+  return c;
+}
 const preview = (c: Record<string, unknown>) => { for (const k of ["title", "lead", "kicker", "eyebrow", "heading", "body"]) { const v = c[k]; if (typeof v === "string" && v) return v.replace(/<[^>]+>/g, "").slice(0, 90); } const first = Object.values(c).find((v) => typeof v === "string" && v); return typeof first === "string" ? first.slice(0, 90) : ""; };
 
 export default async function ContentPage({ searchParams }: { searchParams: Promise<{ page?: string; block?: string }> }) {
@@ -75,7 +87,7 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
                         <form action={blockAction}><input type="hidden" name="blockId" value={b.id} /><input type="hidden" name="op" value="delete" /><input type="hidden" name="_back" value={back} /><ConfirmButton message="Delete this block? This takes effect immediately.">Delete</ConfirmButton></form>
                       </div>
                     </div>
-                    {editing === b.id && <BlockEditor blockId={b.id} type={b.type} content={c as never} back={back} />}
+                    {editing === b.id && <BlockEditor blockId={b.id} type={b.type} content={withEditableDefaults(b.type, c) as never} back={back} />}
                   </div>); })}
               </Sortable>
               <form action={addBlock} style={{ display: "flex", gap: 8, alignItems: "center", paddingTop: 10, borderTop: "1px solid #eef0f4" }}>

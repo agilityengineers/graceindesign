@@ -47,7 +47,11 @@ export default async function MediaAdmin({ searchParams }: { searchParams: Promi
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 14 }}>
           {list.map((m) => (
             <div key={m.id} style={{ display: "flex", flexDirection: "column", gap: 8, padding: 10, borderRadius: 12, border: "1px solid #eef0f4", background: "#fff" }}>
-              <div style={{ height: 130, borderRadius: 8, overflow: "hidden", background: "#f2f4f7" }}><img src={srcOf(m)} alt={m.alt || m.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div>
+              {m.mime === "application/pdf" || /\.pdf$/i.test(m.url) ? (
+                // Documents (e.g. a WELLness guide): no thumbnail, but a link and the URL to paste into a card's Link field.
+                <a href={m.url} target="_blank" rel="noreferrer" style={{ height: 130, borderRadius: 8, background: "#f2f4f7", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, color: "#1a2238", textDecoration: "none" }}><span style={{ padding: "6px 10px", borderRadius: 6, background: "#c0392b", color: "#fff", fontSize: 12, fontWeight: 700, letterSpacing: ".08em" }}>PDF</span><span style={{ fontSize: 11, color: "#6b7486" }}>Open ↗</span></a>
+              ) : <div style={{ height: 130, borderRadius: 8, overflow: "hidden", background: "#f2f4f7" }}><img src={srcOf(m)} alt={m.alt || m.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div>}
+              {(m.mime === "application/pdf" || /\.pdf$/i.test(m.url)) && <input readOnly value={m.url} className="admin-input admin-input-sm" aria-label="PDF link" style={{ fontSize: 11 }} />}
               <form action={mediaAction} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <input type="hidden" name="mediaId" value={m.id} /><input type="hidden" name="op" value="update" /><input type="hidden" name="_back" value={back} />
                 <input name="name" defaultValue={m.name} className="admin-input admin-input-sm" aria-label="Name" />

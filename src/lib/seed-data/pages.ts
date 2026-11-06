@@ -2,6 +2,7 @@
 import { mediaRef as m } from "./media";
 import { shelfSection } from "../shelves";
 import { PARTNERS_PAGE } from "../aip-partners";
+import { wellnessGroupsStarter, wellnessNewsStarter } from "../wellness";
 
 export type SeedBlock = { type: string; content: Record<string, unknown> };
 export type SeedPage = { key: string; slug: string; title: string; navLabel: string; heroStyle?: "classic" | "cinematic"; seoTitle?: string; seoDescription?: string; parentKey?: string; sort: number; status?: "draft" | "published"; blocks: SeedBlock[] };
@@ -97,8 +98,11 @@ export const PAGES: SeedPage[] = [
     key: "wellness", slug: "/healthy-home-resources/wellness", title: "WELLness Resources", navLabel: "Healthy Home Resources · WELLness Resources", parentKey: "hhr", sort: 5, seoDescription: "Guides on light, air, movement and water organized by the WELL concepts Grace In Design designs around, plus a free healthy-home checklist.",
     blocks: [
       { type: "page_header", content: { crumb: "Healthy Home Resources · WELLness Resources", crumbHref: "/healthy-home-resources", title: "Design choices that support your health — explained simply", body: "Guides organized by the WELL concepts we design around. Download, share with family, or bring to your consultation." } },
-      { type: "guide_carousel", content: { eyebrow: "Start here", title: "Most-downloaded guides" } },
-      { type: "wellness_groups", content: { leadMagnet: { eyebrow: "Free download", title: "The 10-Minute Healthy Home Walk-Through", body: "Our quick checklist for light, air, water and safety — the same one our specialists start with.", cta: "Send me the checklist", link: "Or request a full home assessment →", linkHref: "/contact?from=aging-in-place" } } },
+      { type: "guide_carousel", content: { eyebrow: "Start here", title: "Most-downloaded guides", limit: 6 } },
+      // The WELL concepts, their resource cards and the walk-through sidebar: all edited in Admin → Content.
+      { type: "wellness_groups", content: wellnessGroupsStarter() },
+      // News & Insights posts in the "WELLness" category show here automatically (the row hides itself until there is one).
+      { type: "news", content: wellnessNewsStarter() },
     ],
   },
   {
