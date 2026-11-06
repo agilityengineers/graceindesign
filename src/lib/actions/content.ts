@@ -1,7 +1,7 @@
 "use server";
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { db, pages, pageBlocks, services, posts, testimonials, teamMembers, paths } from "@/lib/db";
+import { db, pages, pageBlocks, services, posts, testimonials, teamMembers, partners, paths } from "@/lib/db";
 import { requireArea } from "@/lib/auth/session";
 import { audit } from "@/lib/server/audit";
 import { adminAction, backTo } from "./_util";
@@ -10,6 +10,7 @@ import { isShelfKey, shelfSection } from "@/lib/shelves";
 import { eventsSection } from "@/lib/events";
 import { uploadToMedia } from "@/lib/server/media-upload";
 import { autoShareBlogPost } from "@/lib/server/social";
+import { normalizePartnerUrl, PARTNERS_PAGE } from "@/lib/partners";
 
 const SITE_PATHS = ["/", "/about", "/services", "/healthy-home-resources", "/caribbean-connection", "/news", "/contact"];
 const REVAL = ["/admin/content", ...SITE_PATHS];
@@ -64,7 +65,7 @@ export async function addBlock(formData: FormData) {
     // "product_shelf:wellness" = a product shelf pre-filled for that shelf (the "WELLness-Products section" entry in the Add block menu).
     const [type, preset = ""] = str(formData.get("type")).split(":"); if (!type) throw new Error("Pick a block type");
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(pageBlocks).where(eq(pageBlocks.pageId, pageId));
-    const starter: Record<string, Record<string, unknown>> = { rich_text: { title: "New section", body: "<p>Write something…</p>" }, cta: { title: "Ready to get started?", body: "Tell us a little about your project.", cta: "Get Started", ctaHref: "/contact" }, steps: { items: [["Step one", "Describe it"], ["Step two", "Describe it"], ["Step three", "Describe it"]] }, page_header: { eyebrow: "Section", title: "Headline", sub: "Supporting copy." }, news: { eyebrow: "News & Insights", title: "Latest articles", linkLabel: "All articles", linkHref: "/news", count: 3 }, featured_products: { eyebrow: "Featured", title: "Products", linkLabel: "Browse", linkHref: "/healthy-home-resources/aip-products", count: 4 }, product_grid: { title: "All products", shelf: "aip", categories: [], disclosure: "" }, product_shelf: { eyebrow: "Shop our picks", title: "Tools we recommend", body: "", shelf: "", categories: [], featuredOnly: false, limit: 4, linkLabel: "See all products", linkHref: "/healthy-home-resources/aip-products", cartAll: true, cartAllLabel: "Add all to your Amazon cart", disclosure: "" }, consult_form: { title: "Start your project" }, google_map: { eyebrow: "Visit us", title: "Find us on Google Maps", height: 420 } };
+    const starter: Record<string, Record<string, unknown>> = { partner_directory: { ...PARTNERS_PAGE.blocks[1].content }, rich_text: { title: "New section", body: "<p>Write something…</p>" }, cta: { title: "Ready to get started?", body: "Tell us a little about your project.", cta: "Get Started", ctaHref: "/contact" }, steps: { items: [["Step one", "Describe it"], ["Step two", "Describe it"], ["Step three", "Describe it"]] }, page_header: { eyebrow: "Section", title: "Headline", sub: "Supporting copy." }, news: { eyebrow: "News & Insights", title: "Latest articles", linkLabel: "All articles", linkHref: "/news", count: 3 }, featured_products: { eyebrow: "Featured", title: "Products", linkLabel: "Browse", linkHref: "/healthy-home-resources/aip-products", count: 4 }, product_grid: { title: "All products", shelf: "aip", categories: [], disclosure: "" }, product_shelf: { eyebrow: "Shop our picks", title: "Tools we recommend", body: "", shelf: "", categories: [], featuredOnly: false, limit: 4, linkLabel: "See all products", linkHref: "/healthy-home-resources/aip-products", cartAll: true, cartAllLabel: "Add all to your Amazon cart", disclosure: "" }, consult_form: { title: "Start your project" }, google_map: { eyebrow: "Visit us", title: "Find us on Google Maps", height: 420 } };
     // "events:us" = an events section pre-set to the United States; plain "events" shows every region until the admin narrows it.
     const content = type === "product_shelf" && isShelfKey(preset) ? shelfSection(preset) : type === "events" ? eventsSection(preset) : starter[type] || {};
     const [b] = await db.insert(pageBlocks).values({ pageId, type, sort: Number(n), content, visible: true }).returning();
@@ -103,7 +104,7 @@ export async function createPage(formData: FormData) {
 }
 export async function deletePage(formData: FormData) {
   const id = parseNum(formData.get("pageId"));
-  await adminAction("pages", "page", "delete", async () => { const p = await db.query.pages.findFirst({ where: eq(pages.id, id) }); if (!p) throw new Error("Page not found"); if (["home", "about", "services", "hhr", "caribbean", "news", "contact"].includes(p.key)) throw new Error("Core pages can be unpublished but not deleted"); await db.delete(pages).where(eq(pages.id, id)); return id; }, { back: "/admin/content", ok: "Page deleted", entityId: () => id, revalidate: REVAL });
+  await adminAction("pages", "page", "delete", async () => { const p = await db.query.pages.findFirst({ where: eq(pages.id, id) }); if (!p) throw new Error("Page not found"); if (["home", "about", "services", "hhr", "caribbean", "news", "contact", "aip-partners"].includes(p.key)) throw new Error("Core pages can be unpublished but not deleted"); await db.delete(pages).where(eq(pages.id, id)); return id; }, { back: "/admin/content", ok: "Page deleted", entityId: () => id, revalidate: REVAL });
 }
 
 // --- Services ----------------------------------------------------------------
@@ -218,4 +219,46 @@ export async function saveTeamMember(formData: FormData) {
 export async function deleteTeamMember(formData: FormData) {
   const id = parseNum(formData.get("memberId"));
   await adminAction("pages", "team_member", "delete", async () => { const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(teamMembers); if (Number(n) <= 1) throw new Error("Keep at least one team member — the About page needs a founder"); await db.delete(teamMembers).where(eq(teamMembers.id, id)); return id; }, { back: "/admin/content/team", ok: "Team member removed", entityId: () => id, revalidate: [...REVAL, "/admin/content/team"] });
+}
+
+// --- AIP Partners directory ---------------------------------------------------
+const PARTNER_REVAL = ["/admin/content/partners", PARTNERS_PAGE.slug, "/healthy-home-resources"];
+/** Add or edit one listing. A photo can be uploaded (stored in the Media library) or picked from it. */
+export async function savePartner(formData: FormData) {
+  const id = formData.get("partnerId") ? parseNum(formData.get("partnerId")) : null;
+  const back = backTo(formData, "/admin/content/partners");
+  await adminAction("pages", "partner", id ? "update" : "create", async (user) => {
+    const name = str(formData.get("name")); if (!name) throw new Error("Name is required");
+    const rawUrl = str(formData.get("url")); const url = normalizePartnerUrl(rawUrl);
+    if (rawUrl && !url) throw new Error(`“${rawUrl}” isn't a website address`);
+    let imageUrl = strOrNull(formData.get("imageUrl")); const f = formData.get("image_file");
+    if (f instanceof File && f.size > 0) imageUrl = (await uploadToMedia(f, { folder: "partners", usedOn: ["AIP Partners"], userId: user.id })).url;
+    const status = str(formData.get("status")) === "published" ? "published" as const : "draft" as const;
+    const values = { name, specialty: strOrNull(formData.get("specialty")), category: str(formData.get("category")) || "Other", description: str(formData.get("description")), url: url || null, imageUrl, location: strOrNull(formData.get("location")), status, updatedAt: new Date() };
+    if (formData.has("sort")) Object.assign(values, { sort: parseNum(formData.get("sort")) || 0 });
+    if (id) { await db.update(partners).set(values).where(eq(partners.id, id)); return { id, status }; }
+    const [{ n }] = await db.select({ n: sql<number>`coalesce(max(${partners.sort}), -1) + 1` }).from(partners);
+    const [row] = await db.insert(partners).values({ sort: Number(n), ...values }).returning({ id: partners.id }); return { id: row.id, status };
+  }, { back, ok: (r) => id ? "Listing saved" : r.status === "published" ? "Listing added and published" : "Listing added as a draft (hidden until you publish it)", entityId: (r) => r.id, revalidate: PARTNER_REVAL });
+}
+/** Publish, unpublish, reorder or delete one listing. */
+export async function partnerAction(formData: FormData) {
+  const id = parseNum(formData.get("partnerId")); const op = str(formData.get("op"));
+  const back = backTo(formData, "/admin/content/partners");
+  await adminAction("pages", "partner", op || "update", async () => {
+    const row = await db.query.partners.findFirst({ where: eq(partners.id, id) }); if (!row) throw new Error("Listing not found");
+    if (op === "publish") await db.update(partners).set({ status: "published", updatedAt: new Date() }).where(eq(partners.id, id));
+    else if (op === "unpublish") await db.update(partners).set({ status: "draft", updatedAt: new Date() }).where(eq(partners.id, id));
+    else if (op === "delete") await db.delete(partners).where(eq(partners.id, id));
+    else if (op === "up" || op === "down") {
+      // Swap with the neighbour in the same category, so ↑/↓ reorder cards within the group visitors see.
+      const all = await db.select({ id: partners.id, sort: partners.sort, name: partners.name, category: partners.category }).from(partners).orderBy(partners.sort, partners.name);
+      const group = all.filter((p) => p.category === row.category); const i = group.findIndex((p) => p.id === id); const j = op === "up" ? i - 1 : i + 1;
+      if (j >= 0 && j < group.length) {
+        const ordered = all.map((p) => p.id); const a = ordered.indexOf(group[i].id), b = ordered.indexOf(group[j].id); [ordered[a], ordered[b]] = [ordered[b], ordered[a]];
+        for (const [k, pid] of ordered.entries()) await db.update(partners).set({ sort: k }).where(eq(partners.id, pid));
+      }
+    } else throw new Error("Unknown action");
+    return { id, name: row.name };
+  }, { back, ok: (r) => op === "publish" ? `“${r.name}” is now on the site` : op === "unpublish" ? `“${r.name}” is hidden from the site` : op === "delete" ? `“${r.name}” deleted` : "Order updated", entityId: (r) => r.id, revalidate: PARTNER_REVAL });
 }

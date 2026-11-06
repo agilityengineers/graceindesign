@@ -8,14 +8,17 @@ import { getSetting } from "@/lib/server/settings";
 import type { NavActive } from "@/components/site/SiteNav";
 
 /** Builds a block-rendered page component + metadata for a CMS page key. */
-export function cmsPage(key: string, opts: { active: NavActive; sourceKey?: string; heroToggle?: boolean }) {
+/** `ensure` runs before the page is read, e.g. to create a page that databases seeded before it existed do not have. */
+export function cmsPage(key: string, opts: { active: NavActive; sourceKey?: string; heroToggle?: boolean; ensure?: () => Promise<void> }) {
   async function generateMetadata(): Promise<Metadata> {
+    await opts.ensure?.();
     const p = await getPage(key, true);
     const description = p?.page.seoDescription || (await getSetting("seo")).defaultDescription || undefined;
     return { title: p?.page.seoTitle ? { absolute: p.page.seoTitle } : p?.page.title, description, alternates: { canonical: p?.page.slug || undefined } };
   }
   async function Page({ searchParams }: { searchParams: Promise<{ preview?: string; from?: string }> }) {
     const sp = await searchParams;
+    await opts.ensure?.();
     const data = await getPage(key, await canPreview(sp));
     if (!data) notFound();
     const sourceKey = sp.from || opts.sourceKey || key;

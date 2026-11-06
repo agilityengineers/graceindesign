@@ -5,7 +5,8 @@ import Carousel from "./Carousel";
 import Reveal from "./Reveal";
 import { ConsultButton } from "./ConsultContext";
 import { ArrowRight, ArrowUpRight, Heart, Rss, Play, Globe, Check } from "@/components/ui/Icons";
-import { getProducts, getPublishedPosts, getFounder, getServiceList, getCaribbeanData } from "@/lib/data/site";
+import { getProducts, getPublishedPosts, getFounder, getServiceList, getCaribbeanData, getPartners } from "@/lib/data/site";
+import { groupPartners, normalizePartnerUrl } from "@/lib/partners";
 import { getMediaMap, resolveDeep } from "@/lib/data/media";
 import { WELLNESS_GROUPS, EPISODES } from "@/lib/seed-data/demo";
 import { fmtDate } from "@/lib/utils";
@@ -312,6 +313,11 @@ async function BlockView({ block: b, ctx }: { block: Block; ctx: { pageKey: stri
             <span style={{ fontSize: 12, color: "#8c95a8", lineHeight: 1.6 }}>{c.regionalNote}</span>
           </aside>
         </div>
+      </section>); }
+    // AIP Partners: the curated directory from Admin → Content → Partner directory (published listings only).
+    case "partner_directory": { const rows = await getPartners(); const Dir = (await import("./PartnerDirectory")).default; return (
+      <section id="directory" className="gx" style={{ paddingTop: 72, paddingBottom: 104, display: "flex", flexDirection: "column", gap: 36, scrollMarginTop: 24 }}>
+        <Dir eyebrow={c.eyebrow} title={c.title} note={c.note} empty={c.empty} groups={groupPartners(rows.map((p) => ({ id: p.id, name: p.name, specialty: p.specialty || "", category: p.category.trim() || "Other", description: p.description, url: normalizePartnerUrl(p.url), image: p.imageUrl || "", location: p.location || "" })))} />
       </section>); }
     case "cc_directory": { const { resources } = await getCaribbeanData(); const Dir = (await import("./CaribbeanDirectory")).default; return (
       <section id="directory" className="gx" style={{ paddingTop: 104, paddingBottom: 104, display: "flex", flexDirection: "column", gap: 40 }}>

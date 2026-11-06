@@ -22,7 +22,7 @@ export default function SiteNav({ label, active, sourceKey, phone, email, servic
     ["AIP Products", "Aging In Place essentials from our shop", "/healthy-home-resources/aip-products"],
     ["WELLness Resources", "Guides for healthier living spaces", "/healthy-home-resources/wellness"],
     ["Home Health Series", "Articles & videos on home wellness", "/healthy-home-resources/home-health-series"],
-    ["AIP Partners", "Join our Aging In Place network", "/healthy-home-resources/aip-partners"],
+    ["AIP Partners", "Professionals we know and trust", "/healthy-home-resources/aip-partners"],
   ];
   return (
     <div style={{ position: "relative", zIndex: 50 }}>

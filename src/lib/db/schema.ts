@@ -537,6 +537,24 @@ export const media = pgTable("media", {
 });
 
 // ---------------------------------------------------------------------------
+// AIP Partners: a curated directory of independent professionals GID knows or has worked with
+// (Admin → Content → Partner directory). Not a recruiting funnel: no public submissions.
+// ---------------------------------------------------------------------------
+export const partners = pgTable("partners", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  specialty: text("specialty"), // e.g. "Occupational therapist", shown on the card
+  category: text("category").notNull().default("Other"), // the directory's filter groups
+  description: text("description").notNull().default(""),
+  url: text("url"),
+  imageUrl: text("image_url"), // a URL or media://slot reference, like other content images
+  location: text("location"),
+  status: contentStatusEnum("status").notNull().default("draft"), // published = shown; draft = hidden
+  sort: integer("sort").notNull().default(0),
+  ...timestamps,
+}, (t) => ({ statusIdx: index("partners_status_idx").on(t.status, t.category, t.sort) }));
+
+// ---------------------------------------------------------------------------
 // Caribbean Connection
 // ---------------------------------------------------------------------------
 export const ccCountries = pgTable("cc_countries", {
@@ -859,6 +877,7 @@ export type Media = typeof media.$inferSelect;
 export type PathRow = typeof paths.$inferSelect;
 export type FormField = typeof formFields.$inferSelect;
 export type AvailabilityBlock = typeof availabilityBlocks.$inferSelect;
+export type Partner = typeof partners.$inferSelect;
 export type CcResource = typeof ccResources.$inferSelect;
 export type CcEvent = typeof ccEvents.$inferSelect;
 export type CcSubscriber = typeof ccSubscribers.$inferSelect;

@@ -5,6 +5,7 @@ export const CONTENT_TABS = [
   { key: "posts", label: "News & Insights", href: "/admin/content/posts" },
   { key: "testimonials", label: "Testimonials", href: "/admin/content/testimonials" },
   { key: "team", label: "About & team", href: "/admin/content/team" },
+  { key: "partners", label: "Partner directory", href: "/admin/content/partners" },
   { key: "media", label: "Media library", href: "/admin/content/media" },
   { key: "settings", label: "Site settings", href: "/admin/content/settings" },
 ];

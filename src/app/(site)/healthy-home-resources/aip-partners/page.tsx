@@ -1,13 +1,8 @@
-import { canPreview } from "@/lib/auth/session";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import SiteFrame from "@/components/site/SiteFrame";
-import ServiceLanding from "@/components/site/ServiceLanding";
-import Reveal from "@/components/site/Reveal";
-import { getServiceBySlug } from "@/lib/data/site";
+import { cmsPage } from "@/app/(site)/_page-factory";
+import { ensurePartnersPage } from "@/lib/server/partners";
 export const dynamic = "force-dynamic";
-export async function generateMetadata(): Promise<Metadata> { const d = await getServiceBySlug("aip-partners", true); return d ? { title: d.service.seoTitle || d.service.title, description: d.service.seoDescription || d.service.sub, alternates: { canonical: "/healthy-home-resources/aip-partners" } } : {}; }
-export default async function Page({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
-  const sp = await searchParams; const d = await getServiceBySlug("aip-partners", await canPreview(sp)); if (!d) notFound();
-  return <SiteFrame label="Healthy Home Resources · AIP Partners" active="hbd" sourceKey="aip-partners" heroToggle={{ kind: "service", key: "aip-partners", style: d.service.heroStyle }}><ServiceLanding s={d.service as any} all={d.all} heroStyle={d.service.heroStyle} /><Reveal /></SiteFrame>;
-}
+// A curated directory of independent professionals (Admin → Content → Partner directory), built from page blocks in
+// Admin → Content → Pages → AIP Partners. It used to be the "aip-partners" service landing with a consultation form.
+const { Page, generateMetadata } = cmsPage("aip-partners", { active: "hbd", sourceKey: "aip-partners", heroToggle: false, ensure: ensurePartnersPage });
+export { generateMetadata };
+export default Page;

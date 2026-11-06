@@ -1,9 +1,9 @@
 import "server-only";
 import { cache } from "react";
 import { and, asc, desc, eq, gte, inArray, isNull, or, sql } from "drizzle-orm";
-import { db, pages, pageBlocks, services, posts, products, testimonials, teamMembers, ccResources, ccEvents, ccCountries, rssSources, socialFeedItems, type Service } from "@/lib/db";
+import { db, pages, pageBlocks, services, posts, products, testimonials, teamMembers, partners, ccResources, ccEvents, ccCountries, rssSources, socialFeedItems, type Service } from "@/lib/db";
 import { getSettings } from "@/lib/server/settings";
-import { getMediaMap, resolveDeep } from "./media";
+import { getMediaMap, resolveDeep, resolveImg } from "./media";
 import { UPCOMING_EVENTS_LOOKBACK_MS, upcomingEvents } from "@/lib/cc-events";
 
 export const getSiteChrome = cache(async () => {
@@ -75,6 +75,13 @@ export const getProducts = cache(async (featuredOnly = false) => {
 
 export const getTestimonials = cache(async () => db.select().from(testimonials).where(eq(testimonials.visible, true)).orderBy(asc(testimonials.sort)));
 export const getFounder = cache(async () => { const map = await getMediaMap(); const t = await db.query.teamMembers.findFirst({ where: eq(teamMembers.visible, true), orderBy: asc(teamMembers.sort) }); return t ? { ...t, photoUrl: resolveDeep(map, t.photoUrl) } : null; });
+
+/** Published AIP Partners listings, in the admin's order (sort, then name), with images resolved. */
+export const getPartners = cache(async () => {
+  const map = await getMediaMap();
+  const rows = await db.select().from(partners).where(eq(partners.status, "published")).orderBy(asc(partners.sort), asc(partners.name));
+  return rows.map((p) => ({ ...p, imageUrl: p.imageUrl ? resolveImg(map, p.imageUrl) : null }));
+});
 
 export const getCaribbeanData = cache(async () => {
   const liveCountries = await db.select().from(ccCountries).orderBy(asc(ccCountries.sort));
