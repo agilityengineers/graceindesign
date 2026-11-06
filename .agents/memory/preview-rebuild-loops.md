@@ -20,3 +20,9 @@ Do not run a destructive dependency reinstall underneath the live preview during
 **Why:** Repeated source-only merges triggered `npm ci`, which removed dependencies while Next was serving requests and repeatedly broke navigation. A successful install afterward did not repair the already-running server's module state.
 
 **How to apply:** Preserve unchanged dependencies during merge setup; if a clean reinstall is necessary, stop the workflow first and restart it afterward.
+
+Keep development and production build output isolated.
+
+**Why:** Repeated missing generated chunks and stylesheets broke the live preview, including an unstyled homepage. Rebuilding into a separate development directory restored it; sharing output makes builds and cache cleanup unsafe while preview is running.
+
+**How to apply:** Preserve phase-specific output directories. Clean only the affected generated directory with its server stopped; do not revert to shared build output.

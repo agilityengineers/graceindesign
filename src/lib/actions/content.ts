@@ -186,7 +186,7 @@ export async function saveTestimonial(formData: FormData) {
   const id = formData.get("testimonialId") ? parseNum(formData.get("testimonialId")) : null;
   await adminAction("pages", "testimonial", id ? "update" : "create", async () => {
     const quote = str(formData.get("quote")); if (!quote) throw new Error("Quote is required");
-    const values = { quote, who: str(formData.get("who")) || "Client", whereLabel: str(formData.get("whereLabel")) || "Atlanta, GA", serviceSlug: strOrNull(formData.get("serviceSlug")), visible: formData.has("visible") ? bool(formData.get("visible")) : true, updatedAt: new Date() };
+    const values = { quote, who: str(formData.get("who")) || "Client", whereLabel: str(formData.get("whereLabel")) || "Atlanta, GA", serviceSlug: strOrNull(formData.get("serviceSlug")), visible: bool(formData.get("visible")), updatedAt: new Date() };
     if (id) { await db.update(testimonials).set(values).where(eq(testimonials.id, id)); return id; }
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(testimonials);
     const [t] = await db.insert(testimonials).values({ ...values, sort: Number(n) }).returning(); return t.id;
@@ -210,7 +210,7 @@ export async function saveTeamMember(formData: FormData) {
     const name = str(formData.get("name")); if (!name) throw new Error("Name is required");
     let photoUrl = strOrNull(formData.get("photoUrl")); const f = formData.get("photo_file");
     if (f instanceof File && f.size > 0) photoUrl = (await uploadToMedia(f, { folder: "team", usedOn: ["About", "Home"], userId: user.id })).url;
-    const values = { name, title: str(formData.get("title")) || "Team member", credentials: strOrNull(formData.get("credentials")), quote: strOrNull(formData.get("quote")), bio: strOrNull(formData.get("bio")), bio2: strOrNull(formData.get("bio2")), education: lines(formData.get("education")), credentialList: lines(formData.get("credentialList")), photoUrl, visible: formData.has("visible") ? bool(formData.get("visible")) : true, updatedAt: new Date() };
+    const values = { name, title: str(formData.get("title")) || "Team member", credentials: strOrNull(formData.get("credentials")), quote: strOrNull(formData.get("quote")), bio: strOrNull(formData.get("bio")), bio2: strOrNull(formData.get("bio2")), education: lines(formData.get("education")), credentialList: lines(formData.get("credentialList")), photoUrl, visible: bool(formData.get("visible")), updatedAt: new Date() };
     if (id) { await db.update(teamMembers).set(values).where(eq(teamMembers.id, id)); return id; }
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(teamMembers);
     const [t] = await db.insert(teamMembers).values({ ...values, sort: Number(n) }).returning(); return t.id;
@@ -232,7 +232,7 @@ export async function saveAipPartner(formData: FormData) {
     let logoUrl = strOrNull(formData.get("logoUrl")); const f = formData.get("logo_file");
     if (f instanceof File && f.size > 0) logoUrl = (await uploadToMedia(f, { folder: "partners", usedOn: ["AIP Partners"], userId: user.id })).url;
     const relationship = str(formData.get("relationship")); if (!isAipPartnerRelationship(relationship)) throw new Error("Choose a relationship");
-    const values = { name, category, relationship, serviceType: strOrNull(formData.get("serviceType")), serviceArea: strOrNull(formData.get("serviceArea")), description: strOrNull(formData.get("description")), websiteUrl: normalizeWebsite(str(formData.get("websiteUrl"))), logoUrl, visible: formData.has("visible") ? bool(formData.get("visible")) : false, updatedAt: new Date() };
+    const values = { name, category, relationship, serviceType: strOrNull(formData.get("serviceType")), serviceArea: strOrNull(formData.get("serviceArea")), description: strOrNull(formData.get("description")), websiteUrl: normalizeWebsite(str(formData.get("websiteUrl"))), logoUrl, visible: bool(formData.get("visible")), updatedAt: new Date() };
     if (id) { await db.update(aipPartners).set(values).where(eq(aipPartners.id, id)); return id; }
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(aipPartners);
     const [t] = await db.insert(aipPartners).values({ ...values, sort: Number(n) }).returning(); return t.id;
