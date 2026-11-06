@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — AIP Partners directory
+- **Admin → Content → AIP Partners** (owners and editors): add, edit, hide/show, reorder (drag) and remove the professionals listed on the AIP Partners page. Each listing has a business or professional name, a category, a type of service, a relationship (*GID collaborator* or *Known professional*), a service area (city, region or "Virtual"), a short description, a website and an optional logo or photo (upload or media library). Websites typed without `https://` get it added; anything that isn't an http(s) address is refused.
+- Six categories: Home Modification, Healthcare & Therapy, Home Care & Support, Real Estate & Relocation, Home Organization, Specialized Services (`src/lib/aip-partners.ts`).
+- **`/healthy-home-resources/aip-partners`** gains an *Our trusted partners* section (`#partners`) above the partner sign-up form: cards with the category, a relationship badge, type of service, description, service area and a *Visit website* link (new tab), filtered by category pills that only list categories with at least one shown partner. The section stays off the page until a partner is shown, so the page is unchanged until the first listing goes in.
+- New table `aip_partners` (`drizzle/0011_aip_partners.sql`). `npm run db:seed -- --demo` plants four clearly labelled sample partners; a normal seed plants none. `npm run test:aip-partners` covers categories, relationships and website checks.
+
 ## Unreleased — Google & SEO settings, Google Business Profile on the site
 - **Admin → Site settings → Google & SEO** (owners and editors): the GA4 Measurement ID, an optional Tag Manager container and the Search Console "HTML tag" verification code are entered in the admin and go live on save — no republish. `NEXT_PUBLIC_GA_MEASUREMENT_ID` still works as a fallback until an ID is saved. Pasted values are normalised and only Google's exact ID shapes are accepted (`src/lib/google.ts`), and they are re-checked when a page renders.
 - Analytics now loads on public pages only (from `SiteFrame`, no longer the root layout): never on admin, login, client portal, proposal, booking, unsubscribe or roadmap pages (`SiteFrame privatePage`), so per-client links with tokens are never sent to Google. "Don't count visits from signed-in team members" is on by default.
