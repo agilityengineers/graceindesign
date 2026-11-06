@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { AIP_PARTNER_CATEGORIES, aipPartnerCategoryLabel, aipPartnerRelationshipLabel, isAipPartnerCategory, isAipPartnerRelationship, normalizeWebsite } from "../src/lib/aip-partners";
+import { AIP_PARTNER_CATEGORIES, aipPartnerCategoryLabel, aipPartnerRelationshipLabel, isAipPartnerCategory, isAipPartnerRelationship, normalizeWebsite, partnerImageKind } from "../src/lib/aip-partners";
 import { DEMO_AIP_PARTNERS } from "../src/lib/seed-data/demo";
 
 test("normalizeWebsite adds https and keeps full URLs", () => {
@@ -39,4 +39,12 @@ test("the AIP Partners page is a directory, not a recruiting page", async () => 
   assert.match(text, /partner_directory/);
   assert.doesNotMatch(text, /become a partner|join our|consult_form/i);
   assert.equal(PARTNERS_PAGE.slug, "/healthy-home-resources/aip-partners");
+});
+
+test("image kind is photo only when asked for, otherwise logo", () => {
+  assert.equal(partnerImageKind("photo"), "photo");
+  assert.equal(partnerImageKind("logo"), "logo");
+  assert.equal(partnerImageKind(""), "logo");
+  assert.equal(partnerImageKind(null), "logo");
+  assert.equal(partnerImageKind("banner"), "logo");
 });

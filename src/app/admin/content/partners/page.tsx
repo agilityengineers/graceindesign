@@ -9,7 +9,7 @@ import ConfirmButton from "@/components/admin/Confirm";
 import Sortable from "@/components/admin/Sortable";
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentTabs from "@/components/admin/ContentTabs";
-import { AIP_PARTNER_CATEGORIES, AIP_PARTNER_RELATIONSHIPS, aipPartnerCategoryLabel, aipPartnerRelationshipLabel } from "@/lib/aip-partners";
+import { AIP_PARTNER_CATEGORIES, AIP_PARTNER_RELATIONSHIPS, aipPartnerCategoryLabel, aipPartnerRelationshipLabel, partnerImageKind } from "@/lib/aip-partners";
 import { saveAipPartner, aipPartnerAction, reorderAipPartners } from "@/lib/actions/content";
 
 export const metadata = { title: "AIP Partners" };
@@ -22,7 +22,7 @@ export default async function AipPartnersAdmin() {
   const Form = ({ p, compact }: { p?: typeof rows[number]; compact?: boolean }) => { const wide = compact ? "1/-1" : "2/-1"; return (
     <form action={saveAipPartner} encType="multipart/form-data" style={{ display: "grid", gridTemplateColumns: compact ? "1fr" : "120px 1fr 1fr", gap: 10, padding: 12, borderRadius: 12, border: "1px solid #eef0f4", background: p && !p.visible ? "#f7f9fc" : "#fff" }}>
       {p && <input type="hidden" name="partnerId" value={p.id} />}
-      <div style={compact ? undefined : { gridRow: "span 5" }}><ImagePicker name="logoUrl" fileName="logo_file" label="Logo or photo (optional)" defaultValue={p?.logoUrl || ""} preview={p?.logoUrl ? resolveImg(map, p.logoUrl) : undefined} layout="stack" width={120} height={90} /></div>
+      <div style={compact ? undefined : { gridRow: "span 6" }}><ImagePicker name="logoUrl" fileName="logo_file" label="Logo or photo (optional)" defaultValue={p?.logoUrl || ""} preview={p?.logoUrl ? resolveImg(map, p.logoUrl) : undefined} layout="stack" width={120} height={90} /></div>
       <label className="label label-caps">Business or professional name<input name="name" defaultValue={p?.name || ""} className="admin-input admin-input-sm" placeholder="Mobility First OT" required /></label>
       <label className="label label-caps">Category<select name="category" defaultValue={p?.category || ""} className="admin-input admin-input-sm" required><option value="" disabled>Choose a category…</option>{AIP_PARTNER_CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}</select></label>
       <label className="label label-caps">Type of service<input name="serviceType" defaultValue={p?.serviceType || ""} className="admin-input admin-input-sm" placeholder="Occupational therapy" /></label>
@@ -30,6 +30,15 @@ export default async function AipPartnersAdmin() {
       <label className="label label-caps" style={{ gridColumn: wide }}>Service area<input name="serviceArea" defaultValue={p?.serviceArea || ""} className="admin-input admin-input-sm" placeholder="Metro Atlanta · or “Virtual”" /></label>
       <label className="label label-caps" style={{ gridColumn: wide }}>Short description<textarea name="description" rows={2} maxLength={400} defaultValue={p?.description || ""} className="admin-input" placeholder="One or two sentences on what they do and who they help." /></label>
       <label className="label label-caps" style={{ gridColumn: wide }}>Website<input name="websiteUrl" defaultValue={p?.websiteUrl || ""} className="admin-input admin-input-sm" placeholder="example.com" /></label>
+      <div style={{ gridColumn: wide, display: "flex", flexDirection: "column", gap: 8, padding: 10, borderRadius: 10, background: "#f7f8fa" }}>
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", fontSize: 12 }}>
+          <span className="label label-caps" style={{ margin: 0 }}>Image shows as</span>
+          <label style={{ display: "inline-flex", gap: 6, alignItems: "center" }}><input type="radio" name="imageKind" value="logo" defaultChecked={partnerImageKind(p?.imageKind) === "logo"} />Logo <span style={{ color: "#8c95a8" }}>(whole, on a light tile)</span></label>
+          <label style={{ display: "inline-flex", gap: 6, alignItems: "center" }}><input type="radio" name="imageKind" value="photo" defaultChecked={partnerImageKind(p?.imageKind) === "photo"} />Photo <span style={{ color: "#8c95a8" }}>(cropped to fill)</span></label>
+        </div>
+        <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12 }}><input type="checkbox" name="imagePermission" defaultChecked={p?.imagePermission ?? false} />We have the partner's permission to use this image</label>
+        <label className="label label-caps">Image source / permission note<input name="imageSource" defaultValue={p?.imageSource || ""} className="admin-input admin-input-sm" placeholder="e.g. Logo from partnerco.com — permission emailed 11/2026" /></label>
+      </div>
       <div style={{ gridColumn: "1/-1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12 }}><input type="checkbox" name="visible" defaultChecked={p ? p.visible : true} />Shown on the AIP Partners page</label>
         <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8 }}>{p ? "Save" : "+ Add partner"}</button>
@@ -45,7 +54,7 @@ export default async function AipPartnersAdmin() {
             <Sortable ids={rows.map((r) => r.id)} onReorder={reorderAipPartners} handleTop>
               {rows.map((p) => (
                 <div key={p.id} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <span style={{ fontSize: 11, color: "#8c95a8" }}>{aipPartnerCategoryLabel(p.category)} · {aipPartnerRelationshipLabel(p.relationship)}{p.visible ? "" : " · hidden"}</span>
+                  <span style={{ fontSize: 11, color: "#8c95a8" }}>{aipPartnerCategoryLabel(p.category)} · {aipPartnerRelationshipLabel(p.relationship)}{p.visible ? "" : " · hidden"}{p.logoUrl && !p.imagePermission ? <span style={{ color: "#9a3c1e" }}> · image permission not recorded</span> : null}</span>
                   <Form p={p} />
                   <div style={{ alignSelf: "flex-end", display: "flex", gap: 8 }}>
                     <form action={aipPartnerAction}><input type="hidden" name="partnerId" value={p.id} /><input type="hidden" name="op" value="toggle" /><button type="submit" className="btn btn-ghost btn-xs" style={{ borderRadius: 8 }}>{p.visible ? "Hide" : "Show"}</button></form>

@@ -54,6 +54,12 @@ export function aipPartnerRelationshipLabel(key: string): string {
   return (AIP_PARTNER_RELATIONSHIPS.find((r) => r.key === key) ?? AIP_PARTNER_RELATIONSHIPS[1]).label;
 }
 
+/** How a listing's image is shown: a logo whole on a light tile, or a photo cropped to fill it. Anything else is a logo. */
+export type AipPartnerImageKind = "logo" | "photo";
+export function partnerImageKind(v: string | null | undefined): AipPartnerImageKind {
+  return v === "photo" ? "photo" : "logo";
+}
+
 /** The page AIP Partners renders from (Admin → Content → Pages), created on first visit when a database predates it. */
 export const PARTNERS_PAGE = {
   key: "aip-partners",

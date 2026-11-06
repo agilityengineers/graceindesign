@@ -7,7 +7,7 @@ import { audit } from "@/lib/server/audit";
 import { adminAction, backTo } from "./_util";
 import { str, strOrNull, parseNum, bool, slugify, tryJson } from "@/lib/utils";
 import { isShelfKey, shelfSection } from "@/lib/shelves";
-import { isAipPartnerCategory, isAipPartnerRelationship, normalizeWebsite, PARTNERS_PAGE } from "@/lib/aip-partners";
+import { isAipPartnerCategory, isAipPartnerRelationship, normalizeWebsite, partnerImageKind, PARTNERS_PAGE } from "@/lib/aip-partners";
 import { eventsSection } from "@/lib/events";
 import { uploadToMedia } from "@/lib/server/media-upload";
 import { autoShareBlogPost } from "@/lib/server/social";
@@ -232,7 +232,7 @@ export async function saveAipPartner(formData: FormData) {
     let logoUrl = strOrNull(formData.get("logoUrl")); const f = formData.get("logo_file");
     if (f instanceof File && f.size > 0) logoUrl = (await uploadToMedia(f, { folder: "partners", usedOn: ["AIP Partners"], userId: user.id })).url;
     const relationship = str(formData.get("relationship")); if (!isAipPartnerRelationship(relationship)) throw new Error("Choose a relationship");
-    const values = { name, category, relationship, serviceType: strOrNull(formData.get("serviceType")), serviceArea: strOrNull(formData.get("serviceArea")), description: strOrNull(formData.get("description")), websiteUrl: normalizeWebsite(str(formData.get("websiteUrl"))), logoUrl, visible: bool(formData.get("visible")), updatedAt: new Date() };
+    const values = { name, category, relationship, serviceType: strOrNull(formData.get("serviceType")), serviceArea: strOrNull(formData.get("serviceArea")), description: strOrNull(formData.get("description")), websiteUrl: normalizeWebsite(str(formData.get("websiteUrl"))), logoUrl, imageKind: partnerImageKind(str(formData.get("imageKind"))), imagePermission: bool(formData.get("imagePermission")), imageSource: strOrNull(formData.get("imageSource")), visible: bool(formData.get("visible")), updatedAt: new Date() };
     if (id) { await db.update(aipPartners).set(values).where(eq(aipPartners.id, id)); return id; }
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(aipPartners);
     const [t] = await db.insert(aipPartners).values({ ...values, sort: Number(n) }).returning(); return t.id;

@@ -11,6 +11,12 @@
 - **`/healthy-home-resources/aip-partners`** gains an *Our trusted partners* section (`#partners`) above the partner sign-up form: cards with the category, a relationship badge, type of service, description, service area and a *Visit website* link (new tab), filtered by category pills that only list categories with at least one shown partner. The section stays off the page until a partner is shown, so the page is unchanged until the first listing goes in.
 - New table `aip_partners` (`drizzle/0011_aip_partners.sql`). `npm run db:seed -- --demo` plants four clearly labelled sample partners; a normal seed plants none. `npm run test:aip-partners` covers categories, relationships and website checks.
 
+## Unreleased — AIP Partners: logos and photos, as in the approved mock-up
+- **Partner cards follow the mock-up:** the logo or photo sits in a fixed square tile beside the category, name, type of service and service area, so every listing is the same size. The description and a *Visit Partner Website ↗* link go below a divider. Partners without an image show a neutral "Partner logo" placeholder. Cards are two per row, and the tile stacks above the name on small phones.
+- **Logo or photo.** In Admin → Content → AIP Partners each listing has an *Image shows as* choice. *Logo* shows the whole image on a light tile; *Photo* crops it to fill the tile.
+- **Image permission.** Each listing records whether we have the partner's permission to use the image, plus a source note (e.g. "Logo from partnerco.com — permission emailed 11/2026"). The admin list flags any partner whose image has no recorded permission.
+- `aip_partners` gains `image_kind`, `image_permission` and `image_source` (`drizzle/0012_aip_partner_images.sql`). `npm run test:aip-partners` covers the image-kind rule.
+
 ## Unreleased — fixes
 - **Hiding a testimonial or team member works again.** In Admin → Content → Testimonials and → About & team, unchecking *Visible* / *Shown on the About page* and saving left the item on the site, because an unchecked box isn't sent with the form and the save treated "missing" as "visible". A missing box now means hidden; new items still start visible (the box is pre-checked).
 
