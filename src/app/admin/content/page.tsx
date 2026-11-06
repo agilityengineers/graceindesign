@@ -20,7 +20,7 @@ const BLOCK_OPTIONS: [string, string][] = [
   ["rich_text", "Rich text"], ["page_header", "Page header"], ["cta", "Call to action"], ["steps", "Steps"], ["news", "News & Insights row"], ["featured_products", "Featured products (homepage row)"], ["consult_form", "Consultation form"], ["google_map", "Google map (set in Site settings → Google & SEO)"],
   ...SHELF_KEYS.map((k): [string, string] => [`product_shelf:${k}`, `${SHELVES[k].name} section`]),
   ["events:caribbean", "Caribbean events section"], ["events:us", "United States events section"], ["events", "Events (choose region, state or city)"],
-  ["partner_directory", "AIP Partners directory (listings from Content → Partner directory)"], ["product_shelf", "Product shelf (every product, or pick a shelf)"], ["product_grid", "Product grid with category filters"], ["service_list", "Service list"], ["contact_steps", "Contact steps"],
+  ["partner_directory", "AIP Partners directory (listings from Content → AIP Partners)"], ["product_shelf", "Product shelf (every product, or pick a shelf)"], ["product_grid", "Product grid with category filters"], ["service_list", "Service list"], ["contact_steps", "Contact steps"],
 ];
 const CORE = ["home", "about", "services", "hhr", "caribbean", "news", "contact"];
 const PAGE_HREF: Record<string, string> = { home: "/", about: "/about", services: "/services", hhr: "/healthy-home-resources", caribbean: "/caribbean-connection", news: "/news", contact: "/contact", "aip-products": "/healthy-home-resources/aip-products", "aip-partners": "/healthy-home-resources/aip-partners", wellness: "/healthy-home-resources/wellness", "home-health": "/healthy-home-resources/home-health-series", privacy: "/privacy", terms: "/terms", accessibility: "/accessibility" };

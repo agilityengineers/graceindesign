@@ -1,7 +1,7 @@
 /** Page + block seeds. Copy is verbatim from the design/*.dc.html prototypes. */
 import { mediaRef as m } from "./media";
 import { shelfSection } from "../shelves";
-import { PARTNERS_PAGE } from "../partners";
+import { PARTNERS_PAGE } from "../aip-partners";
 
 export type SeedBlock = { type: string; content: Record<string, unknown> };
 export type SeedPage = { key: string; slug: string; title: string; navLabel: string; heroStyle?: "classic" | "cinematic"; seoTitle?: string; seoDescription?: string; parentKey?: string; sort: number; status?: "draft" | "published"; blocks: SeedBlock[] };
@@ -80,7 +80,7 @@ export const PAGES: SeedPage[] = [
       { type: "product_shelf", content: shelfSection("wellness") },
     ],
   },
-  // AIP Partners: a curated directory (Admin → Content → Partner directory), not a recruiting page. Existing databases get
+  // AIP Partners: a curated directory (Admin → Content → AIP Partners), not a recruiting page. Existing databases get
   // the same page on first visit (src/lib/server/partners.ts).
   { ...PARTNERS_PAGE, heroStyle: "classic", sort: 4, blocks: PARTNERS_PAGE.blocks.map((b) => ({ type: b.type, content: { ...b.content } })) },
   {

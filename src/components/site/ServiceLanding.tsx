@@ -42,6 +42,7 @@ export default async function ServiceLanding({ s, all, heroStyle }: { s: Svc; al
       </div>
     </section>
 
+
     {hasBA && <BeforeAfter before={s.beforeAfter!.before} after={s.beforeAfter!.after} title={s.beforeAfter!.title} beforeAlt={s.beforeAfter!.beforeAlt} afterAlt={s.beforeAfter!.afterAlt} />}
 
     {s.features.length > 0 && (

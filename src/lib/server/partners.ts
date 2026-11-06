@@ -1,7 +1,7 @@
 import "server-only";
 import { eq } from "drizzle-orm";
 import { db, pages, pageBlocks } from "@/lib/db";
-import { PARTNERS_PAGE } from "@/lib/partners";
+import { PARTNERS_PAGE } from "@/lib/aip-partners";
 
 let ensured = false;
 /**

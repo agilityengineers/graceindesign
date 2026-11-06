@@ -500,6 +500,22 @@ export const testimonials = pgTable("testimonials", {
   ...timestamps,
 });
 
+/** AIP Partners directory: trusted professionals listed on /healthy-home-resources/aip-partners (Admin → Content → AIP Partners). `category` is a key from src/lib/aip-partners.ts. */
+export const aipPartners = pgTable("aip_partners", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  serviceType: text("service_type"), // e.g. "Occupational therapy", "Bathroom remodels"
+  relationship: text("relationship").notNull().default("known"), // "collaborator" = a GID collaborator, "known" = a known professional (src/lib/aip-partners.ts)
+  serviceArea: text("service_area"), // city, region or "Virtual"
+  description: text("description"),
+  websiteUrl: text("website_url"),
+  logoUrl: text("logo_url"),
+  visible: boolean("visible").notNull().default(true),
+  sort: integer("sort").notNull().default(0),
+  ...timestamps,
+});
+
 export const teamMembers = pgTable("team_members", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -535,24 +551,6 @@ export const media = pgTable("media", {
   remoteUrl: text("remote_url"),
   ...timestamps,
 });
-
-// ---------------------------------------------------------------------------
-// AIP Partners: a curated directory of independent professionals GID knows or has worked with
-// (Admin → Content → Partner directory). Not a recruiting funnel: no public submissions.
-// ---------------------------------------------------------------------------
-export const partners = pgTable("partners", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  specialty: text("specialty"), // e.g. "Occupational therapist", shown on the card
-  category: text("category").notNull().default("Other"), // the directory's filter groups
-  description: text("description").notNull().default(""),
-  url: text("url"),
-  imageUrl: text("image_url"), // a URL or media://slot reference, like other content images
-  location: text("location"),
-  status: contentStatusEnum("status").notNull().default("draft"), // published = shown; draft = hidden
-  sort: integer("sort").notNull().default(0),
-  ...timestamps,
-}, (t) => ({ statusIdx: index("partners_status_idx").on(t.status, t.category, t.sort) }));
 
 // ---------------------------------------------------------------------------
 // Caribbean Connection
@@ -873,11 +871,11 @@ export type Post = typeof posts.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Testimonial = typeof testimonials.$inferSelect;
 export type TeamMember = typeof teamMembers.$inferSelect;
+export type AipPartner = typeof aipPartners.$inferSelect;
 export type Media = typeof media.$inferSelect;
 export type PathRow = typeof paths.$inferSelect;
 export type FormField = typeof formFields.$inferSelect;
 export type AvailabilityBlock = typeof availabilityBlocks.$inferSelect;
-export type Partner = typeof partners.$inferSelect;
 export type CcResource = typeof ccResources.$inferSelect;
 export type CcEvent = typeof ccEvents.$inferSelect;
 export type CcSubscriber = typeof ccSubscribers.$inferSelect;

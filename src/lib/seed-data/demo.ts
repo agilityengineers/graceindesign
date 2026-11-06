@@ -117,6 +117,14 @@ export const CC_REGIONAL_NEWS: readonly (readonly [title: string, source: string
 /** No seeded testimonials: add real, approved client quotes in Admin → Content → Testimonials. */
 export const TESTIMONIALS: readonly (readonly [quote: string, who: string, where: string, serviceSlug: string])[] = [];
 
+/** Sample AIP Partners directory listings, planted only with `--demo` so the layout can be checked. Real partners are added in Admin → Content → AIP Partners. */
+export const DEMO_AIP_PARTNERS: readonly (readonly [name: string, category: string, serviceType: string, relationship: string, serviceArea: string, description: string, website: string])[] = [
+  ["Sample: Mobility First OT", "healthcare-therapy", "Occupational therapy", "collaborator", "Metro Atlanta", "Occupational therapy home visits focused on safe bathing, transfers and fall prevention.", "https://example.com/mobility-first"],
+  ["Sample: Steady Step Remodeling", "home-modification", "Accessibility remodels", "collaborator", "North Georgia", "CAPS-certified contractor for grab bars, curbless showers and zero-step entries.", "https://example.com/steady-step"],
+  ["Sample: Harbor Home Care", "home-care", "In-home care", "known", "Atlanta & suburbs", "Non-medical in-home support and care management for older adults and their families.", "https://example.com/harbor-home-care"],
+  ["Sample: Next Chapter Moves", "real-estate", "Senior relocation", "known", "Virtual", "Senior relocation specialists who plan, pack and settle you into a right-sized home.", ""],
+];
+
 export const TEAM = {
   name: "Grace A. Williams", title: "Principal, Grace In Design Services", credentials: "Registered Interior Designer · WELL AP · CAPS",
   quote: "I believe the best spaces are thoughtfully designed around the people who use them.",

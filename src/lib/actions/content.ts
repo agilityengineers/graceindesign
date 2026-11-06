@@ -1,16 +1,16 @@
 "use server";
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { db, pages, pageBlocks, services, posts, testimonials, teamMembers, partners, paths } from "@/lib/db";
+import { db, pages, pageBlocks, services, posts, testimonials, teamMembers, paths, aipPartners } from "@/lib/db";
 import { requireArea } from "@/lib/auth/session";
 import { audit } from "@/lib/server/audit";
 import { adminAction, backTo } from "./_util";
 import { str, strOrNull, parseNum, bool, slugify, tryJson } from "@/lib/utils";
 import { isShelfKey, shelfSection } from "@/lib/shelves";
+import { isAipPartnerCategory, isAipPartnerRelationship, normalizeWebsite, PARTNERS_PAGE } from "@/lib/aip-partners";
 import { eventsSection } from "@/lib/events";
 import { uploadToMedia } from "@/lib/server/media-upload";
 import { autoShareBlogPost } from "@/lib/server/social";
-import { normalizePartnerUrl, PARTNERS_PAGE } from "@/lib/partners";
 
 const SITE_PATHS = ["/", "/about", "/services", "/healthy-home-resources", "/caribbean-connection", "/news", "/contact"];
 const REVAL = ["/admin/content", ...SITE_PATHS];
@@ -186,7 +186,7 @@ export async function saveTestimonial(formData: FormData) {
   const id = formData.get("testimonialId") ? parseNum(formData.get("testimonialId")) : null;
   await adminAction("pages", "testimonial", id ? "update" : "create", async () => {
     const quote = str(formData.get("quote")); if (!quote) throw new Error("Quote is required");
-    const values = { quote, who: str(formData.get("who")) || "Client", whereLabel: str(formData.get("whereLabel")) || "Atlanta, GA", serviceSlug: strOrNull(formData.get("serviceSlug")), visible: formData.has("visible") ? bool(formData.get("visible")) : true, updatedAt: new Date() };
+    const values = { quote, who: str(formData.get("who")) || "Client", whereLabel: str(formData.get("whereLabel")) || "Atlanta, GA", serviceSlug: strOrNull(formData.get("serviceSlug")), visible: bool(formData.get("visible")), updatedAt: new Date() };
     if (id) { await db.update(testimonials).set(values).where(eq(testimonials.id, id)); return id; }
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(testimonials);
     const [t] = await db.insert(testimonials).values({ ...values, sort: Number(n) }).returning(); return t.id;
@@ -210,7 +210,7 @@ export async function saveTeamMember(formData: FormData) {
     const name = str(formData.get("name")); if (!name) throw new Error("Name is required");
     let photoUrl = strOrNull(formData.get("photoUrl")); const f = formData.get("photo_file");
     if (f instanceof File && f.size > 0) photoUrl = (await uploadToMedia(f, { folder: "team", usedOn: ["About", "Home"], userId: user.id })).url;
-    const values = { name, title: str(formData.get("title")) || "Team member", credentials: strOrNull(formData.get("credentials")), quote: strOrNull(formData.get("quote")), bio: strOrNull(formData.get("bio")), bio2: strOrNull(formData.get("bio2")), education: lines(formData.get("education")), credentialList: lines(formData.get("credentialList")), photoUrl, visible: formData.has("visible") ? bool(formData.get("visible")) : true, updatedAt: new Date() };
+    const values = { name, title: str(formData.get("title")) || "Team member", credentials: strOrNull(formData.get("credentials")), quote: strOrNull(formData.get("quote")), bio: strOrNull(formData.get("bio")), bio2: strOrNull(formData.get("bio2")), education: lines(formData.get("education")), credentialList: lines(formData.get("credentialList")), photoUrl, visible: bool(formData.get("visible")), updatedAt: new Date() };
     if (id) { await db.update(teamMembers).set(values).where(eq(teamMembers.id, id)); return id; }
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(teamMembers);
     const [t] = await db.insert(teamMembers).values({ ...values, sort: Number(n) }).returning(); return t.id;
@@ -222,43 +222,34 @@ export async function deleteTeamMember(formData: FormData) {
 }
 
 // --- AIP Partners directory ---------------------------------------------------
-const PARTNER_REVAL = ["/admin/content/partners", PARTNERS_PAGE.slug, "/healthy-home-resources"];
-/** Add or edit one listing. A photo can be uploaded (stored in the Media library) or picked from it. */
-export async function savePartner(formData: FormData) {
+const PARTNERS_BACK = "/admin/content/partners";
+const PARTNERS_REVAL = [PARTNERS_BACK, "/healthy-home-resources/aip-partners"];
+export async function saveAipPartner(formData: FormData) {
   const id = formData.get("partnerId") ? parseNum(formData.get("partnerId")) : null;
-  const back = backTo(formData, "/admin/content/partners");
-  await adminAction("pages", "partner", id ? "update" : "create", async (user) => {
+  await adminAction("pages", "aip_partner", id ? "update" : "create", async (user) => {
     const name = str(formData.get("name")); if (!name) throw new Error("Name is required");
-    const rawUrl = str(formData.get("url")); const url = normalizePartnerUrl(rawUrl);
-    if (rawUrl && !url) throw new Error(`“${rawUrl}” isn't a website address`);
-    let imageUrl = strOrNull(formData.get("imageUrl")); const f = formData.get("image_file");
-    if (f instanceof File && f.size > 0) imageUrl = (await uploadToMedia(f, { folder: "partners", usedOn: ["AIP Partners"], userId: user.id })).url;
-    const status = str(formData.get("status")) === "published" ? "published" as const : "draft" as const;
-    const values = { name, specialty: strOrNull(formData.get("specialty")), category: str(formData.get("category")) || "Other", description: str(formData.get("description")), url: url || null, imageUrl, location: strOrNull(formData.get("location")), status, updatedAt: new Date() };
-    if (formData.has("sort")) Object.assign(values, { sort: parseNum(formData.get("sort")) || 0 });
-    if (id) { await db.update(partners).set(values).where(eq(partners.id, id)); return { id, status }; }
-    const [{ n }] = await db.select({ n: sql<number>`coalesce(max(${partners.sort}), -1) + 1` }).from(partners);
-    const [row] = await db.insert(partners).values({ sort: Number(n), ...values }).returning({ id: partners.id }); return { id: row.id, status };
-  }, { back, ok: (r) => id ? "Listing saved" : r.status === "published" ? "Listing added and published" : "Listing added as a draft (hidden until you publish it)", entityId: (r) => r.id, revalidate: PARTNER_REVAL });
+    const category = str(formData.get("category")); if (!isAipPartnerCategory(category)) throw new Error("Choose a category");
+    let logoUrl = strOrNull(formData.get("logoUrl")); const f = formData.get("logo_file");
+    if (f instanceof File && f.size > 0) logoUrl = (await uploadToMedia(f, { folder: "partners", usedOn: ["AIP Partners"], userId: user.id })).url;
+    const relationship = str(formData.get("relationship")); if (!isAipPartnerRelationship(relationship)) throw new Error("Choose a relationship");
+    const values = { name, category, relationship, serviceType: strOrNull(formData.get("serviceType")), serviceArea: strOrNull(formData.get("serviceArea")), description: strOrNull(formData.get("description")), websiteUrl: normalizeWebsite(str(formData.get("websiteUrl"))), logoUrl, visible: bool(formData.get("visible")), updatedAt: new Date() };
+    if (id) { await db.update(aipPartners).set(values).where(eq(aipPartners.id, id)); return id; }
+    const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(aipPartners);
+    const [t] = await db.insert(aipPartners).values({ ...values, sort: Number(n) }).returning(); return t.id;
+  }, { back: PARTNERS_BACK, ok: id ? "Partner saved" : "Partner added", entityId: (k) => k, revalidate: PARTNERS_REVAL });
 }
-/** Publish, unpublish, reorder or delete one listing. */
-export async function partnerAction(formData: FormData) {
+export async function aipPartnerAction(formData: FormData) {
   const id = parseNum(formData.get("partnerId")); const op = str(formData.get("op"));
-  const back = backTo(formData, "/admin/content/partners");
-  await adminAction("pages", "partner", op || "update", async () => {
-    const row = await db.query.partners.findFirst({ where: eq(partners.id, id) }); if (!row) throw new Error("Listing not found");
-    if (op === "publish") await db.update(partners).set({ status: "published", updatedAt: new Date() }).where(eq(partners.id, id));
-    else if (op === "unpublish") await db.update(partners).set({ status: "draft", updatedAt: new Date() }).where(eq(partners.id, id));
-    else if (op === "delete") await db.delete(partners).where(eq(partners.id, id));
-    else if (op === "up" || op === "down") {
-      // Swap with the neighbour in the same category, so ↑/↓ reorder cards within the group visitors see.
-      const all = await db.select({ id: partners.id, sort: partners.sort, name: partners.name, category: partners.category }).from(partners).orderBy(partners.sort, partners.name);
-      const group = all.filter((p) => p.category === row.category); const i = group.findIndex((p) => p.id === id); const j = op === "up" ? i - 1 : i + 1;
-      if (j >= 0 && j < group.length) {
-        const ordered = all.map((p) => p.id); const a = ordered.indexOf(group[i].id), b = ordered.indexOf(group[j].id); [ordered[a], ordered[b]] = [ordered[b], ordered[a]];
-        for (const [k, pid] of ordered.entries()) await db.update(partners).set({ sort: k }).where(eq(partners.id, pid));
-      }
-    } else throw new Error("Unknown action");
-    return { id, name: row.name };
-  }, { back, ok: (r) => op === "publish" ? `“${r.name}” is now on the site` : op === "unpublish" ? `“${r.name}” is hidden from the site` : op === "delete" ? `“${r.name}” deleted` : "Order updated", entityId: (r) => r.id, revalidate: PARTNER_REVAL });
+  await adminAction("pages", "aip_partner", op, async () => {
+    if (op === "delete") await db.delete(aipPartners).where(eq(aipPartners.id, id));
+    else if (op === "toggle") await db.update(aipPartners).set({ visible: sql`not ${aipPartners.visible}`, updatedAt: new Date() }).where(eq(aipPartners.id, id));
+    else throw new Error("Unknown action");
+    return id;
+  }, { back: PARTNERS_BACK, ok: op === "delete" ? "Partner removed" : "Visibility updated", entityId: () => id, revalidate: PARTNERS_REVAL });
+}
+export async function reorderAipPartners(ids: number[]) {
+  const user = await requireArea("pages");
+  for (const [i, id] of ids.entries()) await db.update(aipPartners).set({ sort: i }).where(eq(aipPartners.id, id));
+  await audit(user.id, "reorder", "aip_partner", null, { ids });
+  for (const p of PARTNERS_REVAL) revalidatePath(p, "layout"); return { ok: true };
 }

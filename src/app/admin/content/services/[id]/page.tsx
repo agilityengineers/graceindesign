@@ -28,7 +28,7 @@ export default async function ServiceEdit({ params }: { params: Promise<{ id: st
   return (
     <AdminShell user={user} active="cms" title={isNew ? "New service" : s!.title} subtitle={isNew ? "Creates a landing page, nav entry and form path mapping" : `/services/${s!.slug}`} actions={<ContentTabs active="services" />}>
       <Toast />
-      {s?.slug === "aip-partners" && <Card title="This service no longer drives the AIP Partners page"><span style={{ fontSize: 13, color: "#4b5569", lineHeight: 1.6 }}>/healthy-home-resources/aip-partners is now a curated directory. Edit its listings under <Link href="/admin/content/partners" className="link-btn">Content → Partner directory</Link> and its heading and intro under <Link href="/admin/content?page=aip-partners" className="link-btn">Pages → AIP Partners</Link>. The fields below are kept for reference only and are not shown on the site.</span></Card>}
+      {s?.slug === "aip-partners" && <Card title="This service no longer drives the AIP Partners page"><span style={{ fontSize: 13, color: "#4b5569", lineHeight: 1.6 }}>/healthy-home-resources/aip-partners is now a curated directory. Edit its listings under <Link href="/admin/content/partners" className="link-btn">Content → AIP Partners</Link> and its heading and intro under <Link href="/admin/content?page=aip-partners" className="link-btn">Pages → AIP Partners</Link>. The fields below are kept for reference only and are not shown on the site.</span></Card>}
       <form action={saveService} encType="multipart/form-data" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         {!isNew && <input type="hidden" name="serviceId" value={s!.id} />}
         <Card title="Basics">
