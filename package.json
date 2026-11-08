@@ -28,6 +28,7 @@
     "test:auth-logging": "node tests/auth-logging-smoke.mjs",
     "test:magic-link-concurrency": "node tests/magic-link-concurrency.mjs",
     "test:dev-link-store": "tsx --test tests/dev-link-store.test.ts",
+    "test:media-access": "tsx --test tests/media-access.test.ts",
     "test:launch-content": "node tests/launch-content.mjs",
     "test:amazon": "tsx --test tests/amazon.test.ts",
     "test:google": "tsx --test tests/google.test.ts",

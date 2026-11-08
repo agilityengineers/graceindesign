@@ -9,7 +9,7 @@ Think of the app as one house with three doors: the **public site** visitors wal
 | App | Next.js 15 (App Router, React 19, TypeScript), server components + server actions |
 | Styling | Tailwind v4 base + hand-written design tokens in `src/app/globals.css` (navy `#1a2238`, sky `#6cb6e6`, Montserrat + Cormorant Garamond) |
 | Database | PostgreSQL via Drizzle ORM (`src/lib/db/schema.ts`), migrations in `drizzle/` |
-| Storage | Replit Object Storage (`@replit/object-storage`) with local `./.data/uploads` fallback; served through `/api/media/[...key]` |
+| Storage | Replit Object Storage (`@replit/object-storage`) with local `./.data/uploads` fallback; served through `/api/media/[...key]`. Keys under `leads/` and `projects/` are private — a team session or the project's portal token is required (`src/lib/media-access.ts`) |
 | Email / SMS / Slack | SendGrid (four verified senders, `src/lib/email-senders.ts`), SMS through Call Flow Tracker's Twilio (fallback: direct Twilio), Slack incoming webhook — all through the `outbox` table / `src/lib/server/notify.ts` |
 | PDFs / calendar | `pdf-lib` (checklist, proposals), server-generated `.ics` |
 | Newsletter | Insta-Newsletter is the list of record and the sender. The website captures sign-ups (two public forms) and pushes each one to Insta-Newsletter's v1 API (`src/lib/server/insta-newsletter.ts`, key from `INSTA_NEWSLETTER_*` secrets or pasted in Admin → Newsletter); the `newsletter` cron job retries. See `docs/insta-newsletter-integration.md` |
