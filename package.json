@@ -36,6 +36,7 @@
     "test:cc-events": "tsx --test tests/cc-events.test.ts",
     "test:events": "tsx --test tests/events.test.ts",
     "test:newsletter": "tsx --test tests/newsletter.test.ts",
+    "test:image-signature": "tsx --test tests/image-signature.test.ts",
     "test:notifications": "tsx --test tests/email-senders.test.ts tests/cft-launch-token.test.ts tests/slack-payload.test.ts tests/cft-sms-contract.test.ts",
     "verify": "npm run typecheck && npm run lint && npm run build"
   },
