@@ -10,8 +10,9 @@ export async function POST(req: Request) {
   if (!(file instanceof File)) return NextResponse.json({ error: "No file" }, { status: 400 });
   if (file.size > 12 * 1024 * 1024) return NextResponse.json({ error: "File too large (12MB max)" }, { status: 400 });
   const mime = file.type || mimeFromName(file.name);
-  if (!mime.startsWith("image/")) return NextResponse.json({ error: "Images only" }, { status: 400 });
   const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+  // SVG is an image type but can carry scripts, and the media route serves it inline: refuse it.
+  if (!mime.startsWith("image/") || mime === "image/svg+xml" || ext === "svg") return NextResponse.json({ error: "Images only (JPG, PNG, WebP, GIF, HEIC)" }, { status: 400 });
   const { url } = await putObject(`leads/photos/${nanoid(10)}.${ext}`, Buffer.from(await file.arrayBuffer()));
   return NextResponse.json({ url });
 }

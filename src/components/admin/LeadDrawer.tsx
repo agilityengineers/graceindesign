@@ -9,6 +9,7 @@ import { updateLead, addLeadActivity, attachLeadDocument, markLeadSigned, delete
 import type { LeadStageDef } from "@/lib/db/constants";
 import type { Lead } from "@/lib/db/schema";
 import { fmtDateTime, relativeDay } from "@/lib/utils";
+import { isMediaPath } from "@/lib/consult-answers";
 
 type Activity = { id: number; type: string; body: string; attachmentUrl: string | null; createdAt: string; userName: string | null };
 type Booking = { id: number; startsAt: string; endsAt: string; status: string };
@@ -57,7 +58,7 @@ export default function LeadDrawer({ lead, stages, activity, bookings, documents
       )}
       <div style={{ padding: "20px 28px", borderBottom: "1px solid #eef0f4", display: "flex", flexDirection: "column", gap: 12 }}>
         <span className="label-caps">Form answers · consultation path</span>
-        {answers.length ? answers.map(([q, a]) => <div key={q} style={{ display: "grid", gridTemplateColumns: "150px 1fr", gap: 12, fontSize: 13 }}><span style={{ color: "#6b7486" }}>{q.replace(/_/g, " ")}</span><span style={{ fontWeight: 500, wordBreak: "break-word" }}>{Array.isArray(a) ? (a as string[]).map((x, i) => /^https?:|^\//.test(String(x)) ? <a key={i} href={String(x)} target="_blank" rel="noreferrer" style={{ color: "#3f9ad9" }}>photo {i + 1} </a> : <span key={i}>{String(x)}{i < (a as string[]).length - 1 ? ", " : ""}</span>) : String(a)}</span></div>) : <span style={{ fontSize: 13, color: "#8c95a8" }}>No form answers recorded.</span>}
+        {answers.length ? answers.map(([q, a]) => <div key={q} style={{ display: "grid", gridTemplateColumns: "150px 1fr", gap: 12, fontSize: 13 }}><span style={{ color: "#6b7486" }}>{q.replace(/_/g, " ")}</span><span style={{ fontWeight: 500, wordBreak: "break-word" }}>{Array.isArray(a) ? (a as unknown[]).map((x, i) => isMediaPath(x) ? <a key={i} href={x} target="_blank" rel="noreferrer" style={{ color: "#3f9ad9" }}>photo {i + 1} </a> : <span key={i}>{String(x)}{i < (a as unknown[]).length - 1 ? ", " : ""}</span>) : String(a)}</span></div>) : <span style={{ fontSize: 13, color: "#8c95a8" }}>No form answers recorded.</span>}
         {documents.length > 0 && <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>{documents.map((d) => <a key={d.id} href={d.url} target="_blank" rel="noreferrer" className="tag" style={{ padding: "6px 10px", borderRadius: 8 }}>{d.name}</a>)}</div>}
       </div>
       <div style={{ padding: "16px 28px", borderBottom: "1px solid #eef0f4", display: "flex", flexDirection: "column", gap: 12, background: "#f7f9fc" }}>
