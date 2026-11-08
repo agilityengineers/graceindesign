@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check } from "@/components/ui/Icons";
 import { EVENT_REGIONS, US_STATES, usState } from "@/lib/events";
 
@@ -83,12 +84,18 @@ export function NewsletterForm() {
   );
 }
 
+/**
+ * The Healthy Home checklist sidebar: first name and email, then straight to the download page (the server says where),
+ * while the email with the same link is on its way. The "Sent!" line only shows if no destination comes back.
+ */
 export function LeadMagnetForm({ cta }: { cta: string }) {
-  const f = useForm();
+  const f = useForm(); const router = useRouter();
+  const field: React.CSSProperties = { height: 46, padding: "0 14px", border: 0, borderRadius: 10, fontSize: 14, background: "#fff", width: "100%" };
   if (f.sent) return <span style={{ fontSize: 14, color: "#6cb6e6", fontWeight: 600 }}>Sent! Check your inbox for the checklist.</span>;
   return (
-    <form style={{ display: "flex", flexDirection: "column", gap: 12 }} onSubmit={async (e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); f.setBusy(true); f.setErr(null); try { await post("/api/newsletter/checklist", Object.fromEntries(fd.entries())); f.setSent(true); } catch (x: any) { f.setErr(x.message); } finally { f.setBusy(false); } }}>
-      <input name="email" type="email" required placeholder="Your email" style={{ height: 46, padding: "0 14px", border: 0, borderRadius: 10, fontSize: 14, background: "#fff" }} />
+    <form style={{ display: "flex", flexDirection: "column", gap: 12 }} onSubmit={async (e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); f.setBusy(true); f.setErr(null); try { const j = await post("/api/newsletter/checklist", Object.fromEntries(fd.entries())); if (typeof j.next === "string" && j.next.startsWith("/")) { router.push(j.next); return; } f.setSent(true); } catch (x: any) { f.setErr(x.message); f.setBusy(false); } }}>
+      <input name="firstName" required maxLength={100} autoComplete="given-name" placeholder="First name" style={field} />
+      <input name="email" type="email" required autoComplete="email" placeholder="Your email" style={field} />
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: -9999, opacity: 0 }} />
       {f.err && <span style={{ color: "#f5b7a3", fontSize: 12 }}>{f.err}</span>}
       <button type="submit" disabled={f.busy} className="btn btn-sky" style={{ boxShadow: "none" }}>{f.busy ? "Sending…" : cta}</button>

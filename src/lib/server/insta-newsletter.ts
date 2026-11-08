@@ -208,7 +208,7 @@ export async function deleteSubscriber(audience: AudienceKey, id: number) {
 }
 
 /** Added by a team member in the admin: recorded like a form sign-up, pushed to Insta-Newsletter, no welcome email. */
-export async function addManualSubscriber(input: { audience: AudienceKey; email: string; segment?: string | null; location?: string | null; by: string }): Promise<number> {
+export async function addManualSubscriber(input: { audience: AudienceKey; email: string; firstName?: string | null; segment?: string | null; location?: string | null; by: string }): Promise<number> {
   const email = input.email.trim().toLowerCase();
   const sourcePage = `admin:${input.by}`;
   if (input.audience === "caribbean-connection") {
@@ -217,8 +217,9 @@ export async function addManualSubscriber(input: { audience: AudienceKey; email:
       .onConflictDoUpdate({ target: ccSubscribers.email, set: { segment, location: input.location || null, country: countryFromLocation(input.location), unsubscribedAt: null } }).returning({ id: ccSubscribers.id });
     return row.id;
   }
-  const [row] = await db.insert(newsletterSubscribers).values({ email, source: "admin", sourcePage })
-    .onConflictDoUpdate({ target: newsletterSubscribers.email, set: { unsubscribedAt: null } }).returning({ id: newsletterSubscribers.id });
+  const firstName = (input.firstName || "").trim() || null;
+  const [row] = await db.insert(newsletterSubscribers).values({ email, firstName, source: "admin", sourcePage })
+    .onConflictDoUpdate({ target: newsletterSubscribers.email, set: { unsubscribedAt: null, ...(firstName ? { firstName } : {}) } }).returning({ id: newsletterSubscribers.id });
   return row.id;
 }
 

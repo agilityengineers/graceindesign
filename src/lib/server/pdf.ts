@@ -39,36 +39,38 @@ export async function buildChecklistPdf(opts: { name: string; pathLabel: string;
 /**
  * The 10-Minute Healthy Home Walk-Through (the WELLness Resources lead magnet). Same letterhead as the
  * pre-consult checklist, but written for a homeowner walking their own home: no name, no "before we talk".
+ * Runs to as many pages as the admin's checklist needs; it used to stop at one page and drop the rest.
  */
 export async function buildWalkthroughPdf(opts: { title?: string; items: string[] }) {
   const pdf = await PDFDocument.create();
   const logo = await pdf.embedPng(await readCommunicationLogo());
-  const page = pdf.addPage([612, 792]);
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const serif = await pdf.embedFont(StandardFonts.TimesRoman);
   const navy = rgb(0.102, 0.133, 0.22), sky = rgb(0.424, 0.714, 0.902), body = rgb(0.294, 0.333, 0.412);
-  page.drawRectangle({ x: 0, y: 720, width: 612, height: 72, color: navy });
-  page.drawRectangle({ x: 44, y: 745, width: 224, height: 43, color: rgb(1, 1, 1) });
-  page.drawImage(logo, { x: 48, y: 748, width: 216, height: 216 * logo.height / logo.width });
-  page.drawText("WELLness Resources · Free checklist", { x: 48, y: 730, size: 10, font, color: sky });
-  let y = 680;
+  let page = pdf.addPage([612, 792]); let y = 680;
+  const header = () => { page.drawRectangle({ x: 0, y: 720, width: 612, height: 72, color: navy }); page.drawRectangle({ x: 44, y: 745, width: 224, height: 43, color: rgb(1, 1, 1) }); page.drawImage(logo, { x: 48, y: 748, width: 216, height: 216 * logo.height / logo.width }); page.drawText("WELLness Resources · Free checklist", { x: 48, y: 730, size: 10, font, color: sky }); y = 680; };
+  const footer = () => page.drawText("(770) 691-1600 · support@graceindesign.net · graceindesign.net", { x: 48, y: 48, size: 9, font, color: rgb(0.55, 0.58, 0.66) });
+  /** Make room for the next `h` points, starting a new page (with the letterhead) when this one is full. */
+  const ensure = (h: number) => { if (y - h < 70) { footer(); page = pdf.addPage([612, 792]); header(); } };
+  header();
   for (const line of wrap(opts.title || "The 10-Minute Healthy Home Walk-Through", 48)) { page.drawText(line, { x: 48, y, size: 22, font: serif, color: navy }); y -= 26; }
   for (const line of wrap("Walk one room at a time and tick each item you can answer \"yes\" to. Anything left unticked is a good place to start.", 88)) { page.drawText(line, { x: 48, y, size: 11, font, color: body }); y -= 15; }
   y -= 16;
   for (const item of opts.items.filter((i) => i.trim())) {
-    if (y < 190) break; // one page: leave room for the closing notes
-    page.drawRectangle({ x: 48, y: y - 2, width: 12, height: 12, borderColor: navy, borderWidth: 1 });
     const lines = wrap(item.trim(), 78);
+    ensure(14 * lines.length + 12);
+    page.drawRectangle({ x: 48, y: y - 2, width: 12, height: 12, borderColor: navy, borderWidth: 1 });
     for (const [i, line] of lines.entries()) page.drawText(line, { x: 68, y: y - i * 14, size: 11, font, color: body });
     y -= 14 * lines.length + 12;
   }
   y -= 8;
+  ensure(20 + 3 * 16);
   page.drawText("What to do with your answers", { x: 48, y, size: 12, font: bold, color: navy }); y -= 20;
   for (const line of ["Fix the quick wins first: lighting, loose rugs, cords and clutter.", "Note anything that needs a professional: ventilation, water, entries, bathrooms.", "Bring this sheet to a consultation and we'll plan the rest with you."]) {
     page.drawText(`• ${line}`, { x: 52, y, size: 11, font, color: body }); y -= 16;
   }
-  page.drawText("(770) 691-1600 · support@graceindesign.net · graceindesign.net", { x: 48, y: 48, size: 9, font, color: rgb(0.55, 0.58, 0.66) });
+  footer();
   return Buffer.from(await pdf.save());
 }
 
