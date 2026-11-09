@@ -3,7 +3,8 @@
  * Match raw and percent-encoded query delimiters/keys, including nested dev URLs.
  * Encoded values are removed as a whole rather than decoded into the log.
  */
-const keys = ["token", "dev", "dev-link", "devlink"].map(key =>
+// `portal` is the client-portal token the media route accepts as ?portal=… (src/app/api/media/[...key]/route.ts).
+const keys = ["token", "dev", "dev-link", "devlink", "portal"].map(key =>
   [...key].map(char => `(?:${char}|%(?:25)*${char.charCodeAt(0).toString(16)})`).join(""),
 ).join("|");
 const authQuery = new RegExp(
