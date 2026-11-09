@@ -12,6 +12,7 @@ import { emitEvent } from "@/lib/server/webhooks";
 import { normalizePhone } from "@/lib/server/outbox";
 import { enrollLeadInSequences } from "@/lib/server/sequences";
 import { notifyTeam, describeNotice } from "@/lib/server/notify";
+import { sanitizeAnswers } from "@/lib/consult-answers";
 
 export const TZ = "America/New_York";
 
@@ -90,7 +91,8 @@ export type ConsultSubmission = { sourcePage: string; pathId: string | null; ans
 
 export async function submitConsultation(input: ConsultSubmission, meta: { ip?: string | null }) {
   if (input.honeypot) return { ok: true as const, leadId: 0, bookingId: null, when: null, spam: true };
-  const a = input.answers;
+  // Visitor-controlled: drop link-shaped values from list answers before anything is stored or sent.
+  const a = sanitizeAnswers(input.answers);
   const name = String(a.name || "").trim(); const email = String(a.email || "").trim().toLowerCase(); const phone = String(a.phone || "").trim();
   if (!name || !email || !a.consent) return { ok: false as const, error: "Name, email and consent are required." };
   const path = input.pathId ? await db.query.paths.findFirst({ where: eq(paths.id, input.pathId) }) : null;

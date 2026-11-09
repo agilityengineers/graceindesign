@@ -38,6 +38,7 @@ Sign in at `/login` with `info@graceindesign.net` or `emailme@clarencewilliams.c
 | `npm run test:aip-partners` | Unit tests for the AIP Partners directory: categories, relationships and the website check |
 | `npm run test:cc-events` | Unit tests for the Community Events rule: a past event leaves the public page at midnight in its own time zone |
 | `npm run test:newsletter` | Unit tests for the newsletter hand-off to Insta-Newsletter: request body, status vocabulary, filters, CSV export |
+| `npm run test:consult-answers` | Unit tests for the consultation answer check: which uploaded photo paths and list answers are kept, and which media paths the lead drawer may link |
 | `npm run test:walkthrough` | Unit tests for the Healthy Home checklist: the email's links, the PDF address rules, the multi-page PDF, absolute links and the clickable links in every plain-text email |
 | `npm run test:media-access` | Unit tests for the media route's access rule: which keys are private, the private-file headers, portal document links |
 | `node tests/smoke.mjs` | Funnel and route smoke test against a running server (writes a test lead); also checks that `leads/` and `projects/` files are refused when signed out |
