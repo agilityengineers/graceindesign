@@ -286,6 +286,19 @@ p { margin: 0; }
 .modal-panel { position: relative; width: 1040px; max-width: 100%; max-height: 92vh; overflow: auto; border-radius: 20px; }
 @media (max-width: 720px) { .modal-backdrop { padding: 12px; } }
 
+/* WELLness resource panel: the pop-open guide viewer (ResourcePanel.tsx). Two columns that scroll on their own; stacked at ≤1024px. */
+.modal-panel.resource-panel { display: grid; grid-template-columns: minmax(0, 1fr) 360px; overflow: hidden; background: #fff; }
+.resource-panel > * { min-height: 0; max-height: 92vh; overflow-y: auto; }
+.resource-panel-side { border-left: 1px solid #e9ecf1; background: #f7f8fa; }
+.resource-panel-item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 10px 12px; border-radius: 12px; border: 0; background: transparent; color: #1a2238; cursor: pointer; transition: background .15s; }
+.resource-panel-item:hover { background: #fff; }
+.resource-panel-item[aria-current="true"] { background: #e6f3fc; }
+@media (max-width: 1024px) {
+  .modal-panel.resource-panel { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }
+  .resource-panel > * { max-height: none; overflow: visible; }
+  .resource-panel-side { border-left: 0; border-top: 1px solid #e9ecf1; }
+}
+
 /* Before/after */
 .ba { position: relative; height: 620px; border-radius: 22px; overflow: hidden; cursor: ew-resize; user-select: none; touch-action: pan-y; background: #e9ebef; }
 @media (max-width: 1024px) { .ba { height: 440px; } }
