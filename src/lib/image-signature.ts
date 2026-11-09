@@ -3,7 +3,8 @@
  * consultation form. A pure module with no imports so the upload route, the media
  * route and the unit tests can all use it directly.
  */
-export const PUBLIC_PHOTO_PREFIX = "leads/photos/";
+/** Where the consultation upload stores photos; src/lib/media-access.ts keeps this folder team-only. */
+export const CONSULT_PHOTO_PREFIX = "leads/photos/";
 
 export type AcceptedPhotoMime = "image/jpeg" | "image/png" | "image/webp" | "image/gif";
 
@@ -48,9 +49,4 @@ export function detectImageType(bytes: Uint8Array): DetectedImage | null {
 
 export function isAcceptedPhotoMime(mime: string): mime is AcceptedPhotoMime {
   return Object.prototype.hasOwnProperty.call(ACCEPTED_PHOTO_TYPES, mime);
-}
-
-/** Keys written by the public consultation upload. */
-export function isPublicPhotoKey(key: string) {
-  return key.startsWith(PUBLIC_PHOTO_PREFIX);
 }

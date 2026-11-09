@@ -1,10 +1,14 @@
 /**
  * Media storage: Replit Object Storage when available, local filesystem otherwise.
- * Files are served through /api/media/[...key] so URLs are stable across backends.
+ * Files are served through /api/media/[...key] so URLs are stable across backends. Keys under
+ * leads/ and projects/ are private there (see src/lib/media-access.ts); everything else is public.
  */
 import fs from "fs/promises";
 import path from "path";
 import { env } from "@/lib/env";
+import { safeKey } from "@/lib/media-access";
+
+export { safeKey };
 
 const LOCAL_DIR = path.join(process.cwd(), ".data", "uploads");
 
@@ -29,8 +33,11 @@ async function getReplit(): Promise<StorageClient | null> {
   return replitClient;
 }
 
-export function safeKey(name: string) {
-  return name.replace(/[^a-zA-Z0-9._/-]+/g, "-").replace(/-+/g, "-").replace(/^\/+/, "");
+/** Where a key lives on the local filesystem; refuses anything that would resolve outside the uploads folder. */
+function localPath(k: string) {
+  const file = path.resolve(LOCAL_DIR, k);
+  if (!file.startsWith(LOCAL_DIR + path.sep)) throw new Error("Bad storage key");
+  return file;
 }
 
 export async function putObject(key: string, bytes: Buffer): Promise<{ key: string; url: string }> {
@@ -40,7 +47,7 @@ export async function putObject(key: string, bytes: Buffer): Promise<{ key: stri
     const res = await client.uploadFromBytes(k, bytes);
     if (!res.ok) throw new Error(`Object storage upload failed: ${String(res.error)}`);
   } else {
-    const file = path.join(LOCAL_DIR, k);
+    const file = localPath(k);
     await fs.mkdir(path.dirname(file), { recursive: true });
     await fs.writeFile(file, bytes);
   }
@@ -55,14 +62,14 @@ export async function getObject(key: string): Promise<Buffer | null> {
     if (!res.ok || !res.value) return null;
     return Buffer.concat(res.value);
   }
-  try { return await fs.readFile(path.join(LOCAL_DIR, k)); } catch { return null; }
+  try { return await fs.readFile(localPath(k)); } catch { return null; }
 }
 
 export async function deleteObject(key: string) {
   const k = safeKey(key);
   const client = await getReplit();
   if (client) { await client.delete(k); return; }
-  try { await fs.unlink(path.join(LOCAL_DIR, k)); } catch { /* ignore */ }
+  try { await fs.unlink(localPath(k)); } catch { /* ignore */ }
 }
 
 export function mimeFromName(name: string) {

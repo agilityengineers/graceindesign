@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ACCEPTED_PHOTO_TYPES, detectImageType, isAcceptedPhotoMime, isPublicPhotoKey } from "../src/lib/image-signature";
+import { ACCEPTED_PHOTO_TYPES, CONSULT_PHOTO_PREFIX, detectImageType, isAcceptedPhotoMime } from "../src/lib/image-signature";
+import { classifyMediaKey } from "../src/lib/media-access";
+import { isLeadPhotoPath } from "../src/lib/consult-answers";
 
 const bytes = (...parts: (string | number[] | Uint8Array)[]) =>
   Buffer.concat(parts.map((p) => (typeof p === "string" ? Buffer.from(p, "latin1") : Buffer.from(p))));
@@ -45,12 +47,17 @@ test("the decision takes only bytes, so filename and declared type cannot influe
   assert.equal(detectImageType.length, 1);
 });
 
-test("accepted-type and key helpers", () => {
+test("accepted-type helper", () => {
   for (const mime of Object.keys(ACCEPTED_PHOTO_TYPES)) assert.equal(isAcceptedPhotoMime(mime), true, mime);
   assert.equal(isAcceptedPhotoMime("image/svg+xml"), false);
   assert.equal(isAcceptedPhotoMime("text/html"), false);
   assert.equal(isAcceptedPhotoMime("constructor"), false);
-  assert.equal(isPublicPhotoKey("leads/photos/abc.svg"), true);
-  assert.equal(isPublicPhotoKey("leads/photosx/abc.png"), false);
-  assert.equal(isPublicPhotoKey("media/leads/photos/abc.png"), false);
+});
+
+test("every photo the upload stores lands in the team-only photo folder and passes the lead-answer check", () => {
+  for (const ext of Object.values(ACCEPTED_PHOTO_TYPES)) {
+    const key = `${CONSULT_PHOTO_PREFIX}AbC_12-xyZ.${ext}`; // nanoid(10) alphabet: A-Z a-z 0-9 _ -
+    assert.equal(classifyMediaKey(key).kind, "lead_photo", key);
+    assert.equal(isLeadPhotoPath(`/api/media/${key}`), true, key);
+  }
 });
