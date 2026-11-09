@@ -49,6 +49,8 @@ export type SubscriberRecord = {
   id: number;
   audience: AudienceKey;
   email: string;
+  /** Asked for by the Healthy Home checklist form; the Caribbean form has no name field. */
+  firstName: string | null;
   segment: string | null;
   location: string | null;
   country: string | null;
@@ -66,15 +68,15 @@ export type SubscriberRecord = {
 
 type SyncColumns = { instaStatus: string | null; instaContactId: string | null; instaSyncedAt: Date | null; instaError: string | null; consentIp: string | null; sourcePage: string | null };
 export type CaribbeanRow = { id: number; email: string; segment: string; location: string | null; country: string | null; consentedAt: Date; unsubscribedAt: Date | null; createdAt: Date } & SyncColumns;
-export type HealthyHomeRow = { id: number; email: string; source: string; consentedAt: Date; unsubscribedAt: Date | null } & SyncColumns;
+export type HealthyHomeRow = { id: number; email: string; firstName: string | null; source: string; consentedAt: Date; unsubscribedAt: Date | null } & SyncColumns;
 
 const syncOf = (r: SyncColumns) => ({ instaStatus: isInstaStatus(r.instaStatus) ? r.instaStatus : null, instaContactId: r.instaContactId, instaSyncedAt: r.instaSyncedAt, instaError: r.instaError, consentIp: r.consentIp, sourcePage: r.sourcePage });
 
 export function fromCaribbeanRow(r: CaribbeanRow): SubscriberRecord {
-  return { id: r.id, audience: "caribbean-connection", email: r.email, segment: r.segment, location: r.location, country: r.country, source: "caribbean-newsletter", consentedAt: r.consentedAt, unsubscribedAt: r.unsubscribedAt, createdAt: r.createdAt, ...syncOf(r) };
+  return { id: r.id, audience: "caribbean-connection", email: r.email, firstName: null, segment: r.segment, location: r.location, country: r.country, source: "caribbean-newsletter", consentedAt: r.consentedAt, unsubscribedAt: r.unsubscribedAt, createdAt: r.createdAt, ...syncOf(r) };
 }
 export function fromHealthyHomeRow(r: HealthyHomeRow): SubscriberRecord {
-  return { id: r.id, audience: "healthy-home", email: r.email, segment: null, location: null, country: null, source: r.source, consentedAt: r.consentedAt, unsubscribedAt: r.unsubscribedAt, createdAt: r.consentedAt, ...syncOf(r) };
+  return { id: r.id, audience: "healthy-home", email: r.email, firstName: r.firstName, segment: null, location: null, country: null, source: r.source, consentedAt: r.consentedAt, unsubscribedAt: r.unsubscribedAt, createdAt: r.consentedAt, ...syncOf(r) };
 }
 
 /** Jamaica or the diaspora, from the free-text location the Caribbean form asks for. */
@@ -117,7 +119,10 @@ export function instaLinks(baseUrl: string) {
 
 export function missingInstaScopes(granted: readonly string[]): string[] { return INSTA_REQUIRED_SCOPES.filter((s) => !granted.includes(s)); }
 
-/** The `POST /v1/subscribers` body for one website sign-up. Only fields the API knows: it refuses unknown ones. */
+/**
+ * The `POST /v1/subscribers` body for one website sign-up. Only fields the API knows: it refuses unknown ones.
+ * `firstName` is a top-level field there (instanewsletter docs/api-v1.md), so Grace's newsletters can greet the person by name.
+ */
 export function buildInstaSubscriberBody(rec: SubscriberRecord, audienceId: string, opts: { doubleOptIn: boolean; siteUrl: string }) {
   const a = AUDIENCES[rec.audience];
   const tags = Array.from(new Set(["website", a.key, ...(rec.segment ? [rec.segment] : [])])).map((t) => t.slice(0, INSTA_TAG_MAX));
@@ -127,7 +132,7 @@ export function buildInstaSubscriberBody(rec: SubscriberRecord, audienceId: stri
   if (rec.country) customFields.country = rec.country;
   const consent: { at: string; ip?: string; page: string } = { at: rec.consentedAt.toISOString(), page: rec.sourcePage || `${opts.siteUrl.replace(/\/+$/, "")}${a.signupPage}` };
   if (rec.consentIp) consent.ip = rec.consentIp;
-  return { email: rec.email, audienceIds: [audienceId], tags, customFields, consent, doubleOptIn: opts.doubleOptIn };
+  return { email: rec.email, ...(rec.firstName ? { firstName: rec.firstName } : {}), audienceIds: [audienceId], tags, customFields, consent, doubleOptIn: opts.doubleOptIn };
 }
 
 export type InstaOutcome = { status: InstaStatus; contactId: string | null; error: string | null; retry: boolean; connectionProblem: boolean };
@@ -213,7 +218,7 @@ export function filterSubscribers(records: SubscriberRecord[], f: SubscriberFilt
     if (status === "active" && r.unsubscribedAt) return false;
     if (status === "unsubscribed" && !r.unsubscribedAt) return false;
     if (status === "attention" && !(r.instaStatus === "failed" || r.instaStatus === "queued" || (!r.unsubscribedAt && r.instaStatus === null))) return false;
-    if (q && !`${r.email} ${r.segment || ""} ${r.location || ""} ${r.country || ""}`.toLowerCase().includes(q)) return false;
+    if (q && !`${r.firstName || ""} ${r.email} ${r.segment || ""} ${r.location || ""} ${r.country || ""}`.toLowerCase().includes(q)) return false;
     return true;
   });
 }
@@ -240,6 +245,6 @@ const csvCell = (v: string | number | null | undefined) => { const s = v == null
  */
 export function subscribersCsv(records: SubscriberRecord[]): string {
   const header = ["email", "first_name", "last_name", "status", "audience", "segment", "location", "country", "source", "consented_at", "unsubscribed_at", "insta_newsletter"];
-  const rows = records.map((r) => [r.email, "", "", r.unsubscribedAt ? "unsubscribed" : "active", AUDIENCES[r.audience].name, r.segment, r.location, r.country, r.source, r.consentedAt.toISOString(), r.unsubscribedAt?.toISOString() ?? "", r.instaStatus ?? "not sent"]);
+  const rows = records.map((r) => [r.email, r.firstName ?? "", "", r.unsubscribedAt ? "unsubscribed" : "active", AUDIENCES[r.audience].name, r.segment, r.location, r.country, r.source, r.consentedAt.toISOString(), r.unsubscribedAt?.toISOString() ?? "", r.instaStatus ?? "not sent"]);
   return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
 }

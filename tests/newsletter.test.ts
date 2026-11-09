@@ -10,7 +10,7 @@ import {
 const when = new Date("2026-10-31T19:00:00Z");
 const sync = { instaStatus: null, instaContactId: null, instaSyncedAt: null, instaError: null, consentIp: null, sourcePage: null };
 const cc = fromCaribbeanRow({ id: 1, email: "ann@example.com", segment: "Living in Jamaica", location: "Kingston, Jamaica", country: "Jamaica", consentedAt: when, unsubscribedAt: null, createdAt: when, ...sync, consentIp: "203.0.113.5", sourcePage: "https://graceindesign.net/caribbean-connection" });
-const hh = fromHealthyHomeRow({ id: 2, email: "bob@example.com", source: "wellness-checklist", consentedAt: when, unsubscribedAt: null, ...sync });
+const hh = fromHealthyHomeRow({ id: 2, email: "bob@example.com", firstName: "Bob", source: "wellness-checklist", consentedAt: when, unsubscribedAt: null, ...sync });
 const rec = (patch: Partial<SubscriberRecord>): SubscriberRecord => ({ ...cc, ...patch });
 
 test("the two website lists map onto two Insta-Newsletter audiences", () => {
@@ -24,11 +24,14 @@ test("the two website lists map onto two Insta-Newsletter audiences", () => {
   assert.equal(countryFromLocation(""), null);
   assert.equal(hh.audience, "healthy-home");
   assert.equal(hh.createdAt, when, "the Healthy Home table has no created_at; consent time stands in");
+  assert.equal(hh.firstName, "Bob", "the checklist form asks for a first name");
+  assert.equal(cc.firstName, null, "the Caribbean form has no name field");
 });
 
 test("the request body carries only fields Insta-Newsletter's /v1/subscribers knows, with consent evidence", () => {
   const body = buildInstaSubscriberBody(cc, "aud_123", { doubleOptIn: false, siteUrl: "https://graceindesign.net/" });
   assert.deepEqual(Object.keys(body).sort(), ["audienceIds", "consent", "customFields", "doubleOptIn", "email", "tags"]);
+  assert.equal("firstName" in body, false, "no name known → the key is left out rather than sent as null");
   assert.deepEqual(body.audienceIds, ["aud_123"]);
   assert.deepEqual(body.tags, ["website", "caribbean-connection", "Living in Jamaica"]);
   assert.deepEqual(body.customFields, { website_list: "Caribbean Connection", source: "caribbean-newsletter", segment: "Living in Jamaica", location: "Kingston, Jamaica", country: "Jamaica" });
@@ -39,6 +42,8 @@ test("the request body carries only fields Insta-Newsletter's /v1/subscribers kn
   assert.equal(hhBody.consent.page, "https://graceindesign.net/healthy-home-resources/wellness", "no page recorded → the form's own page");
   assert.equal("ip" in hhBody.consent, false, "no IP → the key is left out rather than sent as null");
   assert.equal(hhBody.doubleOptIn, true);
+  assert.equal(hhBody.firstName, "Bob", "the first name travels as Insta-Newsletter's own firstName field, so merge fields can greet the person");
+  assert.deepEqual(Object.keys(hhBody).sort(), ["audienceIds", "consent", "customFields", "doubleOptIn", "email", "firstName", "tags"]);
   for (const t of body.tags) assert.ok(t.length <= 50);
 });
 
@@ -96,6 +101,7 @@ test("filters, summary and the Insta-Newsletter-friendly CSV", () => {
   assert.deepEqual(filterSubscribers(rows, { status: "attention" }).map((r) => r.email), ["ann@example.com", "bob@example.com", "dan@example.com"], "never sent, retrying or failed");
   assert.deepEqual(filterSubscribers(rows, { audience: "healthy-home", status: "all" }).map((r) => r.email), ["bob@example.com"]);
   assert.deepEqual(filterSubscribers(rows, { q: "kingston", status: "all" }).map((r) => r.id), [1, 3, 4, 5]);
+  assert.deepEqual(filterSubscribers(rows, { q: "bob", status: "all" }).map((r) => r.id), [2], "search matches the first name too");
   assert.deepEqual(filterSubscribers(rows, { audience: "bogus", status: "all" }).length, 5, "an unknown list filter is ignored, not an empty page");
   const s = summarizeSubscribers(rows, new Date("2026-11-01T00:00:00Z"));
   assert.equal(s.active, 4); assert.equal(s.byAudience["caribbean-connection"], 3); assert.equal(s.byAudience["healthy-home"], 1);
@@ -104,6 +110,7 @@ test("filters, summary and the Insta-Newsletter-friendly CSV", () => {
   assert.equal(csv[0], "email,first_name,last_name,status,audience,segment,location,country,source,consented_at,unsubscribed_at,insta_newsletter");
   assert.equal(csv[1], 'ann@example.com,,,active,Caribbean Connection,Living in Jamaica,"Kingston, Jamaica",Jamaica,caribbean-newsletter,2026-10-31T19:00:00.000Z,,not sent');
   assert.match(csv[2], /^cara@example.com,,,unsubscribed,/, "a suppression travels in the status column Insta-Newsletter's import honours");
+  assert.match(subscribersCsv([hh]).split("\n")[1], /^bob@example.com,Bob,,active,Healthy Home,/, "the first name fills Insta-Newsletter's first_name import column");
 });
 
 test("pasted addresses and keys are tidied before they are used", () => {

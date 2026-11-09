@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import ts from "typescript";
 import { PDFDocument, PDFName, PDFDict } from "pdf-lib";
 import { COMMUNICATION_LOGO_HTML, COMMUNICATION_LOGO_CID, communicationLogoAttachment } from "../src/lib/server/communication-brand";
-import { buildChecklistPdf, buildProposalPdf } from "../src/lib/server/pdf";
+import { buildChecklistPdf, buildProposalPdf, buildWalkthroughPdf } from "../src/lib/server/pdf";
 
 test("inline email logo is byte-for-byte the original site-header artwork", async () => {
   const attachment = await communicationLogoAttachment();
@@ -30,6 +30,10 @@ test("shared email template uses the embedded image and preserves escaped text a
   assert.ok(html.includes("&lt;unsafe&gt;"));
   assert.ok(html.includes("/auth/verify#token=noncredential"));
   assert.ok(!html.includes("<span"));
+  // Full web addresses become links (a download, a portal, an unsubscribe page); the punctuation after one stays outside it.
+  const linked = render("Download it here:\nhttps://graceindesign.net/healthy-home-resources/wellness/checklist/healthy-home-walkthrough.pdf\n\nSee https://graceindesign.net/contact?from=a&b=c.", "support@example.invalid");
+  assert.ok(linked.includes('<a href="https://graceindesign.net/healthy-home-resources/wellness/checklist/healthy-home-walkthrough.pdf"'));
+  assert.match(linked, /<a href="https:\/\/graceindesign\.net\/contact\?from=a&amp;b=c"[^>]*>https:\/\/graceindesign\.net\/contact\?from=a&amp;b=c<\/a>\./, "the trailing full stop is not part of the link, and the escaped ampersand is kept");
   assert.match(source, /communicationLogoAttachment\(\)/);
   assert.match(source, /row\.attachments\?\.map/);
 });
@@ -38,6 +42,7 @@ test("outbound checklist and every proposal page embed a logo image", async () =
   const files = [
     await buildChecklistPdf({ name: "Test", pathLabel: "Residential", consultType: "Consultation", when: "Test date" }),
     await buildProposalPdf({ title: "Test proposal", body: "Test content.\n".repeat(100), status: "draft" }),
+    await buildWalkthroughPdf({ items: Array.from({ length: 40 }, (_, i) => `Walk-through item ${i + 1}: a long line of checklist text that wraps onto a second line to fill the page sooner.`) }),
   ];
   for (const bytes of files) {
     const pdf = await PDFDocument.load(bytes);

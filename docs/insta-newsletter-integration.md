@@ -42,11 +42,11 @@ The site keeps **two separate subscriber tables** in its own Postgres database (
 | List | Table | Where people sign up | What is captured | What happens on sign-up |
 | --- | --- | --- | --- | --- |
 | Caribbean Connection newsletter | `cc_subscribers` | The `cc_newsletter` block on `/caribbean-connection` (`NewsletterForm` in `src/components/site/CaribbeanForms.tsx`) posting to `POST /api/caribbean/subscribe` | email (unique), `segment` (one of four "I am…" choices), `location` (free text), `country` (derived: Jamaica / Diaspora / null), `consentedAt`, `unsubscribedAt` | Upsert on email (a returning address is re-subscribed and its segment updated). Plain-text welcome email from `newsletter@`. Slack and support-inbox notice through `notifyTeam`. |
-| Healthy Home list | `newsletter_subscribers` | The `LeadMagnetForm` on the WELLness resources page posting to `POST /api/newsletter/checklist` | email (unique), `source` (`wellness-checklist`), `consentedAt`, `unsubscribedAt` | Insert-if-absent. Emails the Healthy Home Walk-Through PDF from `newsletter@`. Slack notice. |
+| Healthy Home list | `newsletter_subscribers` | The `LeadMagnetForm` on the WELLness resources page posting to `POST /api/newsletter/checklist` | email (unique), `firstName` (November 2026), `source` (`wellness-checklist`), `consentedAt`, `unsubscribedAt` | Upsert on email (a returning address is re-subscribed and its name recorded). Creates a lead on the Leads board (one per email), sends the visitor to the download page and emails the full link to the Healthy Home Walk-Through PDF from `newsletter@`. Slack notice. |
 
-Both routes share the same protections: a Zod schema, a DB-backed fixed-window rate limit per IP (10 per hour for subscribe, 5 per hour for the checklist, `src/lib/server/rate-limit.ts`) and a `website` honeypot field that is silently swallowed. Neither form asks for a name. Neither does double opt-in: the Caribbean form carries consent wording under the button, and the row is live the moment it is written.
+Both routes share the same protections: a Zod schema, a DB-backed fixed-window rate limit per IP (10 per hour for subscribe, 5 per hour for the checklist, `src/lib/server/rate-limit.ts`) and a `website` honeypot field that is silently swallowed. The checklist form asks for a first name and email, which travels to Insta-Newsletter as the contact's top-level `firstName` (November 2026; before that neither form asked for a name); the Caribbean form asks for email only. Neither does double opt-in: the Caribbean form carries consent wording under the button, and the row is live the moment it is written.
 
-The domain logic for both lives in `src/lib/server/caribbean.ts` (`subscribeCaribbean`, `sendChecklistLead`).
+The domain logic lives in `src/lib/server/caribbean.ts` (`subscribeCaribbean`) and `src/lib/server/walkthrough.ts` (`sendChecklistLead`, plus the checklist PDF resolver the download page and the PDF route share).
 
 ### 1.2 Unsubscribe
 
@@ -54,7 +54,7 @@ The domain logic for both lives in `src/lib/server/caribbean.ts` (`subscribeCari
 
 ### 1.3 Sending an issue
 
-Admin → Caribbean Connection → *Newsletter subscribers* has a **Compose issue** card (`composeIssue` in `src/lib/actions/catalog.ts`). It takes a subject, a plain-text body and an optional segment, and queues one `outbox` row per active Caribbean subscriber (`relatedType: "cc_issue"`), which the `outbox` cron job delivers through SendGrid from `newsletter@`. There is a "send a test to me" switch. The Healthy Home list has no compose at all; it is a lead-capture list only.
+Admin → Caribbean Connection → *Newsletter subscribers* has a **Compose issue** card (`composeIssue` in `src/lib/actions/catalog.ts`). It takes a subject, a plain-text body and an optional segment, and queues one `outbox` row per active Caribbean subscriber (`relatedType: "cc_issue"`), which the `outbox` cron job delivers through SendGrid from `newsletter@`. There is a "send a test to me" switch. The Healthy Home list has no compose at all; it is a lead-capture list only (each sign-up also becomes a lead on the Leads board, source "Healthy Home checklist").
 
 ### 1.4 Admin and export
 
@@ -214,7 +214,7 @@ Unlike the public page, this endpoint may say `already`: the caller is the accou
 The website already has the courier; it only needs to be told to carry subscribers too.
 
 1. **Two new events** in `GID_EVENTS` (`src/lib/server/webhooks.ts`): `newsletter.subscribed` and `newsletter.unsubscribed`. They appear automatically as checkboxes in Admin → Client ops → Webhooks.
-2. **Emit them** from `subscribeCaribbean` and `sendChecklistLead` (`src/lib/server/caribbean.ts`), from the `/unsubscribe` server action, and from the admin `subscriberAction` unsubscribe / re-subscribe / delete. The payload is the envelope in §5.1 with `list` set to `caribbean-connection` or `healthy-home`. Pass the visitor IP into `subscribeCaribbean` from the route so it can travel in `consent.ip`.
+2. **Emit them** from `subscribeCaribbean` (`src/lib/server/caribbean.ts`) and `sendChecklistLead` (`src/lib/server/walkthrough.ts`), from the `/unsubscribe` server action, and from the admin `subscriberAction` unsubscribe / re-subscribe / delete. The payload is the envelope in §5.1 with `list` set to `caribbean-connection` or `healthy-home`. Pass the visitor IP into `subscribeCaribbean` from the route so it can travel in `consent.ip`.
 3. **One header.** Either the website's `deliver()` adds `X-Signature` beside `X-GID-Signature` (one line), or Insta-Newsletter's receiver accepts `X-GID-Signature` as an alias. Adding the generic header on the website is the cleaner choice and keeps Call Flow Tracker untouched.
 4. **No new admin UI.** The subscription is created in Admin → Client ops → Webhooks: paste the Insta-Newsletter endpoint URL, tick the two events, and copy the signing secret the website shows once into the Insta-Newsletter source (or the other way round; one side generates, the other pastes). *Send ping* tests it. Retries with backoff, delivery history, pause and resume all come for free from `webhook_deliveries` and the `webhooks` cron job.
 5. **Optional.** Add an `insta_newsletter` row to the integrations registry (`D.INTEGRATIONS` in the seed and `liveStatus` in `src/lib/actions/settings.ts`) so the Site settings → Integrations card shows it as connected when a subscription targeting Insta-Newsletter is active.
