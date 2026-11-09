@@ -10,7 +10,7 @@ const get = async (p, opts) => { const r = await fetch(base + p, { redirect: "ma
 const rawGet = (p, headers) => new Promise((resolve, reject) => { const u = new URL(base + p); const req = (u.protocol === "https:" ? https : http).request(u, { method: "GET", headers }, (res) => { res.resume(); resolve({ status: res.statusCode, headers: res.headers }); }); req.on("error", reject); req.end(); });
 
 // 1. Public routes answer 200
-for (const p of ["/", "/about", "/services", "/services/residential", "/services/residential/design-refresh", "/services/residential/model-home", "/services/aging-in-place", "/services/aging-in-place/virtual", "/services/commercial", "/services/project-management", "/services/start", "/healthy-home-resources", "/healthy-home-resources/aip-products", "/healthy-home-resources/wellness", "/healthy-home-resources/home-health-series", "/healthy-home-resources/aip-partners", "/caribbean-connection", "/news", "/contact", "/privacy", "/terms", "/accessibility", "/login", "/unsubscribe?e=x@y.z"]) {
+for (const p of ["/", "/about", "/services", "/services/residential", "/services/residential/design-refresh", "/services/residential/model-home", "/services/aging-in-place", "/services/aging-in-place/virtual", "/services/commercial", "/services/project-management", "/services/start", "/healthy-home-resources", "/healthy-home-resources/aip-products", "/healthy-home-resources/wellness", "/healthy-home-resources/wellness/checklist", "/healthy-home-resources/home-health-series", "/healthy-home-resources/aip-partners", "/caribbean-connection", "/news", "/contact", "/privacy", "/terms", "/accessibility", "/login", "/unsubscribe?e=x@y.z"]) {
   const r = await get(p); check(`GET ${p}`, r.status === 200, `HTTP ${r.status}`);
 }
 // 2. Admin is gated
@@ -47,6 +47,10 @@ if (sub.bookingId) {
 const bot = await get("/api/consult/submit", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sourcePage: "home", answers: { name: "Bot", email: "bot@example.com" }, website: "spam" }) });
 check("honeypot submissions are swallowed", bot.status === 200 || bot.status === 400, `HTTP ${bot.status}`);
 
+// 3b. Healthy Home checklist: the PDF route answers, and a request lands on the download page
+const wt = await get("/healthy-home-resources/wellness/checklist/healthy-home-walkthrough.pdf"); check("walk-through checklist PDF works", wt.status === 200 && (wt.headers.get("content-type") || "").includes("pdf"), wt.headers.get("content-type") || "");
+const ck = await get("/api/newsletter/checklist", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ firstName: "Smoke", email: `smoke-ck+${Date.now()}@example.com` }) });
+const ckj = await ck.json().catch(() => ({})); check("checklist request creates the lead and points at the download page", ck.status === 200 && ckj.ok && ckj.next === "/healthy-home-resources/wellness/checklist", `HTTP ${ck.status} ${JSON.stringify(ckj)}`);
 // 4. Caribbean public forms + newsletter
 const nl = await get("/api/caribbean/subscribe", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: `smoke-nl+${Date.now()}@example.com`, segment: "Caregiver", location: "Kingston, Jamaica" }) });
 check("Caribbean newsletter signup", nl.status === 200, `HTTP ${nl.status}`);

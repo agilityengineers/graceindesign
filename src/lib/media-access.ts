@@ -44,8 +44,8 @@ export function inlineMime(mime: string) {
   return mime === "application/pdf" || mime.startsWith("video/") || (mime.startsWith("image/") && mime !== "image/svg+xml");
 }
 
-/** Display name for a private file: the last path segment without the `<timestamp>-` prefix the uploaders add. */
-export function privateFileName(key: string) {
+/** Display name for a file: the last path segment without the `<timestamp>-` prefix the uploaders add, so a saved PDF is "walkthrough.pdf" rather than a bare key. */
+export function mediaFileName(key: string) {
   return (key.split("/").pop() || "file").replace(/^\d{13}-/, "") || "file";
 }
 
@@ -61,7 +61,7 @@ export function privateFileHeaders(key: string, mime: string): Record<string, st
   return {
     "content-type": mime,
     "cache-control": "private, no-store",
-    "content-disposition": `${inlineMime(mime) ? "inline" : "attachment"}; filename="${privateFileName(key)}"`,
+    "content-disposition": `${inlineMime(mime) ? "inline" : "attachment"}; filename="${mediaFileName(key)}"`,
     "content-security-policy": "default-src 'none'",
     "referrer-policy": "no-referrer",
     "x-content-type-options": "nosniff",
@@ -69,9 +69,9 @@ export function privateFileHeaders(key: string, mime: string): Record<string, st
   };
 }
 
-/** Headers for public site content: a stable key, so a year in every cache. */
-export function publicFileHeaders(mime: string): Record<string, string> {
-  return { "content-type": mime, "cache-control": "public, max-age=31536000, immutable" };
+/** Headers for public site content: a stable key, so a year in every cache; shown inline under its own name. */
+export function publicFileHeaders(key: string, mime: string): Record<string, string> {
+  return { "content-type": mime, "content-disposition": `inline; filename="${mediaFileName(key)}"`, "cache-control": "public, max-age=31536000, immutable" };
 }
 
 /** Portal page document links: hand the media route the portal token. Only internal media URLs are touched. */

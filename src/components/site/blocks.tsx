@@ -4,12 +4,13 @@ import { HomeClassicHero } from "./ClassicHero";
 import Carousel from "./Carousel";
 import Reveal from "./Reveal";
 import { ConsultButton } from "./ConsultContext";
+import { ResourcePanelProvider, ResourceCardLink, type PanelGroup } from "./ResourcePanel";
 import { ArrowRight, ArrowUpRight, Heart, Rss, Play, Globe, Check } from "@/components/ui/Icons";
 import { getProducts, getPublishedPosts, getFounder, getServiceList, getCaribbeanData, getAipPartners } from "@/lib/data/site";
-import { getMediaMap, resolveDeep } from "@/lib/data/media";
+import { getMediaMap, resolveDeep, type MediaMap } from "@/lib/data/media";
 import { EPISODES } from "@/lib/seed-data/demo";
 import { wellGroupsOf, isDownload, type WellGroup } from "@/lib/wellness";
-import { fmtDate } from "@/lib/utils";
+import { fmtDate, slugify } from "@/lib/utils";
 import { env } from "@/lib/env";
 import { retailerLabel, asinFromUrl, amazonCartUrl, withAssociateTag } from "@/lib/retailers";
 import { onShelf } from "@/lib/shelves";
@@ -25,12 +26,13 @@ function shopFields(p: ProductRow, shop: AmazonShop) {
   const asin = p.retailer === "amazon" ? asinFromUrl(p.url) : null;
   return { url: withAssociateTag(p.url, shop.tag), asin, cartUrl: asin && shop.tag && shop.cartButtons ? amazonCartUrl([asin], shop.tag, shop.marketplace) : "" };
 }
-/** Link props for a WELLness resource card: a PDF opens in a new tab, a page link navigates, no link stays on the guides section. */
-function resourceLink(href: string) {
-  if (!href) return { href: "#guides" };
-  if (isDownload(href) || /^https?:\/\//.test(href)) return { href, target: "_blank", rel: "noreferrer" };
-  return { href };
+/** The WELL resources for the pop-open resource panel (ResourcePanel.tsx): a stable `?guide=` slug from the title (duplicates get -2, -3…), the image resolved to a URL and the concept named. */
+function panelGroupsOf(groups: WellGroup[], map: MediaMap): PanelGroup[] {
+  const seen = new Map<string, number>();
+  return groups.map((g) => ({ ...g, resources: g.resources.map((r) => { const base = slugify(r.title) || "guide"; const n = (seen.get(base) || 0) + 1; seen.set(base, n); return { ...r, slug: n > 1 ? `${base}-${n}` : base, img: r.img ? resolveDeep(map, r.img) : "", concept: g.title }; }) }));
 }
+/** How many cards a `guide_carousel` block shows (`limit`, default 6). */
+const carouselLimit = (v: unknown) => (Number(v) > 0 ? Number(v) : 6);
 import CaribbeanForms, { NewsletterForm, SuggestResourceForm, LeadMagnetForm } from "./CaribbeanForms";
 import EventsSection from "./EventsSection";
 import dynamic from "next/dynamic";
@@ -44,14 +46,18 @@ const strList = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is
 
 export async function RenderBlocks({ blocks, ctx }: { blocks: Block[]; ctx: BlockCtx }) {
   // The guide carousel shows the cards from this page's WELL concepts block, so the two never drift apart.
-  const wellGroups = wellGroupsOf(blocks.find((b) => b.type === "wellness_groups")?.content);
-  return (<>
-    {blocks.map((b) => <BlockView key={b.id} block={b} ctx={ctx} wellGroups={wellGroups} />)}
+  const panelGroups = panelGroupsOf(wellGroupsOf(blocks.find((b) => b.type === "wellness_groups")?.content), await getMediaMap());
+  const carousel = blocks.find((b) => b.type === "guide_carousel");
+  const featured = carousel ? panelGroups.flatMap((g) => g.resources).slice(0, carouselLimit(carousel.content.limit)).map((r) => r.slug) : [];
+  const body = (<>
+    {blocks.map((b) => <BlockView key={b.id} block={b} ctx={ctx} panelGroups={panelGroups} />)}
     <Reveal />
   </>);
+  // A page with WELL resource cards gets the pop-open resource panel the cards open into; every other page renders as before.
+  return blocks.some((b) => b.type === "wellness_groups" || b.type === "guide_carousel") ? <ResourcePanelProvider groups={panelGroups} featured={featured}>{body}</ResourcePanelProvider> : body;
 }
 
-async function BlockView({ block: b, ctx, wellGroups }: { block: Block; ctx: BlockCtx; wellGroups: WellGroup[] }) {
+async function BlockView({ block: b, ctx, panelGroups }: { block: Block; ctx: BlockCtx; panelGroups: PanelGroup[] }) {
   const c = b.content;
   switch (b.type) {
     case "hero": {
@@ -215,22 +221,22 @@ async function BlockView({ block: b, ctx, wellGroups }: { block: Block; ctx: Blo
       </section>); }
     case "product_carousel": { const shop = await getAmazonShop(); const all = shelfOnly(await getProducts(), c.shelf); if (all.length === 0) return null; return <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={306} count={all.length}>{all.map((p) => <ProductCard key={p.id} p={{ ...p, ...shopFields(p, shop) }} compact />)}</Carousel>; }
     case "product_grid": { const shop = await getAmazonShop(); const all = shelfOnly(await getProducts(), c.shelf); const ProductGrid = (await import("./ProductGrid")).default; return <ProductGrid title={c.title} categories={c.categories} disclosure={c.disclosure} shop={shop} products={all.map((p) => { const f = shopFields(p, shop); return { id: p.id, title: p.title, description: p.description || "", category: p.category, price: p.price, reviews: p.reviews, synced: !!p.lastSyncedAt, type: p.type, tag: p.tag || "", img: p.imageUrl || "", url: f.url, asin: f.asin, cartUrl: f.cartUrl, retailer: p.retailer, retailerLabel: retailerLabel(p.retailer) }; })} shopUrl={env.etsyShopUrl} />; }
-    // Cards come from this page's WELL concepts block (see RenderBlocks); `limit` caps how many (default 6).
-    case "guide_carousel": { const map = await getMediaMap(); const items = wellGroups.flatMap((g) => g.resources.map((r) => ({ ...r, concept: g.title, img: resolveDeep(map, r.img) }))).slice(0, Number(c.limit) > 0 ? Number(c.limit) : 6); if (items.length === 0) return null; return (
-      <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={416} count={items.length}>{items.map((r, k) => (
-        <a key={k} {...resourceLink(r.href)} className="card-hover" style={{ display: "flex", flexDirection: "column", borderRadius: 16, overflow: "hidden", border: "1px solid #e9ecf1", color: "#1a2238" }}>
+    // Cards come from this page's WELL concepts block (see RenderBlocks); `limit` caps how many (default 6). Each card opens the resource panel.
+    case "guide_carousel": { const items = panelGroups.flatMap((g) => g.resources).slice(0, carouselLimit(c.limit)); if (items.length === 0) return null; return (
+      <Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={416} count={items.length}>{items.map((r) => (
+        <ResourceCardLink key={r.slug} slug={r.slug} className="card-hover" style={{ display: "flex", flexDirection: "column", borderRadius: 16, overflow: "hidden", border: "1px solid #e9ecf1", color: "#1a2238" }}>
           <div style={{ position: "relative", height: 240, background: "#e6f3fc" }}>{r.img && <img src={r.img} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}<span style={{ position: "absolute", top: 12, left: 12, padding: "5px 10px", borderRadius: 999, background: "#fff", fontSize: 11, fontWeight: 600 }}>{r.kind}</span></div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "20px 22px 22px" }}><span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".14em" }}>{r.concept}</span><span style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.3 }}>{r.title}</span><span style={{ fontSize: 13.5, lineHeight: 1.55, color: "#6b7486" }}>{r.desc}</span></div>
-        </a>))}</Carousel>); }
+        </ResourceCardLink>))}</Carousel>); }
     // `groups` = the WELL concepts and their resource cards (edited in Admin → Content). Concepts with no resources yet are hidden.
-    case "wellness_groups": { const map = await getMediaMap(); const lm = c.leadMagnet || {}; const groups = wellGroupsOf(c).filter((g) => g.resources.length > 0); return (
+    case "wellness_groups": { const lm = c.leadMagnet || {}; const groups = panelGroupsOf(wellGroupsOf(c), await getMediaMap()).filter((g) => g.resources.length > 0); return (
       <section id="guides" className="gx wellness-grid" style={{ paddingTop: 80, paddingBottom: 104, display: "grid", gridTemplateColumns: "minmax(0,1fr) 360px", gap: 64, alignItems: "start" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 56 }}>
           {groups.map((g, gi) => (
             <div key={`${g.title}-${gi}`} className="reveal" style={{ display: "flex", flexDirection: "column", gap: 22 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 18 }}><span className="display" style={{ width: 52, height: 52, borderRadius: 14, background: "#e6f3fc", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 600, color: "#3f9ad9" }}>{g.letter}</span><div style={{ display: "flex", flexDirection: "column", gap: 2 }}><h2 className="display t-display-lg" style={{ fontSize: 34, fontWeight: 600 }}>{g.title}</h2><span style={{ fontSize: 14, color: "#6b7486" }}>{g.sub}</span></div></div>
               <div className="g2 g2-stack-sm" style={{ gap: 16 }}>
-                {g.resources.map(({ kind, title, desc, img, href }, ri) => <a key={`${title}-${ri}`} {...resourceLink(href)} className="card-hover" style={{ display: "flex", gap: 16, padding: 20, borderRadius: 14, border: "1px solid #e9ecf1", color: "#1a2238" }}><div style={{ width: 96, height: 96, flex: "none", borderRadius: 10, overflow: "hidden", position: "relative", background: "#e6f3fc" }}>{img && <img src={resolveDeep(map, img)} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}</div><div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}><span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".14em" }}>{kind}{isDownload(href) ? " · PDF" : ""}</span><span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.35 }}>{title}</span><span style={{ fontSize: 13, lineHeight: 1.55, color: "#6b7486" }}>{desc}</span></div></a>)}
+                {g.resources.map(({ kind, title, desc, img, href, slug }, ri) => <ResourceCardLink key={`${title}-${ri}`} slug={slug} className="card-hover" style={{ display: "flex", gap: 16, padding: 20, borderRadius: 14, border: "1px solid #e9ecf1", color: "#1a2238" }}><div style={{ width: 96, height: 96, flex: "none", borderRadius: 10, overflow: "hidden", position: "relative", background: "#e6f3fc" }}>{img && <img src={img} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}</div><div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}><span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".14em" }}>{kind}{isDownload(href) ? " · PDF" : ""}</span><span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.35 }}>{title}</span><span style={{ fontSize: 13, lineHeight: 1.55, color: "#6b7486" }}>{desc}</span></div></ResourceCardLink>)}
               </div>
             </div>))}
         </div>

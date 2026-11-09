@@ -40,7 +40,7 @@ export async function addSubscriber(formData: FormData) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid email address");
     if (!isAudienceKey(audience)) throw new Error("Pick a list");
     const segment = str(formData.get("segment")); const location = strOrNull(formData.get("location"));
-    const id = await addManualSubscriber({ audience, email, segment: (CARIBBEAN_SEGMENTS as readonly string[]).includes(segment) ? segment : null, location, by: user.email });
+    const id = await addManualSubscriber({ audience, email, firstName: strOrNull(formData.get("firstName")), segment: (CARIBBEAN_SEGMENTS as readonly string[]).includes(segment) ? segment : null, location, by: user.email });
     return `${email} added to ${AUDIENCES[audience].name} · ${describePush(await pushSubscriber(audience, id))}`;
   }, { back: `${BACK}?tab=subscribers`, ok: (msg) => msg, entityId: () => email, revalidate: REVAL });
 }

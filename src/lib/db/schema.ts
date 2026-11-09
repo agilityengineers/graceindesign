@@ -653,6 +653,8 @@ export const ccSubscribers = pgTable("cc_subscribers", {
 export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
+  /** Asked for by the Healthy Home checklist form; forwarded to Insta-Newsletter as the contact's firstName. */
+  firstName: text("first_name"),
   source: text("source").notNull().default("wellness"),
   consentedAt: timestamp("consented_at", { withTimezone: true }).defaultNow().notNull(),
   unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),

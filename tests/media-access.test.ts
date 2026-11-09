@@ -51,7 +51,8 @@ test("private files are never cached or indexed, open inline only when safe, and
   assert.equal(privateFileHeaders("projects/3/170000000000-plan.pdf", "application/pdf")["content-disposition"], 'inline; filename="170000000000-plan.pdf"');
   for (const v of Object.values(pdf)) assert.doesNotMatch(v, /[\r\n"]{2}|[\r\n]/);
   // Public site content keeps the long-lived cache.
-  assert.deepEqual(publicFileHeaders("image/webp"), { "content-type": "image/webp", "cache-control": "public, max-age=31536000, immutable" });
+  assert.deepEqual(publicFileHeaders("library/1700000000000-hero.webp", "image/webp"), { "content-type": "image/webp", "content-disposition": 'inline; filename="hero.webp"', "cache-control": "public, max-age=31536000, immutable" });
+  assert.equal(publicFileHeaders("pages/3/blocks/1793700000000-walkthrough.pdf", "application/pdf")["content-disposition"], 'inline; filename="walkthrough.pdf"');
 });
 
 test("portal document links carry the portal token only for internal media URLs", () => {

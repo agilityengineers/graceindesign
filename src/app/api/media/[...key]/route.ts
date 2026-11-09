@@ -24,7 +24,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const buf = await getObject(key);
   if (!buf) return new Response("Not found", { status: 404 });
   const mime = mimeFromName(key);
-  return new Response(new Uint8Array(buf), { headers: isPrivateMedia(kind) ? privateFileHeaders(key, mime) : publicFileHeaders(mime) });
+  return new Response(new Uint8Array(buf), { headers: isPrivateMedia(kind) ? privateFileHeaders(key, mime) : publicFileHeaders(key, mime) });
 }
 
 /** `null` when the caller may read this private key; otherwise the response to send instead. */
