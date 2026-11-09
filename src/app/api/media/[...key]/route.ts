@@ -4,6 +4,7 @@ import { getObject, mimeFromName } from "@/lib/server/storage";
 import { getCurrentUser, can } from "@/lib/auth/session";
 import { loadPortal } from "@/lib/server/portal";
 import { classifyMediaKey, isPrivateMedia, portalMayOpen, privateFileHeaders, publicFileHeaders, type MediaKind } from "@/lib/media-access";
+import { detectImageType } from "@/lib/image-signature";
 export const dynamic = "force-dynamic";
 
 /**
@@ -23,8 +24,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   }
   const buf = await getObject(key);
   if (!buf) return new Response("Not found", { status: 404 });
-  const mime = mimeFromName(key);
-  return new Response(new Uint8Array(buf), { headers: isPrivateMedia(kind) ? privateFileHeaders(key, mime) : publicFileHeaders(key, mime) });
+  // Consultation photos: the stored bytes decide the type, never the extension. Anything that isn't a
+  // recognised raster image goes out as octet-stream, which privateFileHeaders turns into a download.
+  const mime = kind === "lead_photo" ? (detectImageType(buf)?.mime ?? "application/octet-stream") : mimeFromName(key);
+  const headers = isPrivateMedia(kind) ? privateFileHeaders(key, mime) : publicFileHeaders(key, mime);
+  // Media-library SVGs stay viewable in pages but can't run script when opened directly on this origin.
+  if (!isPrivateMedia(kind) && mime === "image/svg+xml") headers["content-security-policy"] = "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox";
+  return new Response(new Uint8Array(buf), { headers });
 }
 
 /** `null` when the caller may read this private key; otherwise the response to send instead. */
