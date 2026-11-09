@@ -1,7 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { and, asc, desc, eq } from "drizzle-orm";
 import SiteFrame from "@/components/site/SiteFrame";
-import { db, portalAccess, projects, projectStages, projectPhases, milestones, documents, invoices, approvals, projectActivity, users } from "@/lib/db";
+import { db, portalAccess, projectStages, projectPhases, milestones, documents, invoices, approvals, projectActivity, users } from "@/lib/db";
+import { loadPortal } from "@/lib/server/portal";
+import { withPortalToken } from "@/lib/media-access";
 import { emitEvent } from "@/lib/server/webhooks";
 import { sendEmail } from "@/lib/server/outbox";
 import { env } from "@/lib/env";
@@ -10,14 +12,6 @@ import { Check } from "@/components/ui/Icons";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Client portal", robots: { index: false, follow: false } };
-
-async function loadPortal(token: string) {
-  const access = await db.query.portalAccess.findFirst({ where: eq(portalAccess.token, token) });
-  if (!access || (access.expiresAt && access.expiresAt < new Date())) return null;
-  const project = await db.query.projects.findFirst({ where: eq(projects.id, access.projectId) });
-  if (!project || !project.clientPortalEnabled) return null;
-  return { access, project };
-}
 
 async function respond(formData: FormData) {
   "use server";
@@ -83,7 +77,7 @@ export default async function PortalPage({ params, searchParams }: { params: Pro
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 48 }}>
           <Section id="documents" title="Documents">
-            {docs.map((d) => <a key={d.id} href={d.url} target="_blank" rel="noreferrer" style={{ display: "flex", justifyContent: "space-between", padding: "12px 16px", borderRadius: 12, border: "1px solid #e9ecf1", fontSize: 14, color: "#1a2238" }}><span>{d.name}</span><span style={{ fontSize: 12, color: "#8c95a8", textTransform: "capitalize" }}>{d.type}</span></a>)}
+            {docs.map((d) => <a key={d.id} href={withPortalToken(d.url, token)} target="_blank" rel="noreferrer" style={{ display: "flex", justifyContent: "space-between", padding: "12px 16px", borderRadius: 12, border: "1px solid #e9ecf1", fontSize: 14, color: "#1a2238" }}><span>{d.name}</span><span style={{ fontSize: 12, color: "#8c95a8", textTransform: "capitalize" }}>{d.type}</span></a>)}
             {!docs.length && <p style={{ color: "#6b7486" }}>Shared documents will appear here.</p>}
           </Section>
           <Section id="invoices" title="Invoices">

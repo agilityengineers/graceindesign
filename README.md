@@ -39,7 +39,8 @@ Sign in at `/login` with `info@graceindesign.net` or `emailme@clarencewilliams.c
 | `npm run test:cc-events` | Unit tests for the Community Events rule: a past event leaves the public page at midnight in its own time zone |
 | `npm run test:newsletter` | Unit tests for the newsletter hand-off to Insta-Newsletter: request body, status vocabulary, filters, CSV export |
 | `npm run test:walkthrough` | Unit tests for the Healthy Home checklist: the email's links, the PDF address rules, the multi-page PDF, absolute links and the clickable links in every plain-text email |
-| `node tests/smoke.mjs` | Funnel and route smoke test against a running server (writes a test lead) |
+| `npm run test:media-access` | Unit tests for the media route's access rule: which keys are private, the private-file headers, portal document links |
+| `node tests/smoke.mjs` | Funnel and route smoke test against a running server (writes a test lead); also checks that `leads/` and `projects/` files are refused when signed out |
 | `npm run test:launch-content` | Read-only crawl of the public pages: no prototype/admin text, unique titles and descriptions, robots, sitemap, favicon, noindex, redirects |
 | `node tests/shot.mjs --login <owner email> /route …` | Full-page screenshots (dev helper) |
 

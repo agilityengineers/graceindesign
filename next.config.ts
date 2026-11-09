@@ -39,6 +39,11 @@ const nextConfig: NextConfig = {
         source: "/auth/verify",
         headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
       },
+      {
+        // Private files (leads/, projects/) may be opened with a client's ?portal= token; never pass it on as a referrer.
+        source: "/api/media/:path*",
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
     ];
   },
 };

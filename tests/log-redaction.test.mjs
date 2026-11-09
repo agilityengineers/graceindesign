@@ -44,6 +44,14 @@ test("repeated, encoded, HTML and nested auth parameters are redacted", () => {
   ]) noCredential(redactAuthUrls(url));
 });
 
+test("client-portal tokens on media links are redacted, the file path is kept", () => {
+  const log = redactAuthUrls(` GET /api/media/projects/4/1700000000000-plan.pdf?portal=${token} 200 in 9ms`);
+  noCredential(log);
+  assert.ok(log.includes("/api/media/projects/4/1700000000000-plan.pdf?portal=[REDACTED] 200 in 9ms"));
+  noCredential(redactAuthUrls(`/api/media/projects/4/plan.pdf?x=1&amp;portal=${token}`));
+  assert.equal(redactAuthUrls(" GET /portal/schedule 200 in 3ms"), " GET /portal/schedule 200 in 3ms");
+});
+
 test("auth email body is omitted without changing the delivery payload", () => {
   const row = { toAddr: "test@example.invalid", subject: "Sign in", bodyText: `Hello\n${verify}\nExpires soon` };
   const before = JSON.stringify(row);
