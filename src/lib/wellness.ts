@@ -50,12 +50,15 @@ export function wellGroupsOf(content: unknown): WellGroup[] {
   }));
 }
 
+/**
+ * The walk-through sidebar's default wording (Admin → Content → WELLness Resources → the WELL concepts block → Lead magnet).
+ * Also the fallback the download page and the checklist email use for any field the admin left blank.
+ */
+export const DEFAULT_LEAD_MAGNET = { eyebrow: "Free download", title: "The 10-Minute Healthy Home Walk-Through", body: "Our quick checklist for light, air, water and safety — the same one our specialists start with.", cta: "Send me the checklist", link: "Or request a full home assessment →", linkHref: "/contact?from=wellness", pdf: "", items: DEFAULT_WALKTHROUGH_ITEMS };
+
 /** Starter content for a new `wellness_groups` block (Admin → Content → + Add block). */
 export function wellnessGroupsStarter() {
-  return {
-    groups: DEFAULT_WELL_GROUPS,
-    leadMagnet: { eyebrow: "Free download", title: "The 10-Minute Healthy Home Walk-Through", body: "Our quick checklist for light, air, water and safety — the same one our specialists start with.", cta: "Send me the checklist", link: "Or request a full home assessment →", linkHref: "/contact?from=wellness", pdf: "", items: DEFAULT_WALKTHROUGH_ITEMS },
-  };
+  return { groups: DEFAULT_WELL_GROUPS, leadMagnet: { ...DEFAULT_LEAD_MAGNET } };
 }
 
 /** Starter content for the "Latest WELLness articles" row: a `news` block limited to the WELLness category. */

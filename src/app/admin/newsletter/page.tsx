@@ -79,7 +79,7 @@ export default async function NewsletterAdmin({ searchParams }: { searchParams: 
           {STATUS_FILTERS.map(([k, l]) => <Link key={k} href={href({ status: k })} className={`pill${status === k ? " is-on" : ""}`}>{l}</Link>)}
           <form method="get" action="/admin/newsletter" style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
             <input type="hidden" name="tab" value="subscribers" />{audience && <input type="hidden" name="audience" value={audience} />}<input type="hidden" name="status" value={status} />
-            <input name="q" defaultValue={q} placeholder="Search email, segment, location" className="admin-input admin-input-sm" style={{ width: 240 }} />
+            <input name="q" defaultValue={q} placeholder="Search name, email, segment, location" className="admin-input admin-input-sm" style={{ width: 240 }} />
             <button type="submit" className="btn btn-ghost btn-xs" style={{ borderRadius: 8 }}>Search</button>
             {q && <Link href={href({ q: "" })} className="link-btn link-muted" style={{ fontSize: 12 }}>Clear</Link>}
           </form>
@@ -89,7 +89,7 @@ export default async function NewsletterAdmin({ searchParams }: { searchParams: 
             <div style={{ maxHeight: 620, overflow: "auto", display: "flex", flexDirection: "column" }}>
               {shown.map((r) => {
                 const a = AUDIENCES[r.audience]; const push = needsPush(r);
-                const details = r.audience === "healthy-home" ? "Checklist download" : [r.segment, r.location || r.country].filter(Boolean).join(" · ") || "—";
+                const details = r.audience === "healthy-home" ? [r.firstName, "Checklist download"].filter(Boolean).join(" · ") : [r.segment, r.location || r.country].filter(Boolean).join(" · ") || "—";
                 const sendLabel = !connected ? null : r.unsubscribedAt ? null : r.instaStatus === "suppressed" ? "Ask them to confirm" : r.instaStatus === "failed" ? "Try again" : push ? "Send now" : null;
                 return (
                   <div key={`${r.audience}-${r.id}`} style={{ display: "grid", gridTemplateColumns: COLS, gap: 10, alignItems: "center", fontSize: 12, padding: "8px 0", borderBottom: "1px solid #f2f4f7", opacity: r.unsubscribedAt ? .55 : 1 }}>
@@ -114,6 +114,7 @@ export default async function NewsletterAdmin({ searchParams }: { searchParams: 
             <Card title="Add someone by hand" sub="Recorded on the website and added to Insta-Newsletter. No welcome email is sent.">
               <form action={addSubscriber} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <input name="email" type="email" required placeholder="name@example.com" className="admin-input admin-input-sm" />
+                <input name="firstName" placeholder="First name (optional; Healthy Home list)" maxLength={100} className="admin-input admin-input-sm" />
                 <label className="label label-caps">List<select name="audience" className="admin-input admin-input-sm" defaultValue="caribbean-connection">{AUDIENCE_KEYS.map((k) => <option key={k} value={k}>{AUDIENCES[k].name}</option>)}</select></label>
                 <label className="label label-caps">Segment (Caribbean Connection)<select name="segment" className="admin-input admin-input-sm" defaultValue={CARIBBEAN_SEGMENTS[0]}>{CARIBBEAN_SEGMENTS.map((s) => <option key={s}>{s}</option>)}</select></label>
                 <input name="location" placeholder="City, Country (optional)" className="admin-input admin-input-sm" />
@@ -200,14 +201,14 @@ export default async function NewsletterAdmin({ searchParams }: { searchParams: 
             <form action={saveNewsletterSettings} style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: 13 }}>
               <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}><span>Send a welcome email from the website after a Caribbean Connection sign-up<br /><span style={help}>From {env.senders.newsletter.formatted}. Switch this off if Insta-Newsletter sends its own welcome, so people do not get two.</span></span><input type="checkbox" name="sendWelcomeEmail" defaultChecked={settings.sendWelcomeEmail} /></label>
               <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}><span>Ask Insta-Newsletter to confirm by email before adding the person<br /><span style={help}>Double opt-in: they get a confirmation link and join when they click it. Cleaner consent and fewer typos, one more step for them. Off means they are added at once.</span></span><input type="checkbox" name="doubleOptIn" defaultChecked={settings.doubleOptIn} /></label>
-              <span style={help}>The Healthy Home checklist email is always sent: it is what the person asked for.</span>
+              <span style={help}>The Healthy Home checklist email is always sent: it is what the person asked for. It carries the full link to the checklist PDF and to its download page; the person is also added to the Leads board.</span>
               <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8, alignSelf: "flex-start" }}>Save</button>
             </form>
           </Card>
           <Card title="Good to know">
             <div style={{ ...help, fontSize: 13, color: "#4b5569", display: "flex", flexDirection: "column", gap: 10 }}>
               <span><strong>Slack notice on each sign-up:</strong> {notif.slackOnOtherForms ? "on" : "off"}{slackConfigured() ? "" : " (Slack is not configured)"}. Change it under <Link href="/admin/forms" className="link-btn">Form builder → Notifications</Link>.</span>
-              <span><strong>Where people sign up:</strong> the <Link href="/caribbean-connection#newsletter" className="link-btn">Caribbean Connection page</Link> and the <Link href="/healthy-home-resources/wellness" className="link-btn">Healthy Home checklist</Link>. Neither form asks for a name.</span>
+              <span><strong>Where people sign up:</strong> the <Link href="/caribbean-connection#newsletter" className="link-btn">Caribbean Connection page</Link> and the <Link href="/healthy-home-resources/wellness" className="link-btn">Healthy Home checklist</Link>. The checklist form asks for a first name and email (the name is sent to Insta-Newsletter as the contact&apos;s first name, for personalised newsletters); the Caribbean form asks for email only.</span>
               <span><strong>Unsubscribing:</strong> newsletters sent from Insta-Newsletter carry its own unsubscribe link. The website&apos;s own link (<code>{env.baseUrl}/unsubscribe</code>, in the welcome email) takes the person off both website lists and tells Insta-Newsletter.</span>
               <span><strong>Who can see this page:</strong> owners and editors.</span>
             </div>

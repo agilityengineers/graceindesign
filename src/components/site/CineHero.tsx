@@ -51,7 +51,7 @@ export default function CineHero(p: Props) {
           </div>
         </div>
         <div className="hero-rail">
-          <span className="eyebrow-sm eyebrow" style={{ color: "#c6cbd6", marginBottom: 8 }}>{p.scenesLabel}</span>
+          <span className="eyebrow-sm eyebrow" style={{ color: "#fff", marginBottom: 8 }}>{p.scenesLabel}</span>
           {p.scenes.map((s, k) => {
             const inner = (<>
               <span className="display" style={{ fontSize: 20, color: "#6cb6e6", width: 28 }}>{String(k + 1).padStart(2, "0")}</span>

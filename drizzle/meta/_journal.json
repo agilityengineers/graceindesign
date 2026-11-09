@@ -92,6 +92,13 @@
       "when": 1793700400000,
       "tag": "0012_aip_partner_images",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793700500000,
+      "tag": "0013_newsletter_first_name",
+      "breakpoints": true
     }
   ]
 }

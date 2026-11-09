@@ -152,6 +152,14 @@ export async function deliverOutbox(id: number) {
 
 export function textToHtml(text: string, footerEmail = env.senders.support.email) {
   const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const paras = esc.split(/\n{2,}/).map((p) => `<p style="margin:0 0 14px;line-height:1.6">${p.replace(/\n/g, "<br>")}</p>`).join("");
+  const paras = esc.split(/\n{2,}/).map((p) => `<p style="margin:0 0 14px;line-height:1.6">${linkify(p).replace(/\n/g, "<br>")}</p>`).join("");
   return `<!doctype html><html><body style="margin:0;background:#f2f4f7;padding:24px;font-family:Montserrat,Helvetica,Arial,sans-serif;color:#1a2238;font-size:15px"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid #e3e6ec">${COMMUNICATION_LOGO_HTML}${paras}<p style="margin:24px 0 0;font-size:12px;color:#8c95a8">Grace In Design Services, LLC · (770) 691-1600 · ${footerEmail}</p></div></body></html>`;
+}
+/**
+ * Every full web address in a plain-text email becomes a clickable link (a download, a portal, an unsubscribe page), with
+ * trailing punctuation left outside the link. Runs on already-escaped text, so an `&amp;` inside the href is correct HTML.
+ * Kept below textToHtml and import-free: tests/communication-brand.test.ts evaluates everything from textToHtml to the end of this file on its own.
+ */
+function linkify(escaped: string) {
+  return escaped.replace(/https?:\/\/[^\s<"]*[^\s<".,;:!?)\]']/g, (url) => `<a href="${url}" style="color:#3f9ad9">${url}</a>`);
 }
