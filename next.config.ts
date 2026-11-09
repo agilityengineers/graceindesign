@@ -16,10 +16,10 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    // Allow a 100 MB PDF or video plus multipart fields and form metadata.
     serverActions: { bodySizeLimit: "110mb" },
     // middleware.ts matches /admin, so Next buffers admin request bodies for it — default cap is 10MB,
     // which truncates larger media uploads ("Unexpected end of form"). Keep in step with bodySizeLimit.
-    // 110mb leaves headroom over the 100 MB video cap in src/lib/server/media-upload.ts.
     middlewareClientMaxBodySize: "110mb",
   },
   serverExternalPackages: ["pg", "@replit/object-storage", "pdf-lib", "twilio", "@sendgrid/mail", "stripe"],

@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, media } from "@/lib/db";
 import { putObject, mimeFromName, safeKey } from "@/lib/server/storage";
 
-const MAX_BYTES = 15 * 1024 * 1024;
+import { mediaUploadError } from "@/lib/upload-limits";
 /** Videos (Home Health Series episodes and the like) get more room than photos. Keep in step with bodySizeLimit in next.config.ts. */
 export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 
@@ -12,7 +12,12 @@ export async function uploadToMedia(file: File, opts: { folder: string; usedOn?:
   if (!(file instanceof File) || file.size === 0) throw new Error("Choose a file first");
   const mime = file.type || mimeFromName(file.name);
   const isVideo = mime.startsWith("video/");
-  if (file.size > (isVideo ? MAX_VIDEO_BYTES : MAX_BYTES)) throw new Error(isVideo ? `${file.name} is larger than 100 MB — export it smaller (1080p MP4 works well) and try again` : `${file.name} is larger than 15 MB`);
+  if (isVideo) {
+    if (file.size > MAX_VIDEO_BYTES) throw new Error(`${file.name} is larger than 100 MB — export it smaller (1080p MP4 works well) and try again`);
+  } else {
+    const error = mediaUploadError(file);
+    if (error) throw new Error(error);
+  }
   const key = `${opts.folder.replace(/^\/+|\/+$/g, "")}/${Date.now()}-${safeKey(file.name)}`;
   const { url, key: storedKey } = await putObject(key, Buffer.from(await file.arrayBuffer()));
   if (opts.slot) {

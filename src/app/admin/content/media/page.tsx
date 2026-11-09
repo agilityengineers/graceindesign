@@ -14,6 +14,7 @@ import Toast from "@/components/admin/Toast";
 import ConfirmButton from "@/components/admin/Confirm";
 import ContentTabs from "@/components/admin/ContentTabs";
 import { uploadMedia, mediaAction, generateMedia } from "@/lib/actions/media";
+import { UPLOAD_LIMIT_HINT } from "@/lib/upload-limits";
 
 export const metadata = { title: "Media library" };
 export const dynamic = "force-dynamic";
@@ -35,7 +36,7 @@ export default async function MediaAdmin({ searchParams }: { searchParams: Promi
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 20 }} className="g2">
         <Card title="Upload" sub="Photos, PDFs and videos. Pick a slot to replace an image everywhere it's used, or leave blank to add to the library">
           <form action={uploadMedia} encType="multipart/form-data" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <label className="label label-caps" style={{ gridColumn: "1/-1" }}>Files<input type="file" name="files" multiple accept="image/*,video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm,.pdf" className="admin-input admin-input-sm" style={{ paddingTop: 6 }} required /><span style={{ fontSize: 11, color: "#8c95a8", textTransform: "none", letterSpacing: 0, fontWeight: 400 }}>Photos up to 15 MB. Videos up to 100 MB (MP4 plays everywhere). Upload large videos one at a time.</span></label>
+            <label className="label label-caps" style={{ gridColumn: "1/-1" }}>Files<input type="file" name="files" multiple accept="image/*,video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm,.pdf" className="admin-input admin-input-sm" style={{ paddingTop: 6 }} required /><span style={{ fontSize: 11, color: "#8c95a8", textTransform: "none", letterSpacing: 0, fontWeight: 400 }}>{UPLOAD_LIMIT_HINT} Videos: up to 100 MB each (MP4 recommended); upload large videos one at a time.</span></label>
             <label className="label label-caps">Replace slot (optional)<input name="slot" list="slots" className="admin-input admin-input-sm" placeholder="e.g. int.kitchen-windows" /><datalist id="slots">{slots.map((s) => <option key={s} value={s} />)}</datalist></label>
             <label className="label label-caps">Alt text<input name="alt" className="admin-input admin-input-sm" /></label>
             <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8, justifySelf: "start" }}>Upload</button>

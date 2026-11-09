@@ -4,6 +4,7 @@ import { saveBlock } from "@/lib/actions/content";
 import ImagePicker from "./ImagePicker";
 import { SHELVES, SHELF_KEYS } from "@/lib/shelves";
 import { EVENT_REGIONS, US_STATES } from "@/lib/events";
+import { PDF_UPLOAD_MAX_MB, mediaUploadError } from "@/lib/upload-limits";
 
 type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
 const isVideoKey = (k: string) => /^video$/i.test(k);
@@ -60,7 +61,7 @@ function Field({ k, v, path, update }: { k: string; v: Json; path: (string | num
     if (isFileKey(String(k))) return (
       <div style={{ ...full, display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 8, alignItems: "end" }}>
         <label className="label label-caps">{String(k).toLowerCase() === "href" ? "Link (a page, a website, or an uploaded PDF)" : String(k).toLowerCase() === "pdf" ? "Your own PDF (optional; replaces the generated one once the page is published)" : `${label} (PDF)`}<input value={s} placeholder={String(k).toLowerCase() === "href" ? "e.g. /news/my-article or upload a PDF →" : "Upload a PDF →"} onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm" /></label>
-        <label className="btn btn-ghost btn-xs" style={{ borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap" }}>Upload PDF<input type="file" name={`file::${name}`} accept=".pdf,application/pdf" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) update(path, `(uploading ${f.name} on save)`); }} /></label>
+        <label className="btn btn-ghost btn-xs" style={{ borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap" }}>Upload PDF (max {PDF_UPLOAD_MAX_MB} MB)<input type="file" name={`file::${name}`} accept=".pdf,application/pdf" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) { const error = mediaUploadError(f); if (error) { window.alert(error); e.target.value = ""; return; } update(path, `(uploading ${f.name} on save)`); } }} /></label>
         {s && /\.pdf(\?|#|$)/i.test(s) && <a href={s} target="_blank" rel="noreferrer" style={{ gridColumn: "1/-1", fontSize: 11 }}>Open current PDF ↗</a>}
       </div>);
     // An episode's video: paste a link from the media library, or upload an MP4 here (it's saved to the library too).
