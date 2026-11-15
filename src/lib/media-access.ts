@@ -79,3 +79,31 @@ export function withPortalToken(url: string, token: string) {
   if (!url.startsWith("/api/media/")) return url;
   return `${url}${url.includes("?") ? "&" : "?"}portal=${encodeURIComponent(token)}`;
 }
+
+/** Video and audio files the media library can hold and play on pages. */
+export function isVideoMime(mime: string | null | undefined) {
+  return !!mime && mime.startsWith("video/");
+}
+
+/**
+ * Reads an HTTP `Range: bytes=…` header against a file of `size` bytes. Browsers ask for video this way, and
+ * Safari/iOS won't play a video at all unless the server answers with 206 Partial Content.
+ * Returns the inclusive byte span, `null` when there's no usable single range (send the whole file), or
+ * "unsatisfiable" when the range starts past the end (send 416).
+ */
+export function parseByteRange(header: string | null, size: number): { start: number; end: number } | null | "unsatisfiable" {
+  if (!header) return null;
+  const m = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
+  if (!m || (m[1] === "" && m[2] === "")) return null;
+  if (m[1] === "") {
+    // "bytes=-500": the last 500 bytes.
+    const n = Number(m[2]);
+    if (n === 0) return "unsatisfiable";
+    return { start: Math.max(0, size - n), end: size - 1 };
+  }
+  const start = Number(m[1]);
+  if (start >= size) return "unsatisfiable";
+  const end = m[2] === "" ? size - 1 : Math.min(Number(m[2]), size - 1);
+  if (end < start) return null;
+  return { start, end };
+}

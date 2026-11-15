@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight } from "@/components/ui/Icons";
 
-/** Auto-advance 4s, pause on hover, prev/next, dots, visible-count by width. */
+/** Auto-advance 4s, pause on hover or while a video in it plays, prev/next, dots, visible-count by width. */
 export default function Carousel({ eyebrow, title, cardWidth, gap = 24, children, count }: { eyebrow: string; title: string; cardWidth: number; gap?: number; children: ReactNode[]; count: number }) {
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -16,7 +16,15 @@ export default function Carousel({ eyebrow, title, cardWidth, gap = 24, children
   const max = Math.max(0, count - visible);
   const c = Math.min(idx, max);
   const step = (d: number) => setIdx((s) => ((Math.min(s, max) + d) % (max + 1) + (max + 1)) % (max + 1));
-  useEffect(() => { const t = setInterval(() => { if (!paused && !document.hidden) step(1); }, 4000); return () => clearInterval(t); }, [paused, max]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A video playing inside a card stops the auto-advance until it pauses or ends (phones have no hover to pause it).
+  const [playing, setPlaying] = useState(0);
+  useEffect(() => {
+    const el = wrap.current; if (!el) return;
+    const on = () => setPlaying((n) => n + 1); const off = () => setPlaying((n) => Math.max(0, n - 1));
+    el.addEventListener("play", on, true); el.addEventListener("pause", off, true);
+    return () => { el.removeEventListener("play", on, true); el.removeEventListener("pause", off, true); };
+  }, []);
+  useEffect(() => { const t = setInterval(() => { if (!paused && !playing && !document.hidden) step(1); }, 4000); return () => clearInterval(t); }, [paused, playing, max]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <section style={{ paddingTop: 72, display: "flex", flexDirection: "column", gap: 28, overflow: "hidden" }}>
       <div className="gx" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>

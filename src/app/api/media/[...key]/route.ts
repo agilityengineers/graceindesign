@@ -3,7 +3,7 @@ import { db, documents } from "@/lib/db";
 import { getObject, mimeFromName } from "@/lib/server/storage";
 import { getCurrentUser, can } from "@/lib/auth/session";
 import { loadPortal } from "@/lib/server/portal";
-import { classifyMediaKey, isPrivateMedia, portalMayOpen, privateFileHeaders, publicFileHeaders, type MediaKind } from "@/lib/media-access";
+import { classifyMediaKey, isPrivateMedia, parseByteRange, portalMayOpen, privateFileHeaders, publicFileHeaders, type MediaKind } from "@/lib/media-access";
 import { detectImageType } from "@/lib/image-signature";
 export const dynamic = "force-dynamic";
 
@@ -30,6 +30,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const headers = isPrivateMedia(kind) ? privateFileHeaders(key, mime) : publicFileHeaders(key, mime);
   // Media-library SVGs stay viewable in pages but can't run script when opened directly on this origin.
   if (!isPrivateMedia(kind) && mime === "image/svg+xml") headers["content-security-policy"] = "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox";
+  // Video players fetch in byte ranges; Safari and iPhones refuse to play a video served without them.
+  headers["accept-ranges"] = "bytes";
+  const range = parseByteRange(req.headers.get("range"), buf.length);
+  if (range === "unsatisfiable") return new Response(null, { status: 416, headers: { ...headers, "content-range": `bytes */${buf.length}` } });
+  if (range) {
+    const part = buf.subarray(range.start, range.end + 1);
+    return new Response(new Uint8Array(part), { status: 206, headers: { ...headers, "content-range": `bytes ${range.start}-${range.end}/${buf.length}`, "content-length": String(part.length) } });
+  }
+  headers["content-length"] = String(buf.length);
   return new Response(new Uint8Array(buf), { headers });
 }
 

@@ -62,3 +62,20 @@ test("portal document links carry the portal token only for internal media URLs"
   assert.equal(withPortalToken("https://drive.google.com/file/d/abc/view", "tok_abc"), "https://drive.google.com/file/d/abc/view");
   assert.equal(withPortalToken("/admin/leads?open=12", "tok_abc"), "/admin/leads?open=12");
 });
+
+test("byte ranges for video playback", async () => {
+  const { parseByteRange, isVideoMime } = await import("../src/lib/media-access");
+  assert.equal(parseByteRange(null, 100), null);
+  assert.deepEqual(parseByteRange("bytes=0-", 100), { start: 0, end: 99 });
+  assert.deepEqual(parseByteRange("bytes=0-1", 100), { start: 0, end: 1 });
+  assert.deepEqual(parseByteRange("bytes=10-500", 100), { start: 10, end: 99 });
+  assert.deepEqual(parseByteRange("bytes=-20", 100), { start: 80, end: 99 });
+  assert.deepEqual(parseByteRange("bytes=-500", 100), { start: 0, end: 99 });
+  assert.equal(parseByteRange("bytes=100-", 100), "unsatisfiable");
+  assert.equal(parseByteRange("bytes=-0", 100), "unsatisfiable");
+  assert.equal(parseByteRange("bytes=5-2", 100), null);
+  assert.equal(parseByteRange("bytes=0-1,5-6", 100), null);
+  assert.equal(parseByteRange("items=0-1", 100), null);
+  assert.equal(isVideoMime("video/mp4") && isVideoMime("video/quicktime"), true);
+  assert.equal(isVideoMime("image/png") || isVideoMime(null), false);
+});

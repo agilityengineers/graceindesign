@@ -5,6 +5,8 @@ import { requireArea } from "@/lib/auth/session";
 import { db, media } from "@/lib/db";
 import { getMediaMap } from "@/lib/data/media";
 import { magnificConfigured } from "@/lib/server/magnific";
+import { mimeFromName } from "@/lib/server/storage";
+import { isVideoMime } from "@/lib/media-access";
 import { MEDIA_SLOTS } from "@/lib/seed-data/media";
 import AdminShell from "@/components/admin/AdminShell";
 import { Card } from "@/components/admin/ui";
@@ -24,13 +26,16 @@ export default async function MediaAdmin({ searchParams }: { searchParams: Promi
   const slots = MEDIA_SLOTS.map((s) => s.slot);
   const back = `/admin/content/media${q ? `?q=${encodeURIComponent(q)}` : ""}`;
   const srcOf = (m: typeof rows[number]) => (m.slot ? map.get(m.slot) : m.url) || m.url;
+  // Older rows may have no stored type (or octet-stream); the file name settles it.
+  const isPdf = (m: typeof rows[number]) => m.mime === "application/pdf" || /\.pdf$/i.test(m.url);
+  const isVideo = (m: typeof rows[number]) => isVideoMime(m.mime) || isVideoMime(mimeFromName(m.url)) || isVideoMime(mimeFromName(m.name));
   return (
     <AdminShell user={user} active="cms" title="Media library" subtitle="Photos, logos and documents used across the site" actions={<ContentTabs active="media" />}>
       <Toast />
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 20 }} className="g2">
-        <Card title="Upload" sub="Pick a slot to replace an image everywhere it's used, or leave blank to add to the library">
+        <Card title="Upload" sub="Photos, PDFs and videos. Pick a slot to replace an image everywhere it's used, or leave blank to add to the library">
           <form action={uploadMedia} encType="multipart/form-data" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <label className="label label-caps" style={{ gridColumn: "1/-1" }}>Files<input type="file" name="files" multiple accept="image/*,.pdf" className="admin-input admin-input-sm" style={{ paddingTop: 6 }} required /></label>
+            <label className="label label-caps" style={{ gridColumn: "1/-1" }}>Files<input type="file" name="files" multiple accept="image/*,video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm,.pdf" className="admin-input admin-input-sm" style={{ paddingTop: 6 }} required /><span style={{ fontSize: 11, color: "#8c95a8", textTransform: "none", letterSpacing: 0, fontWeight: 400 }}>Photos up to 15 MB. Videos up to 100 MB (MP4 plays everywhere). Upload large videos one at a time.</span></label>
             <label className="label label-caps">Replace slot (optional)<input name="slot" list="slots" className="admin-input admin-input-sm" placeholder="e.g. int.kitchen-windows" /><datalist id="slots">{slots.map((s) => <option key={s} value={s} />)}</datalist></label>
             <label className="label label-caps">Alt text<input name="alt" className="admin-input admin-input-sm" /></label>
             <button type="submit" className="btn btn-navy btn-xs" style={{ borderRadius: 8, justifySelf: "start" }}>Upload</button>
@@ -49,11 +54,15 @@ export default async function MediaAdmin({ searchParams }: { searchParams: Promi
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 14 }}>
           {list.map((m) => (
             <div key={m.id} style={{ display: "flex", flexDirection: "column", gap: 8, padding: 10, borderRadius: 12, border: "1px solid #eef0f4", background: "#fff" }}>
-              {m.mime === "application/pdf" || /\.pdf$/i.test(m.url) ? (
+              {isPdf(m) ? (
                 // Documents (e.g. a WELLness guide): no thumbnail, but a link and the URL to paste into a card's Link field.
                 <a href={m.url} target="_blank" rel="noreferrer" style={{ height: 130, borderRadius: 8, background: "#f2f4f7", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, color: "#1a2238", textDecoration: "none" }}><span style={{ padding: "6px 10px", borderRadius: 6, background: "#c0392b", color: "#fff", fontSize: 12, fontWeight: 700, letterSpacing: ".08em" }}>PDF</span><span style={{ fontSize: 11, color: "#6b7486" }}>Open ↗</span></a>
+              ) : isVideo(m) ? (
+                // "#t=0.5" makes the browser show a frame from half a second in as the thumbnail.
+                <div style={{ height: 130, borderRadius: 8, overflow: "hidden", background: "#1a2238", position: "relative" }}><video src={`${m.url}#t=0.5`} preload="metadata" muted playsInline controls style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /><span style={{ position: "absolute", top: 6, left: 6, padding: "2px 6px", borderRadius: 4, background: "rgba(26,34,56,.85)", color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: ".08em", pointerEvents: "none" }}>VIDEO</span></div>
               ) : <div style={{ height: 130, borderRadius: 8, overflow: "hidden", background: "#f2f4f7" }}><img src={srcOf(m)} alt={m.alt || m.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /></div>}
-              {(m.mime === "application/pdf" || /\.pdf$/i.test(m.url)) && <><input readOnly value={absoluteUrl(env.baseUrl, m.url)} className="admin-input admin-input-sm" aria-label="PDF link" title="The full link to this PDF" style={{ fontSize: 11 }} /><span style={{ fontSize: 10, color: "#8c95a8", marginTop: -4 }}>Full link — paste it into an email or a card&apos;s Link field.</span></>}
+              {isVideo(m) && <><input readOnly value={m.url} className="admin-input admin-input-sm" aria-label="Video link" title="Paste this into an episode's Video field" style={{ fontSize: 11 }} /><span style={{ fontSize: 10, color: "#8c95a8", marginTop: -4 }}>Video link — paste it into a Home Health Series episode&apos;s Video field.</span></>}
+              {isPdf(m) && <><input readOnly value={absoluteUrl(env.baseUrl, m.url)} className="admin-input admin-input-sm" aria-label="PDF link" title="The full link to this PDF" style={{ fontSize: 11 }} /><span style={{ fontSize: 10, color: "#8c95a8", marginTop: -4 }}>Full link — paste it into an email or a card&apos;s Link field.</span></>}
               <form action={mediaAction} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <input type="hidden" name="mediaId" value={m.id} /><input type="hidden" name="op" value="update" /><input type="hidden" name="_back" value={back} />
                 <input name="name" defaultValue={m.name} className="admin-input admin-input-sm" aria-label="Name" />
@@ -62,7 +71,7 @@ export default async function MediaAdmin({ searchParams }: { searchParams: Promi
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, color: "#8c95a8" }}><span>{m.source}{m.usedOn.length ? ` · ${m.usedOn.slice(0, 2).join(", ")}` : ""}</span><button type="submit" className="link-btn">Save</button></div>
               </form>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                <form action={mediaAction} encType="multipart/form-data" style={{ display: "flex", alignItems: "center", gap: 6 }}><input type="hidden" name="mediaId" value={m.id} /><input type="hidden" name="op" value="replace" /><input type="hidden" name="_back" value={back} /><input type="file" name="file" accept="image/*" style={{ fontSize: 10, width: 120 }} /><button type="submit" className="link-btn">Replace</button></form>
+                <form action={mediaAction} encType="multipart/form-data" style={{ display: "flex", alignItems: "center", gap: 6 }}><input type="hidden" name="mediaId" value={m.id} /><input type="hidden" name="op" value="replace" /><input type="hidden" name="_back" value={back} /><input type="file" name="file" accept={isVideo(m) ? "video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm" : "image/*"} style={{ fontSize: 10, width: 120 }} /><button type="submit" className="link-btn">Replace</button></form>
                 <form action={mediaAction}><input type="hidden" name="mediaId" value={m.id} /><input type="hidden" name="op" value="delete" /><input type="hidden" name="_back" value={back} /><ConfirmButton message={m.slot ? `This image fills the “${m.slot}” slot — pages using it will fall back to a placeholder. Delete anyway?` : "Delete this file?"}>Delete</ConfirmButton></form>
               </div>
             </div>))}
