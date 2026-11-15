@@ -8,7 +8,7 @@ import { ResourcePanelProvider, ResourceCardLink, type PanelGroup } from "./Reso
 import { ArrowRight, ArrowUpRight, Heart, Rss, Play, Globe, Check } from "@/components/ui/Icons";
 import { getProducts, getPublishedPosts, getFounder, getServiceList, getCaribbeanData, getAipPartners } from "@/lib/data/site";
 import { getMediaMap, resolveDeep, type MediaMap } from "@/lib/data/media";
-import { EPISODES } from "@/lib/seed-data/demo";
+import { featuredEpisodeOf, carouselEpisodesOf } from "@/lib/episodes";
 import { wellGroupsOf, isDownload, type WellGroup } from "@/lib/wellness";
 import { fmtDate, slugify } from "@/lib/utils";
 import { env } from "@/lib/env";
@@ -248,24 +248,24 @@ async function BlockView({ block: b, ctx, panelGroups }: { block: Block; ctx: Bl
           {lm.linkHref && lm.link && <Link href={lm.linkHref} style={{ fontSize: 13, color: "#c6cbd6", textAlign: "center" }}>{lm.link}</Link>}
         </aside>
       </section>); }
-    case "featured_episode": { const map = await getMediaMap(); const ep = EPISODES.find((e) => e.featured) || EPISODES[0]; return (
-      <section className="reveal gx g2 g2-stack-sm" style={{ paddingTop: 72, gap: 48, alignItems: "center", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)" }}>
-        <div style={{ position: "relative", aspectRatio: "16/9", borderRadius: 20, overflow: "hidden" }}><img src={resolveDeep(map, ep.img)} alt={ep.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /><div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}><span style={{ width: 84, height: 84, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 18px 44px rgba(26,34,56,.3)" }}><Play size={30} color="#1a2238" /></span></div></div>
+    case "featured_episode": { const map = await getMediaMap(); const ep = featuredEpisodeOf(c); const poster = ep.img ? resolveDeep(map, ep.img) : ""; return (
+      <section id="featured-episode" className="reveal gx g2 g2-stack-sm" style={{ paddingTop: 72, gap: 48, alignItems: "center", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)" }}>
+        <div style={{ position: "relative", aspectRatio: "16/9", borderRadius: 20, overflow: "hidden", background: "#1a2238" }}>{ep.video ? <EpisodeVideo src={resolveDeep(map, ep.video)} poster={poster} title={ep.title} /> : <><img src={poster} alt={ep.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /><div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}><span style={{ width: 84, height: 84, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 18px 44px rgba(26,34,56,.3)" }}><Play size={30} color="#1a2238" /></span></div></>}</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <span className="eyebrow">Latest episode · {ep.num}</span>
+          <span className="eyebrow">Latest episode{ep.num ? ` · ${ep.num}` : ""}</span>
           <h2 className="h2" style={{ fontSize: 40 }}>{ep.title}</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: "#4b5569" }}>{ep.desc}</p>
-          <div style={{ display: "flex", gap: 14, alignItems: "center", fontSize: 13, color: "#6b7486" }}><span>{ep.len}</span><span style={{ width: 3, height: 3, borderRadius: "50%", background: "#c6cbd6" }} /><span>{fmtDate(new Date(Date.now() - ep.date * 86400000), { month: "short", day: "numeric", year: "numeric" })}</span></div>
-          <a href="#episodes" className="btn btn-navy" style={{ alignSelf: "flex-start" }}>Watch now</a>
+          {(ep.len || ep.date) && <div style={{ display: "flex", gap: 14, alignItems: "center", fontSize: 13, color: "#6b7486" }}>{ep.len && <span>{ep.len}</span>}{ep.len && ep.date && <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#c6cbd6" }} />}{ep.date && <span>{ep.date}</span>}</div>}
+          <a href={ep.video ? "#featured-episode" : "#episodes"} className="btn btn-navy" style={{ alignSelf: "flex-start" }}>{ep.video ? "Watch now" : "See all episodes"}</a>
         </div>
       </section>); }
-    case "episode_carousel": { const map = await getMediaMap(); const eps = EPISODES.filter((e) => !e.featured); return (<div id="episodes"><Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={416} count={eps.length}>{eps.map((e) => (
-      <a key={e.num} href="#episodes" style={{ display: "flex", flexDirection: "column", gap: 14, color: "#1a2238" }}>
-        <div style={{ position: "relative", aspectRatio: "16/10", borderRadius: 14, overflow: "hidden" }}><img src={resolveDeep(map, e.img)} alt={e.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" /><span style={{ position: "absolute", bottom: 10, right: 10, padding: "4px 8px", borderRadius: 6, background: "rgba(26,34,56,.85)", color: "#fff", fontSize: 11, fontWeight: 600 }}>{e.len}</span><span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}><span style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(255,255,255,.92)", display: "flex", alignItems: "center", justifyContent: "center" }}><Play size={20} color="#1a2238" /></span></span></div>
-        <span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".14em" }}>Episode {e.num} · {e.room}</span>
+    case "episode_carousel": { const map = await getMediaMap(); const eps = carouselEpisodesOf(c); if (eps.length === 0) return null; return (<div id="episodes"><Carousel eyebrow={c.eyebrow} title={c.title} cardWidth={416} count={eps.length}>{eps.map((e, i) => { const poster = e.img ? resolveDeep(map, e.img) : ""; return (
+      <div key={`${e.num}-${i}`} style={{ display: "flex", flexDirection: "column", gap: 14, color: "#1a2238" }}>
+        <div style={{ position: "relative", aspectRatio: "16/10", borderRadius: 14, overflow: "hidden", background: "#1a2238" }}>{e.video ? <EpisodeVideo src={resolveDeep(map, e.video)} poster={poster} title={e.title} /> : <><img src={poster} alt={e.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />{e.len && <span style={{ position: "absolute", bottom: 10, right: 10, padding: "4px 8px", borderRadius: 6, background: "rgba(26,34,56,.85)", color: "#fff", fontSize: 11, fontWeight: 600 }}>{e.len}</span>}<span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}><span style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(255,255,255,.92)", display: "flex", alignItems: "center", justifyContent: "center" }}><Play size={20} color="#1a2238" /></span></span></>}</div>
+        <span className="eyebrow eyebrow-sm" style={{ letterSpacing: ".14em" }}>{[e.num && `Episode ${e.num}`, e.room, e.video && e.len].filter(Boolean).join(" · ")}</span>
         <h3 className="display" style={{ fontSize: 26, fontWeight: 600, lineHeight: 1.2 }}>{e.title}</h3>
         <p style={{ fontSize: 14, lineHeight: 1.6, color: "#6b7486" }}>{e.desc}</p>
-      </a>))}</Carousel><div style={{ height: 104 }} /></div>); }
+      </div>); })}</Carousel><div style={{ height: 104 }} /></div>); }
     // The block's own `categories`, else the page's `?category=` filter (e.g. /news?category=WELLness).
     case "news_grid": { const cats = strList(c.categories).length ? strList(c.categories) : ctx.category ? [ctx.category] : []; const all = await getPublishedPosts("news", (c.count || 6) + 1, cats); const [feat, ...rest] = all; const filter = ctx.category && !strList(c.categories).length ? <div className="gx" style={{ paddingTop: 40, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", fontSize: 14, color: "#4b5569" }}><span>Showing <strong style={{ color: "#1a2238" }}>{ctx.category}</strong> articles</span><Link href="/news" style={{ fontWeight: 600, borderBottom: "1.5px solid #1a2238", paddingBottom: 2, color: "#1a2238" }}>All articles</Link><a href={`/news/rss.xml?category=${encodeURIComponent(ctx.category)}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#6b7486" }}><Rss /> RSS feed</a></div> : null; if (all.length === 0) return (<>{filter}
       <section className="gx" style={{ paddingTop: 72, paddingBottom: 104, display: "flex", flexDirection: "column", gap: 18, maxWidth: 720 }}>
@@ -408,4 +408,12 @@ export function PostCard({ post, height }: { post: { slug: string; title: string
       <Link href={`/news/${post.slug}`} style={{ fontSize: 13, fontWeight: 600, display: "inline-flex", gap: 8, alignItems: "center" }}>Read article <ArrowRight /></Link>
     </article>
   );
+}
+
+/**
+ * An episode's video player. With no poster chosen, "#t=0.5" has the browser show a frame from half a second
+ * in, so the card never sits blank. `preload="metadata"` fetches only enough to show that frame and the length.
+ */
+function EpisodeVideo({ src, poster, title }: { src: string; poster: string; title: string }) {
+  return <video src={poster ? src : `${src}#t=0.5`} poster={poster || undefined} controls playsInline preload="metadata" aria-label={title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", background: "#1a2238" }} />;
 }

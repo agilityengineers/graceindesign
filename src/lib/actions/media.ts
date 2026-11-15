@@ -3,11 +3,11 @@ import { eq } from "drizzle-orm";
 import { db, media } from "@/lib/db";
 import { adminAction, backTo } from "./_util";
 import { str, strOrNull, parseNum } from "@/lib/utils";
-import { uploadToMedia } from "@/lib/server/media-upload";
-import { putObject, deleteObject } from "@/lib/server/storage";
+import { uploadToMedia, MAX_VIDEO_BYTES } from "@/lib/server/media-upload";
+import { putObject, deleteObject, mimeFromName } from "@/lib/server/storage";
 import { generateImage } from "@/lib/server/magnific";
 
-const REVAL = ["/admin/content/media", "/", "/about", "/services", "/healthy-home-resources", "/caribbean-connection", "/news"];
+const REVAL = ["/admin/content/media", "/", "/about", "/services", "/healthy-home-resources", "/healthy-home-resources/home-health-series", "/caribbean-connection", "/news"];
 
 export async function uploadMedia(formData: FormData) {
   await adminAction("media", "media", "upload", async (user) => {
@@ -25,7 +25,7 @@ export async function mediaAction(formData: FormData) {
     const m = await db.query.media.findFirst({ where: eq(media.id, id) }); if (!m) throw new Error("Media not found");
     if (op === "delete") { if (m.storageKey) await deleteObject(m.storageKey).catch(() => {}); await db.delete(media).where(eq(media.id, id)); }
     else if (op === "update") await db.update(media).set({ name: str(formData.get("name")) || m.name, alt: strOrNull(formData.get("alt")), slot: strOrNull(formData.get("slot")), updatedAt: new Date() }).where(eq(media.id, id));
-    else if (op === "replace") { const f = formData.get("file"); if (!(f instanceof File) || f.size === 0) throw new Error("Choose a file"); const { url, key } = await putObject(`library/${Date.now()}-${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`, Buffer.from(await f.arrayBuffer())); if (m.storageKey) await deleteObject(m.storageKey).catch(() => {}); await db.update(media).set({ url, storageKey: key, mime: f.type || m.mime, size: f.size, name: f.name, source: "upload", updatedAt: new Date() }).where(eq(media.id, id)); }
+    else if (op === "replace") { const f = formData.get("file"); if (!(f instanceof File) || f.size === 0) throw new Error("Choose a file"); const mime = f.type || mimeFromName(f.name); const cap = mime.startsWith("video/") ? MAX_VIDEO_BYTES : 15 * 1024 * 1024; if (f.size > cap) throw new Error(`${f.name} is larger than ${cap / 1024 / 1024} MB`); const { url, key } = await putObject(`library/${Date.now()}-${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`, Buffer.from(await f.arrayBuffer())); if (m.storageKey) await deleteObject(m.storageKey).catch(() => {}); await db.update(media).set({ url, storageKey: key, mime, size: f.size, name: f.name, source: "upload", updatedAt: new Date() }).where(eq(media.id, id)); }
     return id;
   }, { back, ok: op === "delete" ? "Media deleted" : op === "replace" ? "Image replaced everywhere it's used" : "Media updated", entityId: () => id, revalidate: REVAL });
 }

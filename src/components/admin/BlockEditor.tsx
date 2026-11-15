@@ -6,6 +6,7 @@ import { SHELVES, SHELF_KEYS } from "@/lib/shelves";
 import { EVENT_REGIONS, US_STATES } from "@/lib/events";
 
 type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
+const isVideoKey = (k: string) => /^video$/i.test(k);
 const isImageKey = (k: string) => /img|photo|image|logo|avatar|thumb|poster/i.test(k);
 const isImageVal = (v: unknown) => typeof v === "string" && (/^media:\/\//.test(v) || /^\/api\/media\//.test(v) || /^\/(media|assets)\//.test(v) || /\.(jpe?g|png|webp|gif)(\?|$)/i.test(v));
 const isLong = (k: string, v: string) => v.length > 80 || /\n|<p>|<br/.test(v) || /^(body|text|intro|sub|blurb|description|quote|summary|note|html|line)$/i.test(k);
@@ -61,6 +62,13 @@ function Field({ k, v, path, update }: { k: string; v: Json; path: (string | num
         <label className="label label-caps">{String(k).toLowerCase() === "href" ? "Link (a page, a website, or an uploaded PDF)" : String(k).toLowerCase() === "pdf" ? "Your own PDF (optional; replaces the generated one once the page is published)" : `${label} (PDF)`}<input value={s} placeholder={String(k).toLowerCase() === "href" ? "e.g. /news/my-article or upload a PDF →" : "Upload a PDF →"} onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm" /></label>
         <label className="btn btn-ghost btn-xs" style={{ borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap" }}>Upload PDF<input type="file" name={`file::${name}`} accept=".pdf,application/pdf" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) update(path, `(uploading ${f.name} on save)`); }} /></label>
         {s && /\.pdf(\?|#|$)/i.test(s) && <a href={s} target="_blank" rel="noreferrer" style={{ gridColumn: "1/-1", fontSize: 11 }}>Open current PDF ↗</a>}
+      </div>);
+    // An episode's video: paste a link from the media library, or upload an MP4 here (it's saved to the library too).
+    if (isVideoKey(String(k))) return (
+      <div style={{ ...full, display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 8, alignItems: "end", padding: 8, borderRadius: 10, background: "#fff", border: "1px solid #eef0f4" }}>
+        <label className="label label-caps">{label} (MP4 up to 100 MB; leave blank to show the poster only)<input value={s} placeholder="Paste a video link from the media library, or upload →" onChange={(e) => update(path, e.target.value)} className="admin-input admin-input-sm" /></label>
+        <label className="btn btn-ghost btn-xs" style={{ borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap" }}>Upload video<input type="file" name={`file::${name}`} accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) update(path, `(uploading ${f.name} on save)`); }} /></label>
+        {s && !s.startsWith("(uploading") && <video src={`${s}#t=0.5`} preload="metadata" muted playsInline controls style={{ gridColumn: "1/-1", width: 240, aspectRatio: "16/9", borderRadius: 8, background: "#1a2238", objectFit: "cover" }} />}
       </div>);
     if (isImageKey(String(k)) || isImageVal(s)) return (
       <div style={{ ...full, padding: 8, borderRadius: 10, background: "#fff", border: "1px solid #eef0f4" }}>

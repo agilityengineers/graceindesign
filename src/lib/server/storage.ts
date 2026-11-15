@@ -74,5 +74,5 @@ export async function deleteObject(key: string) {
 
 export function mimeFromName(name: string) {
   const ext = name.split(".").pop()?.toLowerCase();
-  return ({ jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", svg: "image/svg+xml", pdf: "application/pdf", mp4: "video/mp4", ics: "text/calendar" } as Record<string, string>)[ext || ""] || "application/octet-stream";
+  return ({ jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", svg: "image/svg+xml", pdf: "application/pdf", mp4: "video/mp4", m4v: "video/mp4", mov: "video/quicktime", webm: "video/webm", avif: "image/avif", ics: "text/calendar" } as Record<string, string>)[ext || ""] || "application/octet-stream";
 }

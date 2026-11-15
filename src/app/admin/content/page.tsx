@@ -13,6 +13,9 @@ import { savePageSeo, blockAction, addBlock, reorderBlocks, publishPage, discard
 import { relativeDay } from "@/lib/utils";
 import { SHELVES, SHELF_KEYS } from "@/lib/shelves";
 import { DEFAULT_WELL_GROUPS, wellnessGroupsStarter } from "@/lib/wellness";
+import { defaultEpisodes, defaultFeaturedEpisode } from "@/lib/episodes";
+
+const BLANK_EPISODE = { num: "", room: "", title: "", desc: "", len: "", date: "", img: "", video: "" };
 
 export const metadata = { title: "Content" };
 export const dynamic = "force-dynamic";
@@ -34,6 +37,9 @@ function withEditableDefaults(type: string, c: Record<string, unknown>): Record<
   if (type === "wellness_groups") { const s = wellnessGroupsStarter(); return { groups: Array.isArray(c.groups) ? c.groups : DEFAULT_WELL_GROUPS, ...c, leadMagnet: { ...s.leadMagnet, ...((c.leadMagnet as object) || {}) } }; }
   if ((type === "news" || type === "news_grid") && !("categories" in c)) return { ...c, categories: [] };
   if (type === "guide_carousel" && !("limit" in c)) return { ...c, limit: 6 };
+  // Home Health Series: the starter episodes become editable (title, poster, video…) the first time the block is opened.
+  if (type === "featured_episode") return { ...c, episode: { ...defaultFeaturedEpisode(), ...((c.episode as object) || {}) } };
+  if (type === "episode_carousel") return { ...c, episodes: Array.isArray(c.episodes) ? (c.episodes as object[]).map((e) => ({ ...BLANK_EPISODE, ...e })) : defaultEpisodes() };
   return c;
 }
 const preview = (c: Record<string, unknown>) => { for (const k of ["title", "lead", "kicker", "eyebrow", "heading", "body"]) { const v = c[k]; if (typeof v === "string" && v) return v.replace(/<[^>]+>/g, "").slice(0, 90); } const first = Object.values(c).find((v) => typeof v === "string" && v); return typeof first === "string" ? first.slice(0, 90) : ""; };
